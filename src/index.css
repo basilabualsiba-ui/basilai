@@ -1,0 +1,213 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* INK-inspired Design System - Dark theme with golden orange accents */
+
+@layer base {
+  :root {
+    /* Dark Navy Base */
+    --background: 220 25% 8%;
+    --foreground: 35 100% 85%;
+
+    /* Cards with subtle transparency */
+    --card: 220 20% 12%;
+    --card-foreground: 35 100% 85%;
+
+    /* Popovers */
+    --popover: 220 20% 12%;
+    --popover-foreground: 35 100% 85%;
+
+    /* Golden Orange Primary */
+    --primary: 35 100% 55%;
+    --primary-foreground: 220 25% 8%;
+
+    /* Darker secondary */
+    --secondary: 220 15% 18%;
+    --secondary-foreground: 35 100% 85%;
+
+    /* Muted elements */
+    --muted: 220 15% 15%;
+    --muted-foreground: 35 20% 65%;
+
+    /* Accent orange */
+    --accent: 35 85% 60%;
+    --accent-foreground: 220 25% 8%;
+
+    /* Destructive red */
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 35 100% 95%;
+
+    /* Success green */
+    --success: 142 76% 36%;
+    --success-foreground: 35 100% 95%;
+
+    /* Warning yellow */
+    --warning: 38 92% 50%;
+    --warning-foreground: 220 25% 8%;
+
+    /* Borders and inputs */
+    --border: 220 15% 20%;
+    --input: 220 15% 18%;
+    --ring: 35 100% 55%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(35 100% 55%), hsl(25 100% 50%));
+    --gradient-secondary: linear-gradient(135deg, hsl(220 20% 12%), hsl(220 15% 18%));
+    --gradient-accent: linear-gradient(45deg, hsl(35 85% 60%), hsl(45 90% 65%));
+    
+    /* Shadows with orange glow */
+    --shadow-primary: 0 10px 30px -5px hsl(35 100% 55% / 0.3);
+    --shadow-card: 0 4px 20px -2px hsl(220 25% 5% / 0.4);
+    --shadow-glow: 0 0 40px hsl(35 100% 55% / 0.2);
+
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Keep the same dark theme colors as root for consistency */
+    --background: 220 25% 8%;
+    --foreground: 35 100% 85%;
+
+    --card: 220 20% 12%;
+    --card-foreground: 35 100% 85%;
+
+    --popover: 220 20% 12%;
+    --popover-foreground: 35 100% 85%;
+
+    --primary: 35 100% 55%;
+    --primary-foreground: 220 25% 8%;
+
+    --secondary: 220 15% 18%;
+    --secondary-foreground: 35 100% 85%;
+
+    --muted: 220 15% 15%;
+    --muted-foreground: 35 20% 65%;
+
+    --accent: 35 85% 60%;
+    --accent-foreground: 220 25% 8%;
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 35 100% 95%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 35 100% 95%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 220 25% 8%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 18%;
+    --ring: 35 100% 55%;
+    
+    --sidebar-background: 220 25% 8%;
+    --sidebar-foreground: 35 100% 85%;
+    --sidebar-primary: 35 100% 55%;
+    --sidebar-primary-foreground: 220 25% 8%;
+    --sidebar-accent: 220 15% 18%;
+    --sidebar-accent-foreground: 35 100% 85%;
+    --sidebar-border: 220 15% 20%;
+    --sidebar-ring: 35 100% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Custom scrollbar styling to match app theme */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary)) hsl(var(--muted));
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+    border-radius: 4px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary));
+    border-radius: 4px;
+    border: 1px solid hsl(var(--muted));
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--accent));
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: hsl(var(--muted));
+  }
+
+  /* Custom checkered background for transparency preview */
+  .bg-checkered {
+    background-image: 
+      linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+      linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+      linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+      linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  }
+
+  [data-theme="dark"] .bg-checkered {
+    background-image: 
+      linear-gradient(45deg, #333 25%, transparent 25%), 
+      linear-gradient(-45deg, #333 25%, transparent 25%), 
+      linear-gradient(45deg, transparent 75%, #333 75%), 
+      linear-gradient(-45deg, transparent 75%, #333 75%);
+  }
+}

@@ -1,0 +1,6 @@
+-- Drop wardrobe-related tables
+DROP TABLE IF EXISTS wear_history CASCADE;
+DROP TABLE IF EXISTS outfit_plan CASCADE;
+DROP TABLE IF EXISTS outfits CASCADE;
+DROP TABLE IF EXISTS clothes CASCADE;
+DROP TABLE IF EXISTS user_preferences CASCADE;

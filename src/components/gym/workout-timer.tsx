@@ -1,0 +1,268 @@
+import { useState, useEffect } from 'react';
+import { useGym } from '@/contexts/GymContext';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { X, Clock, Settings, CheckCircle, Dumbbell, Pause, Play, Plus, Minus, RotateCcw } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { WorkoutExerciseManager } from './workout-exercise-manager';
+import { supabase } from '@/integrations/supabase/client';
+
+interface WorkoutTimerProps {
+  sessionId: string;
+  onExerciseSelect: (exercise: any, workoutConfig?: any) => void;
+  onComplete: () => void;
+  onCancel: () => void;
+  onReset: () => void;
+  completedExercises: Set<string>;
+  currentExercises: any[];
+  onExercisesChange: (exercises: any[]) => void;
+}
+
+export function WorkoutTimer({ 
+  sessionId, 
+  onExerciseSelect, 
+  onComplete, 
+  onCancel,
+  onReset,
+  completedExercises,
+  currentExercises,
+  onExercisesChange
+}: WorkoutTimerProps) {
+  const { getTodayWorkout, workoutSessions, exerciseSets } = useGym();
+  const [timer, setTimer] = useState(0);
+  const [isRunning, setIsRunning] = useState(true);
+  const [isExerciseManagerOpen, setIsExerciseManagerOpen] = useState(false);
+  const [workoutExerciseDetails, setWorkoutExerciseDetails] = useState<Record<string, any>>({});
+  const { toast } = useToast();
+  
+  const todayWorkout = getTodayWorkout();
+  const session = workoutSessions.find(s => s.id === sessionId);
+
+  // Fetch workout exercise details when exercises change
+  useEffect(() => {
+    const fetchWorkoutExerciseDetails = async () => {
+      if (!currentExercises || currentExercises.length === 0) return;
+      
+      try {
+        const exerciseIds = currentExercises.map(ex => ex.id);
+        const { data: workoutExercises, error } = await supabase
+          .from('workout_exercises')
+          .select('*')
+          .in('exercise_id', exerciseIds);
+        
+        if (error) throw error;
+        
+        const detailsMap: Record<string, any> = {};
+        workoutExercises?.forEach(we => {
+          detailsMap[we.exercise_id] = we;
+        });
+        
+        setWorkoutExerciseDetails(detailsMap);
+      } catch (error) {
+        console.error('Error fetching workout exercise details:', error);
+      }
+    };
+    
+    fetchWorkoutExerciseDetails();
+  }, [currentExercises]);
+
+  // Timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (isRunning && session?.started_at) {
+      const startTime = new Date(session.started_at).getTime();
+      
+      interval = setInterval(() => {
+        const now = Date.now();
+        const elapsed = Math.floor((now - startTime) / 1000);
+        setTimer(elapsed);
+      }, 1000);
+    }
+    
+    return () => clearInterval(interval);
+  }, [isRunning, session?.started_at]);
+
+  if (!todayWorkout || !session) {
+    return <div>Loading...</div>;
+  }
+
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const totalExercises = currentExercises.length;
+  const completedCount = completedExercises.size;
+  const progressPercentage = totalExercises > 0 ? (completedCount / totalExercises) * 100 : 0;
+
+  const toggleTimer = () => {
+    setIsRunning(!isRunning);
+  };
+
+  const handleCompleteWorkout = () => {
+    if (completedCount < totalExercises) {
+      toast({
+        title: "Workout incomplete",
+        description: `You have ${totalExercises - completedCount} exercises remaining.`,
+        variant: "destructive"
+      });
+      return;
+    }
+    onComplete();
+  };
+
+  return (
+    <div className="min-h-screen bg-background p-4">
+      {/* Header */}
+      <div className="flex items-center justify-end mb-6">
+        <div className="flex gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onReset}
+            title="Reset workout"
+          >
+            <RotateCcw className="h-5 w-5" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setIsExerciseManagerOpen(true)}
+            title="Manage exercises"
+          >
+            <Settings className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Timer Display */}
+      <div className="text-center mb-8">
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <div className={`w-3 h-3 rounded-full ${isRunning ? 'bg-primary animate-pulse' : 'bg-muted-foreground'}`} />
+          <span className="text-4xl font-mono font-bold text-foreground">
+            {formatTime(timer)}
+          </span>
+        </div>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={toggleTimer}
+          className="text-muted-foreground"
+        >
+          {isRunning ? <Pause className="h-4 w-4 mr-1" /> : <Play className="h-4 w-4 mr-1" />}
+          {isRunning ? 'Pause' : 'Resume'}
+        </Button>
+      </div>
+
+      {/* Progress */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-lg font-medium text-foreground">{totalExercises} Exercise{totalExercises !== 1 ? 's' : ''}</span>
+        </div>
+        
+        <div className="mb-2">
+          <Progress value={progressPercentage} className="h-2" />
+        </div>
+        
+        <div className="text-sm text-muted-foreground text-center">
+          {completedCount}/{totalExercises} exercises complete
+        </div>
+      </div>
+
+      {/* Exercise List */}
+      <div className="space-y-3 mb-20">
+        {currentExercises.map((exercise) => {
+          const isCompleted = completedExercises.has(exercise.id);
+          const exerciseSetCount = exerciseSets.filter(
+            set => set.session_id === sessionId && set.exercise_id === exercise.id
+          ).length;
+
+          return (
+            <Card 
+              key={exercise.id} 
+              className={`cursor-pointer transition-all ${
+                isCompleted ? 'bg-success/10 border-success/30' : 'bg-card border-border hover:border-primary/30'
+              }`}
+              onClick={() => !isCompleted && onExerciseSelect(exercise, workoutExerciseDetails[exercise.id])}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                      {exercise.photo_url ? (
+                        <img 
+                          src={exercise.photo_url} 
+                          alt={exercise.name}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      ) : (
+                        <Dumbbell className="h-6 w-6 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-xs font-bold text-primary-foreground">
+                      💪
+                    </div>
+                  </div>
+                  
+                   <div className="flex-1">
+                     <h3 className={`font-medium ${isCompleted ? 'text-success' : 'text-foreground'}`}>
+                       {exercise.name}
+                     </h3>
+                     <p className="text-sm text-muted-foreground">
+                       {isCompleted ? `${exerciseSetCount} Sets Completed` : (() => {
+                         const config = workoutExerciseDetails[exercise.id];
+                         const sets = config?.sets || 3;
+                         const reps = config?.reps || 10;
+                         const weight = config?.weight || 0;
+                         return `${sets} Sets • ${reps} Reps • ${weight}kg`;
+                       })()}
+                     </p>
+                   </div>
+                  
+                  {isCompleted ? (
+                    <CheckCircle className="h-6 w-6 text-success" />
+                  ) : (
+                    <Button variant="ghost" size="icon">
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Complete Workout Button */}
+      <div className="sticky bottom-4 mt-6 p-4">
+        <Button 
+          onClick={handleCompleteWorkout}
+          disabled={completedCount < totalExercises}
+          className={`w-full h-14 font-semibold text-lg ${
+            completedCount >= totalExercises 
+              ? 'bg-success hover:bg-success/90 text-success-foreground' 
+              : 'bg-muted text-muted-foreground cursor-not-allowed'
+          }`}
+        >
+          {completedCount >= totalExercises ? 'Complete Workout' : `${totalExercises - completedCount} exercises remaining`}
+        </Button>
+      </div>
+
+      {/* Exercise Manager Dialog */}
+      <WorkoutExerciseManager
+        open={isExerciseManagerOpen}
+        onOpenChange={setIsExerciseManagerOpen}
+        currentExercises={currentExercises}
+        onExercisesChange={onExercisesChange}
+      />
+    </div>
+  );
+}

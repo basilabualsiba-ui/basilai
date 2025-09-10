@@ -1,0 +1,42 @@
+-- Insert food items with nutritional information
+INSERT INTO food_items (name, serving_size, serving_unit, calories_per_serving, protein_per_serving, carbs_per_serving, fat_per_serving, fiber_per_serving, sugar_per_serving, sodium_per_serving) VALUES
+('Egg, whole, large', '50', 'g', 70, 6, 0.5, 5, 0, 0.5, 70),
+('Banana, medium', '120', 'g', 105, 1.3, 27, 0.3, 3, 14, 1),
+('Peanut Butter', '16', 'g', 95, 4, 3, 8, 1, 1, 2),
+('Coffee, black, no sugar', '240', 'ml', 5, 0, 0, 0, 0, 0, 5),
+('Orange Juice, fresh', '250', 'ml', 110, 2, 26, 0, 0.5, 21, 2),
+('Basmati Rice, cooked', '100', 'g', 130, 2.5, 28, 0.25, 0.5, 0.1, 1),
+('Chicken Breast, cooked', '100', 'g', 165, 31, 0, 3.6, 0, 0, 74),
+('Potato, baked', '100', 'g', 80, 2, 18, 0, 2, 1, 7),
+('Salmon, grilled', '100', 'g', 208, 22, 0, 13, 0, 0, 59),
+('Tomato, raw', '100', 'g', 20, 1, 4, 0, 1.2, 2.6, 5),
+('Bell Pepper', '120', 'g', 30, 1, 7, 0, 2.5, 4, 3),
+('Carrot, raw', '60', 'g', 25, 0.5, 6, 0, 1.5, 3, 42),
+('Olive Oil', '15', 'ml', 120, 0, 0, 13.5, 0, 0, 0),
+('Tahini', '15', 'g', 90, 3, 3, 8, 1.5, 0.2, 10),
+('Oats, dry', '40', 'g', 154, 5, 27, 3, 4, 0.5, 2),
+('Milk, low-fat', '250', 'ml', 125, 8, 12, 4, 0, 12, 107),
+('Honey', '21', 'g', 64, 0, 17, 0, 0.1, 17, 1),
+('Carb Powder', '50', 'g', 190, 0, 48, 0, 0, 0, 0),
+('Whey Protein', '30', 'g', 120, 24, 2, 1, 0, 1, 50),
+('Dates', '40', 'g', 110, 1, 30, 0, 3, 27, 1),
+('Creatine Monohydrate', '5', 'g', 0, 0, 0, 0, 0, 0, 0),
+('Whole wheat bread', '50', 'g', 125, 4, 23, 2, 3, 1, 230),
+('Cucumber', '100', 'g', 16, 0.7, 4, 0.1, 0.5, 1.7, 2),
+('Lettuce', '50', 'g', 8, 0.7, 1.5, 0.1, 0.6, 0.4, 5),
+('Lemon', '30', 'g', 9, 0.3, 2.8, 0.1, 0.8, 0.5, 1),
+('Pickles', '30', 'g', 4, 0.1, 1, 0, 0.5, 0.5, 300);
+
+-- Insert meals with calculated nutritional totals
+INSERT INTO meals (name, meal_type, total_calories, total_protein, total_carbs, total_fat, default_time) VALUES
+('Breakfast', 'breakfast', 475, 14, 40, 33, '08:15:00'),
+('Morning Shake', 'snack', 740, 34, 105, 16, '11:15:00'),
+('Lunch', 'lunch', 410, 35, 32, 4, '15:00:00'),
+('Dinner 1 (Morning Workout)', 'dinner', 520, 29, 25, 35, '18:30:00'),
+('Dinner 2 (Evening Workout)', 'dinner', 520, 29, 25, 35, '21:00:00'),
+('Pre-Workout Snack 1', 'snack', 200, 5, 30, 8, '05:30:00'),
+('Pre-Workout Snack 2', 'snack', 200, 5, 30, 8, '17:45:00'),
+('Post-Workout Shake 1', 'snack', 420, 26, 74, 1, '07:15:00'),
+('Post-Workout Shake 2', 'snack', 420, 26, 74, 1, '19:30:00'),
+('Night Shake 1', 'snack', 590, 37, 82, 16, '22:00:00'),
+('Night Shake 2', 'snack', 590, 37, 82, 16, '22:30:00');

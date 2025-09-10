@@ -1,0 +1,38 @@
+{
+  "name": "Track My Life",
+  "short_name": "TrackMyLife",
+  "description": "Track your gym, food, finances, and Islamic activities",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48 32x32 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/lovable-uploads/fe018138-2090-4b1d-8808-4ed8082f7011.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/lovable-uploads/fe018138-2090-4b1d-8808-4ed8082f7011.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "permissions": [
+    "notifications",
+    "background-sync",
+    "push"
+  ],
+  "categories": ["productivity", "health", "finance"],
+  "scope": "/",
+  "prefer_related_applications": false,
+  "gcm_sender_id": "103953800507"
+}
