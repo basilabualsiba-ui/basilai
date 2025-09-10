@@ -15,28 +15,59 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Loader2 } from 'lucide-react';
 
-// Common nutrition data for simulation
+// Common nutrition data for simulation with Arabic support
 const commonFoods: Record<string, any> = {
-  'chicken breast': { calories: 165, protein: 31, carbs: 0, fat: 3.6, fiber: 0, sugar: 0, sodium: 74 },
-  'apple': { calories: 52, protein: 0.3, carbs: 14, fat: 0.2, fiber: 2.4, sugar: 10, sodium: 1 },
-  'banana': { calories: 89, protein: 1.1, carbs: 23, fat: 0.3, fiber: 2.6, sugar: 12, sodium: 1 },
-  'rice': { calories: 130, protein: 2.7, carbs: 28, fat: 0.3, fiber: 0.4, sugar: 0.1, sodium: 1 },
-  'salmon': { calories: 208, protein: 20, carbs: 0, fat: 12, fiber: 0, sugar: 0, sodium: 93 },
-  'egg': { calories: 155, protein: 13, carbs: 1.1, fat: 11, fiber: 0, sugar: 1.1, sodium: 124 },
-  'broccoli': { calories: 34, protein: 2.8, carbs: 7, fat: 0.4, fiber: 2.6, sugar: 1.5, sodium: 33 },
-  'bread': { calories: 265, protein: 9, carbs: 49, fat: 3.2, fiber: 2.7, sugar: 5, sodium: 491 },
-  'milk': { calories: 42, protein: 3.4, carbs: 5, fat: 1, fiber: 0, sugar: 5, sodium: 44 },
-  'oats': { calories: 389, protein: 17, carbs: 66, fat: 7, fiber: 11, sugar: 1, sodium: 2 }
+  'chicken breast': { calories: 165, protein: 31, carbs: 0, fat: 3.6, fiber: 0, sugar: 0, sodium: 74, servingSize: '100', servingUnit: 'gram' },
+  'صدر دجاج': { calories: 165, protein: 31, carbs: 0, fat: 3.6, fiber: 0, sugar: 0, sodium: 74, servingSize: '100', servingUnit: 'gram' },
+  'دجاج': { calories: 165, protein: 31, carbs: 0, fat: 3.6, fiber: 0, sugar: 0, sodium: 74, servingSize: '100', servingUnit: 'gram' },
+  'apple': { calories: 52, protein: 0.3, carbs: 14, fat: 0.2, fiber: 2.4, sugar: 10, sodium: 1, servingSize: '100', servingUnit: 'gram' },
+  'تفاح': { calories: 52, protein: 0.3, carbs: 14, fat: 0.2, fiber: 2.4, sugar: 10, sodium: 1, servingSize: '100', servingUnit: 'gram' },
+  'banana': { calories: 89, protein: 1.1, carbs: 23, fat: 0.3, fiber: 2.6, sugar: 12, sodium: 1, servingSize: '100', servingUnit: 'gram' },
+  'موز': { calories: 89, protein: 1.1, carbs: 23, fat: 0.3, fiber: 2.6, sugar: 12, sodium: 1, servingSize: '100', servingUnit: 'gram' },
+  'rice': { calories: 130, protein: 2.7, carbs: 28, fat: 0.3, fiber: 0.4, sugar: 0.1, sodium: 1, servingSize: '100', servingUnit: 'gram' },
+  'رز': { calories: 130, protein: 2.7, carbs: 28, fat: 0.3, fiber: 0.4, sugar: 0.1, sodium: 1, servingSize: '100', servingUnit: 'gram' },
+  'أرز': { calories: 130, protein: 2.7, carbs: 28, fat: 0.3, fiber: 0.4, sugar: 0.1, sodium: 1, servingSize: '100', servingUnit: 'gram' },
+  'salmon': { calories: 208, protein: 20, carbs: 0, fat: 12, fiber: 0, sugar: 0, sodium: 93, servingSize: '100', servingUnit: 'gram' },
+  'سلمون': { calories: 208, protein: 20, carbs: 0, fat: 12, fiber: 0, sugar: 0, sodium: 93, servingSize: '100', servingUnit: 'gram' },
+  'egg': { calories: 78, protein: 6.5, carbs: 0.6, fat: 5.5, fiber: 0, sugar: 0.6, sodium: 62, servingSize: '50', servingUnit: 'gram' },
+  'بيض': { calories: 78, protein: 6.5, carbs: 0.6, fat: 5.5, fiber: 0, sugar: 0.6, sodium: 62, servingSize: '50', servingUnit: 'gram' },
+  'بيضة': { calories: 78, protein: 6.5, carbs: 0.6, fat: 5.5, fiber: 0, sugar: 0.6, sodium: 62, servingSize: '50', servingUnit: 'gram' },
+  'broccoli': { calories: 34, protein: 2.8, carbs: 7, fat: 0.4, fiber: 2.6, sugar: 1.5, sodium: 33, servingSize: '100', servingUnit: 'gram' },
+  'بروكلي': { calories: 34, protein: 2.8, carbs: 7, fat: 0.4, fiber: 2.6, sugar: 1.5, sodium: 33, servingSize: '100', servingUnit: 'gram' },
+  'bread': { calories: 265, protein: 9, carbs: 49, fat: 3.2, fiber: 2.7, sugar: 5, sodium: 491, servingSize: '100', servingUnit: 'gram' },
+  'خبز': { calories: 265, protein: 9, carbs: 49, fat: 3.2, fiber: 2.7, sugar: 5, sodium: 491, servingSize: '100', servingUnit: 'gram' },
+  'milk': { calories: 42, protein: 3.4, carbs: 5, fat: 1, fiber: 0, sugar: 5, sodium: 44, servingSize: '100', servingUnit: 'ml' },
+  'حليب': { calories: 42, protein: 3.4, carbs: 5, fat: 1, fiber: 0, sugar: 5, sodium: 44, servingSize: '100', servingUnit: 'ml' },
+  'oats': { calories: 389, protein: 17, carbs: 66, fat: 7, fiber: 11, sugar: 1, sodium: 2, servingSize: '100', servingUnit: 'gram' },
+  'شوفان': { calories: 389, protein: 17, carbs: 66, fat: 7, fiber: 11, sugar: 1, sodium: 2, servingSize: '100', servingUnit: 'gram' }
 };
 
 const simulateNutritionSearch = async (foodName: string) => {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1000));
   
-  // Find closest match in common foods
-  const lowerName = foodName.toLowerCase();
+  // Find closest match in common foods (exact match first, then partial match)
+  const searchName = foodName.toLowerCase().trim();
+  
+  // First try exact match
+  if (commonFoods[searchName]) {
+    const nutrition = commonFoods[searchName];
+    return {
+      calories_per_serving: nutrition.calories,
+      protein_per_serving: nutrition.protein,
+      carbs_per_serving: nutrition.carbs,
+      fat_per_serving: nutrition.fat,
+      fiber_per_serving: nutrition.fiber,
+      sugar_per_serving: nutrition.sugar,
+      sodium_per_serving: nutrition.sodium,
+      serving_size: nutrition.servingSize,
+      serving_unit: nutrition.servingUnit
+    };
+  }
+  
+  // Then try partial match
   for (const [key, nutrition] of Object.entries(commonFoods)) {
-    if (lowerName.includes(key) || key.includes(lowerName)) {
+    if (searchName.includes(key) || key.includes(searchName)) {
       return {
         calories_per_serving: nutrition.calories,
         protein_per_serving: nutrition.protein,
@@ -45,8 +76,8 @@ const simulateNutritionSearch = async (foodName: string) => {
         fiber_per_serving: nutrition.fiber,
         sugar_per_serving: nutrition.sugar,
         sodium_per_serving: nutrition.sodium,
-        serving_size: '100',
-        serving_unit: 'gram'
+        serving_size: nutrition.servingSize,
+        serving_unit: nutrition.servingUnit
       };
     }
   }
