@@ -17,29 +17,95 @@ import { Search, Loader2 } from 'lucide-react';
 
 // Common nutrition data for simulation with Arabic support
 const commonFoods: Record<string, any> = {
+  // Proteins
   'chicken breast': { calories: 165, protein: 31, carbs: 0, fat: 3.6, fiber: 0, sugar: 0, sodium: 74, servingSize: '100', servingUnit: 'gram' },
   'صدر دجاج': { calories: 165, protein: 31, carbs: 0, fat: 3.6, fiber: 0, sugar: 0, sodium: 74, servingSize: '100', servingUnit: 'gram' },
   'دجاج': { calories: 165, protein: 31, carbs: 0, fat: 3.6, fiber: 0, sugar: 0, sodium: 74, servingSize: '100', servingUnit: 'gram' },
+  'chicken': { calories: 165, protein: 31, carbs: 0, fat: 3.6, fiber: 0, sugar: 0, sodium: 74, servingSize: '100', servingUnit: 'gram' },
+  'beef': { calories: 250, protein: 26, carbs: 0, fat: 17, fiber: 0, sugar: 0, sodium: 72, servingSize: '100', servingUnit: 'gram' },
+  'لحم بقر': { calories: 250, protein: 26, carbs: 0, fat: 17, fiber: 0, sugar: 0, sodium: 72, servingSize: '100', servingUnit: 'gram' },
+  'لحمة': { calories: 250, protein: 26, carbs: 0, fat: 17, fiber: 0, sugar: 0, sodium: 72, servingSize: '100', servingUnit: 'gram' },
+  'salmon': { calories: 208, protein: 20, carbs: 0, fat: 12, fiber: 0, sugar: 0, sodium: 93, servingSize: '100', servingUnit: 'gram' },
+  'سلمون': { calories: 208, protein: 20, carbs: 0, fat: 12, fiber: 0, sugar: 0, sodium: 93, servingSize: '100', servingUnit: 'gram' },
+  'tuna': { calories: 144, protein: 30, carbs: 0, fat: 1, fiber: 0, sugar: 0, sodium: 39, servingSize: '100', servingUnit: 'gram' },
+  'تونة': { calories: 144, protein: 30, carbs: 0, fat: 1, fiber: 0, sugar: 0, sodium: 39, servingSize: '100', servingUnit: 'gram' },
+  'egg': { calories: 78, protein: 6.5, carbs: 0.6, fat: 5.5, fiber: 0, sugar: 0.6, sodium: 62, servingSize: '50', servingUnit: 'gram' },
+  'بيض': { calories: 78, protein: 6.5, carbs: 0.6, fat: 5.5, fiber: 0, sugar: 0.6, sodium: 62, servingSize: '50', servingUnit: 'gram' },
+  'بيضة': { calories: 78, protein: 6.5, carbs: 0.6, fat: 5.5, fiber: 0, sugar: 0.6, sodium: 62, servingSize: '50', servingUnit: 'gram' },
+  
+  // Fruits
   'apple': { calories: 52, protein: 0.3, carbs: 14, fat: 0.2, fiber: 2.4, sugar: 10, sodium: 1, servingSize: '100', servingUnit: 'gram' },
   'تفاح': { calories: 52, protein: 0.3, carbs: 14, fat: 0.2, fiber: 2.4, sugar: 10, sodium: 1, servingSize: '100', servingUnit: 'gram' },
   'banana': { calories: 89, protein: 1.1, carbs: 23, fat: 0.3, fiber: 2.6, sugar: 12, sodium: 1, servingSize: '100', servingUnit: 'gram' },
   'موز': { calories: 89, protein: 1.1, carbs: 23, fat: 0.3, fiber: 2.6, sugar: 12, sodium: 1, servingSize: '100', servingUnit: 'gram' },
+  'orange': { calories: 47, protein: 0.9, carbs: 12, fat: 0.1, fiber: 2.4, sugar: 9, sodium: 0, servingSize: '100', servingUnit: 'gram' },
+  'برتقال': { calories: 47, protein: 0.9, carbs: 12, fat: 0.1, fiber: 2.4, sugar: 9, sodium: 0, servingSize: '100', servingUnit: 'gram' },
+  'grapes': { calories: 69, protein: 0.7, carbs: 18, fat: 0.2, fiber: 0.9, sugar: 16, sodium: 2, servingSize: '100', servingUnit: 'gram' },
+  'عنب': { calories: 69, protein: 0.7, carbs: 18, fat: 0.2, fiber: 0.9, sugar: 16, sodium: 2, servingSize: '100', servingUnit: 'gram' },
+  'strawberry': { calories: 32, protein: 0.7, carbs: 8, fat: 0.3, fiber: 2, sugar: 4.9, sodium: 1, servingSize: '100', servingUnit: 'gram' },
+  'فراولة': { calories: 32, protein: 0.7, carbs: 8, fat: 0.3, fiber: 2, sugar: 4.9, sodium: 1, servingSize: '100', servingUnit: 'gram' },
+  'mango': { calories: 60, protein: 0.8, carbs: 15, fat: 0.4, fiber: 1.6, sugar: 14, sodium: 1, servingSize: '100', servingUnit: 'gram' },
+  'مانجو': { calories: 60, protein: 0.8, carbs: 15, fat: 0.4, fiber: 1.6, sugar: 14, sodium: 1, servingSize: '100', servingUnit: 'gram' },
+  'pineapple': { calories: 50, protein: 0.5, carbs: 13, fat: 0.1, fiber: 1.4, sugar: 10, sodium: 1, servingSize: '100', servingUnit: 'gram' },
+  'أناناس': { calories: 50, protein: 0.5, carbs: 13, fat: 0.1, fiber: 1.4, sugar: 10, sodium: 1, servingSize: '100', servingUnit: 'gram' },
+  'watermelon': { calories: 30, protein: 0.6, carbs: 8, fat: 0.2, fiber: 0.4, sugar: 6, sodium: 1, servingSize: '100', servingUnit: 'gram' },
+  'بطيخ': { calories: 30, protein: 0.6, carbs: 8, fat: 0.2, fiber: 0.4, sugar: 6, sodium: 1, servingSize: '100', servingUnit: 'gram' },
+  
+  // Vegetables
+  'broccoli': { calories: 34, protein: 2.8, carbs: 7, fat: 0.4, fiber: 2.6, sugar: 1.5, sodium: 33, servingSize: '100', servingUnit: 'gram' },
+  'بروكلي': { calories: 34, protein: 2.8, carbs: 7, fat: 0.4, fiber: 2.6, sugar: 1.5, sodium: 33, servingSize: '100', servingUnit: 'gram' },
+  'spinach': { calories: 23, protein: 2.9, carbs: 3.6, fat: 0.4, fiber: 2.2, sugar: 0.4, sodium: 79, servingSize: '100', servingUnit: 'gram' },
+  'سبانخ': { calories: 23, protein: 2.9, carbs: 3.6, fat: 0.4, fiber: 2.2, sugar: 0.4, sodium: 79, servingSize: '100', servingUnit: 'gram' },
+  'carrot': { calories: 41, protein: 0.9, carbs: 10, fat: 0.2, fiber: 2.8, sugar: 4.7, sodium: 69, servingSize: '100', servingUnit: 'gram' },
+  'جزر': { calories: 41, protein: 0.9, carbs: 10, fat: 0.2, fiber: 2.8, sugar: 4.7, sodium: 69, servingSize: '100', servingUnit: 'gram' },
+  'tomato': { calories: 18, protein: 0.9, carbs: 3.9, fat: 0.2, fiber: 1.2, sugar: 2.6, sodium: 5, servingSize: '100', servingUnit: 'gram' },
+  'طماطم': { calories: 18, protein: 0.9, carbs: 3.9, fat: 0.2, fiber: 1.2, sugar: 2.6, sodium: 5, servingSize: '100', servingUnit: 'gram' },
+  'cucumber': { calories: 16, protein: 0.7, carbs: 4, fat: 0.1, fiber: 0.5, sugar: 1.7, sodium: 2, servingSize: '100', servingUnit: 'gram' },
+  'خيار': { calories: 16, protein: 0.7, carbs: 4, fat: 0.1, fiber: 0.5, sugar: 1.7, sodium: 2, servingSize: '100', servingUnit: 'gram' },
+  'lettuce': { calories: 15, protein: 1.4, carbs: 2.9, fat: 0.2, fiber: 1.3, sugar: 0.8, sodium: 28, servingSize: '100', servingUnit: 'gram' },
+  'خس': { calories: 15, protein: 1.4, carbs: 2.9, fat: 0.2, fiber: 1.3, sugar: 0.8, sodium: 28, servingSize: '100', servingUnit: 'gram' },
+  'onion': { calories: 40, protein: 1.1, carbs: 9, fat: 0.1, fiber: 1.7, sugar: 4.2, sodium: 4, servingSize: '100', servingUnit: 'gram' },
+  'بصل': { calories: 40, protein: 1.1, carbs: 9, fat: 0.1, fiber: 1.7, sugar: 4.2, sodium: 4, servingSize: '100', servingUnit: 'gram' },
+  'potato': { calories: 77, protein: 2, carbs: 17, fat: 0.1, fiber: 2.2, sugar: 0.8, sodium: 6, servingSize: '100', servingUnit: 'gram' },
+  'بطاطس': { calories: 77, protein: 2, carbs: 17, fat: 0.1, fiber: 2.2, sugar: 0.8, sodium: 6, servingSize: '100', servingUnit: 'gram' },
+  
+  // Grains & Carbs
   'rice': { calories: 130, protein: 2.7, carbs: 28, fat: 0.3, fiber: 0.4, sugar: 0.1, sodium: 1, servingSize: '100', servingUnit: 'gram' },
   'رز': { calories: 130, protein: 2.7, carbs: 28, fat: 0.3, fiber: 0.4, sugar: 0.1, sodium: 1, servingSize: '100', servingUnit: 'gram' },
   'أرز': { calories: 130, protein: 2.7, carbs: 28, fat: 0.3, fiber: 0.4, sugar: 0.1, sodium: 1, servingSize: '100', servingUnit: 'gram' },
-  'salmon': { calories: 208, protein: 20, carbs: 0, fat: 12, fiber: 0, sugar: 0, sodium: 93, servingSize: '100', servingUnit: 'gram' },
-  'سلمون': { calories: 208, protein: 20, carbs: 0, fat: 12, fiber: 0, sugar: 0, sodium: 93, servingSize: '100', servingUnit: 'gram' },
-  'egg': { calories: 78, protein: 6.5, carbs: 0.6, fat: 5.5, fiber: 0, sugar: 0.6, sodium: 62, servingSize: '50', servingUnit: 'gram' },
-  'بيض': { calories: 78, protein: 6.5, carbs: 0.6, fat: 5.5, fiber: 0, sugar: 0.6, sodium: 62, servingSize: '50', servingUnit: 'gram' },
-  'بيضة': { calories: 78, protein: 6.5, carbs: 0.6, fat: 5.5, fiber: 0, sugar: 0.6, sodium: 62, servingSize: '50', servingUnit: 'gram' },
-  'broccoli': { calories: 34, protein: 2.8, carbs: 7, fat: 0.4, fiber: 2.6, sugar: 1.5, sodium: 33, servingSize: '100', servingUnit: 'gram' },
-  'بروكلي': { calories: 34, protein: 2.8, carbs: 7, fat: 0.4, fiber: 2.6, sugar: 1.5, sodium: 33, servingSize: '100', servingUnit: 'gram' },
   'bread': { calories: 265, protein: 9, carbs: 49, fat: 3.2, fiber: 2.7, sugar: 5, sodium: 491, servingSize: '100', servingUnit: 'gram' },
   'خبز': { calories: 265, protein: 9, carbs: 49, fat: 3.2, fiber: 2.7, sugar: 5, sodium: 491, servingSize: '100', servingUnit: 'gram' },
+  'pasta': { calories: 131, protein: 5, carbs: 25, fat: 1.1, fiber: 1.8, sugar: 0.6, sodium: 6, servingSize: '100', servingUnit: 'gram' },
+  'معكرونة': { calories: 131, protein: 5, carbs: 25, fat: 1.1, fiber: 1.8, sugar: 0.6, sodium: 6, servingSize: '100', servingUnit: 'gram' },
+  'oats': { calories: 389, protein: 17, carbs: 66, fat: 7, fiber: 11, sugar: 1, sodium: 2, servingSize: '100', servingUnit: 'gram' },
+  'شوفان': { calories: 389, protein: 17, carbs: 66, fat: 7, fiber: 11, sugar: 1, sodium: 2, servingSize: '100', servingUnit: 'gram' },
+  'quinoa': { calories: 120, protein: 4.4, carbs: 22, fat: 1.9, fiber: 2.8, sugar: 0.9, sodium: 7, servingSize: '100', servingUnit: 'gram' },
+  'كينوا': { calories: 120, protein: 4.4, carbs: 22, fat: 1.9, fiber: 2.8, sugar: 0.9, sodium: 7, servingSize: '100', servingUnit: 'gram' },
+  
+  // Dairy
   'milk': { calories: 42, protein: 3.4, carbs: 5, fat: 1, fiber: 0, sugar: 5, sodium: 44, servingSize: '100', servingUnit: 'ml' },
   'حليب': { calories: 42, protein: 3.4, carbs: 5, fat: 1, fiber: 0, sugar: 5, sodium: 44, servingSize: '100', servingUnit: 'ml' },
-  'oats': { calories: 389, protein: 17, carbs: 66, fat: 7, fiber: 11, sugar: 1, sodium: 2, servingSize: '100', servingUnit: 'gram' },
-  'شوفان': { calories: 389, protein: 17, carbs: 66, fat: 7, fiber: 11, sugar: 1, sodium: 2, servingSize: '100', servingUnit: 'gram' }
+  'cheese': { calories: 113, protein: 25, carbs: 1, fat: 1, fiber: 0, sugar: 1, sodium: 515, servingSize: '100', servingUnit: 'gram' },
+  'جبنة': { calories: 113, protein: 25, carbs: 1, fat: 1, fiber: 0, sugar: 1, sodium: 515, servingSize: '100', servingUnit: 'gram' },
+  'yogurt': { calories: 59, protein: 10, carbs: 3.6, fat: 0.4, fiber: 0, sugar: 3.2, sodium: 36, servingSize: '100', servingUnit: 'gram' },
+  'لبن': { calories: 59, protein: 10, carbs: 3.6, fat: 0.4, fiber: 0, sugar: 3.2, sodium: 36, servingSize: '100', servingUnit: 'gram' },
+  'زبادي': { calories: 59, protein: 10, carbs: 3.6, fat: 0.4, fiber: 0, sugar: 3.2, sodium: 36, servingSize: '100', servingUnit: 'gram' },
+  
+  // Nuts & Seeds
+  'almonds': { calories: 579, protein: 21, carbs: 22, fat: 50, fiber: 12, sugar: 4, sodium: 1, servingSize: '100', servingUnit: 'gram' },
+  'لوز': { calories: 579, protein: 21, carbs: 22, fat: 50, fiber: 12, sugar: 4, sodium: 1, servingSize: '100', servingUnit: 'gram' },
+  'walnuts': { calories: 654, protein: 15, carbs: 14, fat: 65, fiber: 7, sugar: 3, sodium: 2, servingSize: '100', servingUnit: 'gram' },
+  'جوز': { calories: 654, protein: 15, carbs: 14, fat: 65, fiber: 7, sugar: 3, sodium: 2, servingSize: '100', servingUnit: 'gram' },
+  'peanuts': { calories: 567, protein: 26, carbs: 16, fat: 49, fiber: 9, sugar: 4, sodium: 18, servingSize: '100', servingUnit: 'gram' },
+  'فول سوداني': { calories: 567, protein: 26, carbs: 16, fat: 49, fiber: 9, sugar: 4, sodium: 18, servingSize: '100', servingUnit: 'gram' },
+  
+  // Legumes
+  'lentils': { calories: 116, protein: 9, carbs: 20, fat: 0.4, fiber: 8, sugar: 2, sodium: 2, servingSize: '100', servingUnit: 'gram' },
+  'عدس': { calories: 116, protein: 9, carbs: 20, fat: 0.4, fiber: 8, sugar: 2, sodium: 2, servingSize: '100', servingUnit: 'gram' },
+  'chickpeas': { calories: 164, protein: 8, carbs: 27, fat: 2.6, fiber: 8, sugar: 5, sodium: 7, servingSize: '100', servingUnit: 'gram' },
+  'حمص': { calories: 164, protein: 8, carbs: 27, fat: 2.6, fiber: 8, sugar: 5, sodium: 7, servingSize: '100', servingUnit: 'gram' },
+  'beans': { calories: 127, protein: 9, carbs: 23, fat: 0.5, fiber: 6, sugar: 0.3, sodium: 2, servingSize: '100', servingUnit: 'gram' },
+  'فاصوليا': { calories: 127, protein: 9, carbs: 23, fat: 0.5, fiber: 6, sugar: 0.3, sodium: 2, servingSize: '100', servingUnit: 'gram' }
 };
 
 const simulateNutritionSearch = async (foodName: string) => {
