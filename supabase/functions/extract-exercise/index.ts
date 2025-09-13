@@ -82,38 +82,39 @@ serve(async (req) => {
 })
 
 function extractExerciseDetails(html: string, exerciseName: string): ExerciseData {
-  // Muscle group mapping for consistency
+  // Muscle group mapping for consistency - matching exact database names
   const muscleGroupMap: { [key: string]: string } = {
-    'upper back': 'back',
-    'lats': 'back',
-    'latissimus dorsi': 'back',
-    'middle back': 'back',
-    'lower back': 'lower-back',
-    'biceps': 'biceps',
-    'chest': 'chest',
-    'pectorals': 'chest',
-    'shoulders': 'shoulders',
-    'deltoids': 'shoulders',
-    'triceps': 'triceps',
-    'legs': 'quadriceps',
-    'quadriceps': 'quadriceps',
-    'quads': 'quadriceps',
-    'hamstrings': 'hamstrings',
-    'glutes': 'glutes',
-    'calves': 'calves',
-    'abs': 'abs',
-    'abdominals': 'abs',
-    'core': 'abs',
-    'forearms': 'forearms',
-    'traps': 'trapezius',
-    'trapezius': 'trapezius',
-    'neck': 'neck',
-    'adductors': 'adductors',
-    'abductors': 'abductors'
+    'upper back': 'Upper Back',
+    'lats': 'Lats',
+    'latissimus dorsi': 'Lats',
+    'middle back': 'Upper Back',
+    'lower back': 'Lower Back',
+    'biceps': 'Biceps',
+    'chest': 'Chest',
+    'pectorals': 'Chest',
+    'shoulders': 'Shoulders',
+    'deltoids': 'Shoulders',
+    'triceps': 'Triceps',
+    'legs': 'Quad',
+    'quadriceps': 'Quad',
+    'quads': 'Quad',
+    'hamstrings': 'Hamstrings',
+    'glutes': 'Glutes',
+    'calves': 'Calves',
+    'abs': 'Abs',
+    'abdominals': 'Abs',
+    'core': 'Abs',
+    'obliques': 'Obliques',
+    'forearms': 'Forearms',
+    'traps': 'Traps',
+    'trapezius': 'Traps',
+    'neck': 'Neck',
+    'adductors': 'Adductors',
+    'abductors': 'Abductors'
   }
 
   // Extract primary and secondary muscle groups
-  let primaryMuscleGroup = 'chest' // default
+  let primaryMuscleGroup = 'Chest' // default
   let secondaryMuscleGroups: string[] = []
   let difficulty = 'Beginner' // default
 
@@ -180,16 +181,16 @@ function extractExerciseDetails(html: string, exerciseName: string): ExerciseDat
   if (!secondaryMuscleGroups.length) {
     const nameText = exerciseName.toLowerCase()
     if (nameText.includes('row') || nameText.includes('pull')) {
-      primaryMuscleGroup = 'back'
-      secondaryMuscleGroups = ['biceps']
+      primaryMuscleGroup = 'Upper Back'
+      secondaryMuscleGroups = ['Biceps']
     } else if (nameText.includes('press') || nameText.includes('push')) {
-      primaryMuscleGroup = 'chest'
-      secondaryMuscleGroups = ['shoulders', 'triceps']
+      primaryMuscleGroup = 'Chest'
+      secondaryMuscleGroups = ['Shoulders', 'Triceps']
     } else if (nameText.includes('curl')) {
-      primaryMuscleGroup = 'biceps'
+      primaryMuscleGroup = 'Biceps'
     } else if (nameText.includes('squat')) {
-      primaryMuscleGroup = 'legs'
-      secondaryMuscleGroups = ['glutes']
+      primaryMuscleGroup = 'Quad'
+      secondaryMuscleGroups = ['Glutes']
     }
   }
 
