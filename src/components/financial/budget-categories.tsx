@@ -20,6 +20,20 @@ export const BudgetCategories = () => {
     return iconMap[iconName] || Utensils;
   };
 
+  // Get current month and year
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1; // getMonth() returns 0-11
+  const currentYear = currentDate.getFullYear();
+
+  // Helper function to filter transactions by current month
+  const getCurrentMonthTransactions = (categoryId: string) => {
+    return getTransactionsByCategory(categoryId).filter(transaction => {
+      const transactionDate = new Date(transaction.date);
+      return transactionDate.getMonth() + 1 === currentMonth && 
+             transactionDate.getFullYear() === currentYear;
+    });
+  };
+
   const expenseCategories = categories.filter(cat => cat.type === 'expense');
   const incomeCategories = categories.filter(cat => cat.type === 'income');
   return <div className="space-y-6">
@@ -34,14 +48,14 @@ export const BudgetCategories = () => {
             <AddCategoryDialog defaultType="expense" />
           </div>
           <span className="text-lg font-medium text-accent">
-            ₪{expenseCategories.reduce((sum, cat) => sum + getTransactionsByCategory(cat.id).reduce((catSum, t) => catSum + (t.type === 'expense' ? t.amount : 0), 0), 0).toLocaleString()}
+            ₪{expenseCategories.reduce((sum, cat) => sum + getCurrentMonthTransactions(cat.id).reduce((catSum, t) => catSum + (t.type === 'expense' ? t.amount : 0), 0), 0).toLocaleString()}
           </span>
         </div>
 
         <div className="grid gap-4 grid-cols-2 md:grid-cols-3">
           {expenseCategories.map((category) => {
             const IconComponent = getIconComponent(category.icon);
-            const categoryTotal = getTransactionsByCategory(category.id).reduce((sum, t) => sum + (t.type === 'expense' ? t.amount : 0), 0);
+            const categoryTotal = getCurrentMonthTransactions(category.id).reduce((sum, t) => sum + (t.type === 'expense' ? t.amount : 0), 0);
             
             const longPressHandlers = useLongPress({
               onLongPress: () => setEditingCategory(category),
@@ -81,14 +95,14 @@ export const BudgetCategories = () => {
             <AddCategoryDialog defaultType="income" />
           </div>
           <span className="text-lg font-medium text-accent">
-            ₪{incomeCategories.reduce((sum, cat) => sum + getTransactionsByCategory(cat.id).reduce((catSum, t) => catSum + (t.type === 'income' ? t.amount : 0), 0), 0).toLocaleString()}
+            ₪{incomeCategories.reduce((sum, cat) => sum + getCurrentMonthTransactions(cat.id).reduce((catSum, t) => catSum + (t.type === 'income' ? t.amount : 0), 0), 0).toLocaleString()}
           </span>
         </div>
 
         <div className="grid gap-4 grid-cols-2 md:grid-cols-3">
           {incomeCategories.map((category) => {
             const IconComponent = getIconComponent(category.icon);
-            const categoryTotal = getTransactionsByCategory(category.id).reduce((sum, t) => sum + (t.type === 'income' ? t.amount : 0), 0);
+            const categoryTotal = getCurrentMonthTransactions(category.id).reduce((sum, t) => sum + (t.type === 'income' ? t.amount : 0), 0);
             
             const longPressHandlers = useLongPress({
               onLongPress: () => setEditingCategory(category),
