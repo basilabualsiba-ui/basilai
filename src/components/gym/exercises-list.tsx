@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useGym } from '@/contexts/GymContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Search, Edit2, Trash2, Dumbbell, Link, Image, Play } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Dumbbell, Link, Image, Play, Download } from 'lucide-react';
 import { ExerciseInfoDialog } from './exercise-info-dialog';
 
 const difficultyLevels = ['beginner', 'intermediate', 'advanced'];
@@ -37,6 +39,8 @@ export function ExercisesList() {
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
   const [isExerciseInfoOpen, setIsExerciseInfoOpen] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const [importUrl, setImportUrl] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
   const filteredExercises = exercises.filter(exercise => {
     const matchesSearch = exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) || exercise.muscle_group.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesMuscle = !filterMuscle || filterMuscle === 'all' || exercise.muscle_group === filterMuscle;
@@ -79,9 +83,55 @@ export function ExercisesList() {
     setSelectedExercise(exercise);
     setIsExerciseInfoOpen(true);
   };
-  const fetchExerciseInfo = async () => {
-    // This function can be removed since we're not using fetch_url anymore
-    setIsFetching(false);
+  const handleImportFromUrl = async () => {
+    if (!importUrl.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid URL",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('extract-exercise', {
+        body: { url: importUrl }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Add the extracted exercise
+      await addExercise({
+        name: data.name,
+        muscle_group: data.primaryMuscleGroup,
+        side_muscle_groups: data.secondaryMuscleGroups,
+        difficulty_level: data.difficulty.toLowerCase(),
+        instructions: '',
+        equipment: '',
+        video_url: '',
+        photo_url: ''
+      });
+
+      setImportUrl('');
+      toast({
+        title: "Success",
+        description: `Exercise "${data.name}" imported successfully`,
+      });
+    } catch (error) {
+      console.error('Import error:', error);
+      toast({
+        title: "Import Failed",
+        description: error.message || "Failed to import exercise from URL",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImporting(false);
+    }
   };
   const getDifficultyColor = (level: string) => {
     switch (level) {
@@ -100,6 +150,34 @@ export function ExercisesList() {
         <div>
           <h2 className="text-2xl font-bold text-foreground">Exercise Library</h2>
           <p className="text-muted-foreground">Manage your exercise database</p>
+        </div>
+        
+        {/* Auto Import Section */}
+        <div className="flex gap-2 w-full md:w-auto">
+          <Input
+            placeholder="muscleandstrength.com URL..."
+            value={importUrl}
+            onChange={(e) => setImportUrl(e.target.value)}
+            className="flex-1 md:w-64"
+          />
+          <Button 
+            onClick={handleImportFromUrl} 
+            disabled={isImporting || !importUrl.trim()}
+            variant="outline"
+            size="sm"
+          >
+            {isImporting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                Importing...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 mr-2" />
+                Import
+              </>
+            )}
+          </Button>
         </div>
         
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
