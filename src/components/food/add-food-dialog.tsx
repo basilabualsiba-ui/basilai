@@ -14,7 +14,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Search, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 
 // Common nutrition data for simulation with Arabic support
 const commonFoods: Record<string, any> = {
@@ -109,23 +108,47 @@ const commonFoods: Record<string, any> = {
   'فاصوليا': { calories: 127, protein: 9, carbs: 23, fat: 0.5, fiber: 6, sugar: 0.3, sodium: 2, servingSize: '100', servingUnit: 'gram' }
 };
 
-// Use Gemini API to get real nutrition data
-const getNutritionFromGemini = async (foodName: string) => {
-  try {
-    const { data, error } = await supabase.functions.invoke('gemini-nutrition', {
-      body: { foodName }
-    });
-    
-    if (error) {
-      console.error('Error calling gemini-nutrition function:', error);
-      return null;
-    }
-    
-    return data?.nutritionData || null;
-  } catch (error) {
-    console.error('Error getting nutrition from Gemini:', error);
-    return null;
+const simulateNutritionSearch = async (foodName: string) => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Find closest match in common foods (exact match first, then partial match)
+  const searchName = foodName.toLowerCase().trim();
+  
+  // First try exact match
+  if (commonFoods[searchName]) {
+    const nutrition = commonFoods[searchName];
+    return {
+      calories_per_serving: nutrition.calories,
+      protein_per_serving: nutrition.protein,
+      carbs_per_serving: nutrition.carbs,
+      fat_per_serving: nutrition.fat,
+      fiber_per_serving: nutrition.fiber,
+      sugar_per_serving: nutrition.sugar,
+      sodium_per_serving: nutrition.sodium,
+      serving_size: nutrition.servingSize,
+      serving_unit: nutrition.servingUnit
+    };
   }
+  
+  // Then try partial match
+  for (const [key, nutrition] of Object.entries(commonFoods)) {
+    if (searchName.includes(key) || key.includes(searchName)) {
+      return {
+        calories_per_serving: nutrition.calories,
+        protein_per_serving: nutrition.protein,
+        carbs_per_serving: nutrition.carbs,
+        fat_per_serving: nutrition.fat,
+        fiber_per_serving: nutrition.fiber,
+        sugar_per_serving: nutrition.sugar,
+        sodium_per_serving: nutrition.sodium,
+        serving_size: nutrition.servingSize,
+        serving_unit: nutrition.servingUnit
+      };
+    }
+  }
+  
+  return null;
 };
 
 interface AddFoodDialogProps {
@@ -217,21 +240,14 @@ export function AddFoodDialog({ open, onOpenChange }: AddFoodDialogProps) {
       // Search for nutrition information using a nutrition database or API
       const searchQuery = `${formData.name} nutrition facts calories protein carbs fat fiber sugar sodium per 100g serving`;
       
-      // Use Gemini API to get real nutrition information
-      const nutritionData = await getNutritionFromGemini(formData.name);
+      // For demo purposes, we'll simulate the search and provide some common nutrition values
+      // In a real app, you'd integrate with a nutrition API like USDA FoodData Central or Edamam
+      const nutritionData = await simulateNutritionSearch(formData.name.toLowerCase());
       
       if (nutritionData) {
         setFormData(prev => ({
           ...prev,
-          serving_size: nutritionData.serving_size,
-          serving_unit: nutritionData.serving_unit,
-          calories_per_serving: nutritionData.calories_per_serving,
-          protein_per_serving: nutritionData.protein_per_serving,
-          carbs_per_serving: nutritionData.carbs_per_serving,
-          fat_per_serving: nutritionData.fat_per_serving,
-          fiber_per_serving: nutritionData.fiber_per_serving,
-          sugar_per_serving: nutritionData.sugar_per_serving,
-          sodium_per_serving: nutritionData.sodium_per_serving,
+          ...nutritionData
         }));
         
         toast({
