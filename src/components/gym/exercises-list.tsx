@@ -105,8 +105,8 @@ export function ExercisesList() {
         throw new Error(data.error);
       }
 
-      // Add the extracted exercise
-      await addExercise({
+      // Fill the form with extracted data
+      setFormData({
         name: data.name,
         muscle_group: data.primaryMuscleGroup,
         side_muscle_groups: data.secondaryMuscleGroups,
@@ -120,7 +120,7 @@ export function ExercisesList() {
       setImportUrl('');
       toast({
         title: "Success",
-        description: `Exercise "${data.name}" imported successfully`,
+        description: `Exercise data loaded from "${data.name}"`,
       });
     } catch (error) {
       console.error('Import error:', error);
@@ -152,33 +152,6 @@ export function ExercisesList() {
           <p className="text-muted-foreground">Manage your exercise database</p>
         </div>
         
-        {/* Auto Import Section */}
-        <div className="flex gap-2 w-full md:w-auto">
-          <Input
-            placeholder="muscleandstrength.com URL..."
-            value={importUrl}
-            onChange={(e) => setImportUrl(e.target.value)}
-            className="flex-1 md:w-64"
-          />
-          <Button 
-            onClick={handleImportFromUrl} 
-            disabled={isImporting || !importUrl.trim()}
-            variant="outline"
-            size="sm"
-          >
-            {isImporting ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
-                Importing...
-              </>
-            ) : (
-              <>
-                <Download className="h-4 w-4 mr-2" />
-                Import
-              </>
-            )}
-          </Button>
-        </div>
         
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
@@ -195,8 +168,37 @@ export function ExercisesList() {
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* URL Fetching Section */}
-              
+              {/* Auto Import Section */}
+              <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
+                <Label className="text-sm font-medium">Quick Import</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="muscleandstrength.com URL..."
+                    value={importUrl}
+                    onChange={(e) => setImportUrl(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button 
+                    type="button"
+                    onClick={handleImportFromUrl} 
+                    disabled={isImporting || !importUrl.trim()}
+                    variant="outline"
+                    size="sm"
+                  >
+                    {isImporting ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                        Import
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 mr-2" />
+                        Import
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
 
               <div>
                 <Label htmlFor="name">Exercise Name</Label>

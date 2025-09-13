@@ -86,17 +86,30 @@ function extractExerciseDetails(html: string, exerciseName: string): ExerciseDat
   const muscleGroupMap: { [key: string]: string } = {
     'upper back': 'back',
     'lats': 'back',
+    'latissimus dorsi': 'back',
+    'middle back': 'back',
+    'lower back': 'lower-back',
     'biceps': 'biceps',
     'chest': 'chest',
+    'pectorals': 'chest',
     'shoulders': 'shoulders',
+    'deltoids': 'shoulders',
     'triceps': 'triceps',
-    'legs': 'legs',
-    'quadriceps': 'legs',
-    'hamstrings': 'legs',
+    'legs': 'quadriceps',
+    'quadriceps': 'quadriceps',
+    'quads': 'quadriceps',
+    'hamstrings': 'hamstrings',
     'glutes': 'glutes',
     'calves': 'calves',
     'abs': 'abs',
-    'forearms': 'forearms'
+    'abdominals': 'abs',
+    'core': 'abs',
+    'forearms': 'forearms',
+    'traps': 'trapezius',
+    'trapezius': 'trapezius',
+    'neck': 'neck',
+    'adductors': 'adductors',
+    'abductors': 'abductors'
   }
 
   // Extract primary and secondary muscle groups
