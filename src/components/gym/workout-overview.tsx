@@ -3,22 +3,17 @@ import { useGym } from '@/contexts/GymContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Dumbbell, Play, Target, CheckCircle2, Zap, Folder } from 'lucide-react';
+import { ArrowLeft, Dumbbell, Play, Target, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ExerciseInfoDialog } from './exercise-info-dialog';
-import { WorkoutSelectionDialog } from './workout-selection-dialog';
 interface WorkoutOverviewProps {
   onStartWorkout: () => void;
-  onStartQuickWorkout: () => void;
-  onStartFromTemplate: (workoutId: string, exercises: any[]) => void;
   onBack: () => void;
   selectedDate?: Date;
   isToday?: boolean;
 }
 export function WorkoutOverview({
   onStartWorkout,
-  onStartQuickWorkout,
-  onStartFromTemplate,
   onBack,
   selectedDate,
   isToday = true
@@ -30,7 +25,6 @@ export function WorkoutOverview({
   } = useGym();
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [showWorkoutSelection, setShowWorkoutSelection] = useState(false);
   const todayWorkout = selectedDate ? getWorkoutForDate(format(selectedDate, 'yyyy-MM-dd')) : getTodayWorkout();
   const isCompleted = todayWorkout?.session?.completed_at;
   console.log('WorkoutOverview - todayWorkout:', todayWorkout);
@@ -40,56 +34,17 @@ export function WorkoutOverview({
     setIsDialogOpen(true);
   };
   if (!todayWorkout || todayWorkout.exercises.length === 0) {
-    return (
-      <div className="min-h-screen bg-background p-4">
+    return <div className="min-h-screen bg-background p-4">
+        
+        
         <Card className="text-center py-12">
-          <CardContent className="space-y-6">
-            <div>
-              <Dumbbell className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium text-foreground mb-2">No workout scheduled today</h3>
-              <p className="text-muted-foreground">Choose how you want to start your workout</p>
-            </div>
-
-            <div className="grid gap-4 max-w-md mx-auto">
-              <Button
-                onClick={() => setShowWorkoutSelection(true)}
-                size="lg"
-                variant="outline"
-                className="h-auto py-6 flex-col gap-2"
-              >
-                <Folder className="h-6 w-6" />
-                <div>
-                  <div className="font-semibold">Start From Saved Workout</div>
-                  <div className="text-xs text-muted-foreground font-normal">
-                    Pick a workout template
-                  </div>
-                </div>
-              </Button>
-
-              <Button
-                onClick={onStartQuickWorkout}
-                size="lg"
-                className="h-auto py-6 flex-col gap-2"
-              >
-                <Zap className="h-6 w-6" />
-                <div>
-                  <div className="font-semibold">Start Quick Workout</div>
-                  <div className="text-xs opacity-80 font-normal">
-                    Add exercises as you go
-                  </div>
-                </div>
-              </Button>
-            </div>
+          <CardContent>
+            <Dumbbell className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-medium text-foreground mb-2">No workout scheduled</h3>
+            <p className="text-muted-foreground">Create a workout plan to get started</p>
           </CardContent>
         </Card>
-
-        <WorkoutSelectionDialog
-          open={showWorkoutSelection}
-          onOpenChange={setShowWorkoutSelection}
-          onSelectWorkout={onStartFromTemplate}
-        />
-      </div>
-    );
+      </div>;
   }
   const targetMuscles = Array.from(new Set(todayWorkout.exercises.map(ex => ex.muscle_group)));
 
