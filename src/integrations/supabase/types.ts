@@ -1031,7 +1031,7 @@ export type Database = {
           id: string
           muscle_groups: string[] | null
           notes: string | null
-          plan_id: string
+          plan_id: string | null
           scheduled_date: string
           started_at: string | null
           total_duration_minutes: number | null
@@ -1043,7 +1043,7 @@ export type Database = {
           id?: string
           muscle_groups?: string[] | null
           notes?: string | null
-          plan_id: string
+          plan_id?: string | null
           scheduled_date: string
           started_at?: string | null
           total_duration_minutes?: number | null
@@ -1055,7 +1055,7 @@ export type Database = {
           id?: string
           muscle_groups?: string[] | null
           notes?: string | null
-          plan_id?: string
+          plan_id?: string | null
           scheduled_date?: string
           started_at?: string | null
           total_duration_minutes?: number | null
