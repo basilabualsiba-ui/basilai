@@ -7,12 +7,11 @@ import { WorkoutSummary } from './workout-summary';
 import { LiveActivityStatus } from './live-activity-status';
 import { WorkoutMusicPlayer } from './workout-music-player';
 import { SaveWorkoutTemplateDialog } from './save-workout-template-dialog';
-import { QuickWorkoutExerciseSelector } from './quick-workout-exercise-selector';
 import { format } from 'date-fns';
 import { useLiveActivity } from '@/hooks/useLiveActivity';
 import { supabase } from '@/integrations/supabase/client';
 
-type WorkoutScreen = 'overview' | 'timer' | 'exercise' | 'summary' | 'exercise-selection';
+type WorkoutScreen = 'overview' | 'timer' | 'exercise' | 'summary';
 
 interface WorkoutFlowProps {
   onBack: () => void;
@@ -178,7 +177,7 @@ const handleStartQuickWorkout = async () => {
     setIsQuickWorkout(true);
     setCurrentSession(session.id);
     setCurrentExercises([]);
-    setCurrentScreen('exercise-selection');
+    setCurrentScreen('timer');
   } catch (error) {
     console.error('Failed to start quick workout:', error);
   }
@@ -220,11 +219,6 @@ const handleStartFromTemplate = async (workoutId: string, exercises: any[]) => {
 };
 
   const handleExerciseSelect = async (exercise: any, workoutConfig?: any) => {
-    // Add exercise to current exercises if not already added
-    if (!currentExercises.some(ex => ex.id === exercise.id)) {
-      setCurrentExercises(prev => [...prev, exercise]);
-    }
-    
     setSelectedExercise({ exercise, workoutConfig });
     
     // Update Live Activity with current exercise
@@ -241,8 +235,7 @@ const handleStartFromTemplate = async (workoutId: string, exercises: any[]) => {
       setCompletedExercises(prev => new Set([...prev, selectedExercise.exercise.id]));
     }
     setSelectedExercise(null);
-    // Return to exercise selection for quick workouts, timer for planned workouts
-    setCurrentScreen(isQuickWorkout ? 'exercise-selection' : 'timer');
+    setCurrentScreen('timer');
   };
 
   const handleWorkoutComplete = async () => {
@@ -342,29 +335,6 @@ const handleStartFromTemplate = async (workoutId: string, exercises: any[]) => {
         </>
       );
     
-    case 'exercise-selection':
-      return currentSession ? (
-        <div className="relative">
-          <div className="fixed top-20 left-0 right-0 z-50 md:left-auto md:right-6 md:left-6">
-            <WorkoutMusicPlayer 
-              isWorkoutActive={true}
-              onWorkoutStart={() => {}}
-              onWorkoutEnd={() => {}}
-            />
-            <LiveActivityStatus />
-          </div>
-          <div className="pt-36">
-            <QuickWorkoutExerciseSelector
-              currentExercises={currentExercises}
-              completedExercises={completedExercises}
-              onExerciseSelect={handleExerciseSelect}
-              onComplete={handleWorkoutComplete}
-              onCancel={handleCancel}
-            />
-          </div>
-        </div>
-      ) : null;
-    
     case 'timer':
       return currentSession ? (
         <div className="relative">
@@ -406,7 +376,7 @@ const handleStartFromTemplate = async (workoutId: string, exercises: any[]) => {
               exercise={selectedExercise.exercise}
               sessionId={currentSession}
               onFinish={handleExerciseFinish}
-              onBack={() => setCurrentScreen(isQuickWorkout ? 'exercise-selection' : 'timer')}
+              onBack={() => setCurrentScreen('timer')}
               workoutConfig={selectedExercise.workoutConfig}
             />
           </div>
