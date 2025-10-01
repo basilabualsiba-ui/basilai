@@ -6,8 +6,10 @@ import { ExerciseDetail } from './exercise-detail';
 import { WorkoutSummary } from './workout-summary';
 import { LiveActivityStatus } from './live-activity-status';
 import { WorkoutMusicPlayer } from './workout-music-player';
+import { SaveWorkoutTemplateDialog } from './save-workout-template-dialog';
 import { format } from 'date-fns';
 import { useLiveActivity } from '@/hooks/useLiveActivity';
+import { supabase } from '@/integrations/supabase/client';
 
 type WorkoutScreen = 'overview' | 'timer' | 'exercise' | 'summary';
 
@@ -43,6 +45,8 @@ export function WorkoutFlow({ onBack, selectedDate, isToday = true }: WorkoutFlo
   const [selectedExercise, setSelectedExercise] = useState<{ exercise: any; workoutConfig?: any } | null>(null);
   const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
   const [currentExercises, setCurrentExercises] = useState<any[]>([]);
+  const [isQuickWorkout, setIsQuickWorkout] = useState(false);
+  const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
 
 const todayWorkout = selectedDate
   ? getWorkoutForDate(format(selectedDate, 'yyyy-MM-dd'))
@@ -140,10 +144,75 @@ const handleStartWorkout = async () => {
     const exerciseNames = todayWorkout.exercises.map(ex => ex.name);
     await startWorkoutActivity(workoutName, exerciseNames);
     
+    setIsQuickWorkout(false);
     setCurrentSession(sessionId);
     setCurrentScreen('timer');
   } catch (error) {
     console.error('Failed to start workout:', error);
+  }
+};
+
+const handleStartQuickWorkout = async () => {
+  try {
+    const baseDate = selectedDate || new Date();
+    const dateString = format(baseDate, 'yyyy-MM-dd');
+
+    // Create a session without a plan_id for quick workout
+    const { data: session, error } = await supabase
+      .from('workout_sessions')
+      .insert({
+        scheduled_date: dateString,
+        started_at: new Date().toISOString(),
+        muscle_groups: []
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Start Live Activity
+    await startWorkoutActivity('Quick Workout', []);
+    
+    setIsQuickWorkout(true);
+    setCurrentSession(session.id);
+    setCurrentExercises([]);
+    setCurrentScreen('timer');
+  } catch (error) {
+    console.error('Failed to start quick workout:', error);
+  }
+};
+
+const handleStartFromTemplate = async (workoutId: string, exercises: any[]) => {
+  try {
+    const baseDate = selectedDate || new Date();
+    const dateString = format(baseDate, 'yyyy-MM-dd');
+
+    // Get muscle groups from exercises
+    const muscleGroups = Array.from(new Set(exercises.map(ex => ex.muscle_group)));
+
+    // Create a session without a plan_id
+    const { data: session, error } = await supabase
+      .from('workout_sessions')
+      .insert({
+        scheduled_date: dateString,
+        started_at: new Date().toISOString(),
+        muscle_groups: muscleGroups
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Start Live Activity
+    const exerciseNames = exercises.map(ex => ex.name);
+    await startWorkoutActivity('Workout from Template', exerciseNames);
+    
+    setIsQuickWorkout(false);
+    setCurrentSession(session.id);
+    setCurrentExercises(exercises);
+    setCurrentScreen('timer');
+  } catch (error) {
+    console.error('Failed to start workout from template:', error);
   }
 };
 
@@ -176,15 +245,27 @@ const handleStartWorkout = async () => {
       // End Live Activity
       await endWorkoutActivity();
       
-      setCurrentScreen('summary');
+      // If it was a quick workout, ask to save as template
+      if (isQuickWorkout && currentExercises.length > 0) {
+        setShowSaveTemplateDialog(true);
+      } else {
+        setCurrentScreen('summary');
+      }
     } catch (error) {
       console.error('Failed to complete workout:', error);
     }
   };
 
+  const handleSaveTemplateComplete = () => {
+    setShowSaveTemplateDialog(false);
+    setCurrentScreen('summary');
+  };
+
   const handleSummaryFinish = () => {
     setCurrentSession(null);
     setCompletedExercises(new Set());
+    setCurrentExercises([]);
+    setIsQuickWorkout(false);
     setCurrentScreen('overview');
     onBack();
   };
@@ -198,6 +279,7 @@ const handleStartWorkout = async () => {
     setCurrentSession(null);
     setCompletedExercises(new Set());
     setCurrentExercises(todayWorkout.exercises || []);
+    setIsQuickWorkout(false);
     setCurrentScreen('overview');
   };
 
@@ -215,6 +297,7 @@ const handleStartWorkout = async () => {
       setCurrentSession(null);
       setCompletedExercises(new Set());
       setCurrentExercises(todayWorkout.exercises || []);
+      setIsQuickWorkout(false);
       setCurrentScreen('overview');
     } catch (error) {
       console.error('Failed to reset workout:', error);
@@ -238,12 +321,16 @@ const handleStartWorkout = async () => {
   switch (currentScreen) {
     case 'overview':
       return (
-        <WorkoutOverview 
-          onStartWorkout={handleStartWorkout}
-          onBack={onBack}
-          selectedDate={selectedDate}
-          isToday={isToday}
-        />
+        <>
+          <WorkoutOverview 
+            onStartWorkout={handleStartWorkout}
+            onStartQuickWorkout={handleStartQuickWorkout}
+            onStartFromTemplate={handleStartFromTemplate}
+            onBack={onBack}
+            selectedDate={selectedDate}
+            isToday={isToday}
+          />
+        </>
       );
     
     case 'timer':
@@ -310,6 +397,14 @@ const handleStartWorkout = async () => {
               onFinish={handleSummaryFinish}
             />
           </div>
+
+          <SaveWorkoutTemplateDialog
+            open={showSaveTemplateDialog}
+            onOpenChange={setShowSaveTemplateDialog}
+            sessionId={currentSession}
+            exercises={currentExercises}
+            onSaveComplete={handleSaveTemplateComplete}
+          />
         </div>
       ) : null;
     
