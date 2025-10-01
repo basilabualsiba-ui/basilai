@@ -161,6 +161,7 @@ const handleStartQuickWorkout = async () => {
     const { data: session, error } = await supabase
       .from('workout_sessions')
       .insert({
+        plan_id: null as any,
         scheduled_date: dateString,
         started_at: new Date().toISOString(),
         muscle_groups: []
@@ -194,6 +195,7 @@ const handleStartFromTemplate = async (workoutId: string, exercises: any[]) => {
     const { data: session, error } = await supabase
       .from('workout_sessions')
       .insert({
+        plan_id: null as any,
         scheduled_date: dateString,
         started_at: new Date().toISOString(),
         muscle_groups: muscleGroups
