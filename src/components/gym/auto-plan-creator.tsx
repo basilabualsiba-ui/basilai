@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Calendar as CalendarIcon, Target, Search } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Plus, Calendar as CalendarIcon, Target, Search, Clock } from 'lucide-react';
 import { format, addDays, differenceInDays, startOfDay } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -39,6 +40,7 @@ export function AutoPlanCreator() {
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [showConflictWarning, setShowConflictWarning] = useState(false);
   const [conflictDetails, setConflictDetails] = useState<string[]>([]);
+  const [todayOnly, setTodayOnly] = useState(false);
   const { toast } = useToast();
   const { workoutPlans, workoutPlanDays, planWorkouts } = useGym();
   const [workoutSearchTerm, setWorkoutSearchTerm] = useState('');
@@ -138,16 +140,29 @@ export function AutoPlanCreator() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || formData.selectedDays.length === 0 || !formData.selectedWorkout || !startDate || !endDate) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields including days and workout",
-        variant: "destructive",
-      });
-      return;
+    if (todayOnly) {
+      // Today only mode: only need name and workout
+      if (!formData.name || !formData.selectedWorkout) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in plan name and select a workout",
+          variant: "destructive",
+        });
+        return;
+      }
+    } else {
+      // Normal mode: need all fields
+      if (!formData.name || formData.selectedDays.length === 0 || !formData.selectedWorkout || !startDate || !endDate) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all required fields including days and workout",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
-    if (endDate < startDate) {
+    if (!todayOnly && endDate && startDate && endDate < startDate) {
       toast({
         title: "Validation Error",
         description: "End date must be after start date",
@@ -156,26 +171,34 @@ export function AutoPlanCreator() {
       return;
     }
 
-    // Check for conflicts
-    const conflicts = checkForConflicts();
-    if (conflicts.length > 0) {
-      setConflictDetails(conflicts);
-      setShowConflictWarning(true);
-      return;
+    // Check for conflicts (only in normal mode)
+    if (!todayOnly) {
+      const conflicts = checkForConflicts();
+      if (conflicts.length > 0) {
+        setConflictDetails(conflicts);
+        setShowConflictWarning(true);
+        return;
+      }
     }
 
     try {
       const selectedWorkout = workouts.find(w => w.id === formData.selectedWorkout);
       if (!selectedWorkout) return;
 
+      const today = new Date();
+      const todayStr = format(today, 'yyyy-MM-dd');
+      const todayDayOfWeek = today.getDay() === 0 ? 7 : today.getDay();
+
       // Create the workout plan
       const { data: planData, error: planError } = await supabase
         .from('workout_plans')
         .insert({
           name: formData.name,
-          description: `Auto-generated plan for ${formData.selectedDays.map(d => daysOfWeek.find(day => day.value === d)?.label).join(', ')} workouts`,
-          start_date: format(startDate, 'yyyy-MM-dd'),
-          end_date: format(endDate, 'yyyy-MM-dd'),
+          description: todayOnly 
+            ? 'One-time workout plan for today'
+            : `Auto-generated plan for ${formData.selectedDays.map(d => daysOfWeek.find(day => day.value === d)?.label).join(', ')} workouts`,
+          start_date: todayOnly ? todayStr : format(startDate!, 'yyyy-MM-dd'),
+          end_date: todayOnly ? todayStr : format(endDate!, 'yyyy-MM-dd'),
           is_active: true
         })
         .select()
@@ -183,14 +206,22 @@ export function AutoPlanCreator() {
 
       if (planError) throw planError;
 
-      // Create workout_plan_days entries for each selected day
-      const planDayEntries = formData.selectedDays.map(dayOfWeek => ({
-        plan_id: planData.id,
-        day_of_week: dayOfWeek,
-        muscle_groups: selectedWorkout.muscle_groups,
-        start_time: formData.startTime || null,
-        end_time: formData.endTime || null
-      }));
+      // Create workout_plan_days entries
+      const planDayEntries = todayOnly 
+        ? [{
+            plan_id: planData.id,
+            day_of_week: todayDayOfWeek,
+            muscle_groups: selectedWorkout.muscle_groups,
+            start_time: formData.startTime || null,
+            end_time: formData.endTime || null
+          }]
+        : formData.selectedDays.map(dayOfWeek => ({
+            plan_id: planData.id,
+            day_of_week: dayOfWeek,
+            muscle_groups: selectedWorkout.muscle_groups,
+            start_time: formData.startTime || null,
+            end_time: formData.endTime || null
+          }));
 
       if (planDayEntries.length > 0) {
         const { error: dayError } = await supabase
@@ -201,17 +232,25 @@ export function AutoPlanCreator() {
       }
 
       // Create plan_workouts entries for tracking
-      const totalOccurrences = formData.selectedDays.reduce((total, dayOfWeek) => {
-        return total + getOccurrencesOfDay(startDate, endDate, dayOfWeek).length;
-      }, 0);
+      const totalOccurrences = todayOnly 
+        ? 1
+        : formData.selectedDays.reduce((total, dayOfWeek) => {
+            return total + getOccurrencesOfDay(startDate!, endDate!, dayOfWeek).length;
+          }, 0);
 
-      const planWorkoutEntries = formData.selectedDays.flatMap(dayOfWeek => 
-        getOccurrencesOfDay(startDate, endDate, dayOfWeek).map(() => ({
-          plan_id: planData.id,
-          workout_id: formData.selectedWorkout,
-          day_of_week: dayOfWeek
-        }))
-      );
+      const planWorkoutEntries = todayOnly
+        ? [{
+            plan_id: planData.id,
+            workout_id: formData.selectedWorkout,
+            day_of_week: todayDayOfWeek
+          }]
+        : formData.selectedDays.flatMap(dayOfWeek => 
+            getOccurrencesOfDay(startDate!, endDate!, dayOfWeek).map(() => ({
+              plan_id: planData.id,
+              workout_id: formData.selectedWorkout,
+              day_of_week: dayOfWeek
+            }))
+          );
 
       if (planWorkoutEntries.length > 0) {
         const { error: workoutError } = await supabase
@@ -223,7 +262,9 @@ export function AutoPlanCreator() {
 
       toast({
         title: "Success",
-        description: `Plan created with ${totalOccurrences} sessions across ${formData.selectedDays.length} days`,
+        description: todayOnly 
+          ? "Workout plan created for today"
+          : `Plan created with ${totalOccurrences} sessions across ${formData.selectedDays.length} days`,
       });
 
       // Reset form and close dialog
@@ -252,6 +293,7 @@ export function AutoPlanCreator() {
     setWorkoutSearchTerm('');
     setShowConflictWarning(false);
     setConflictDetails([]);
+    setTodayOnly(false);
   };
 
   const selectedDayOccurrences = startDate && endDate && formData.selectedDays.length > 0 ? 
@@ -291,8 +333,23 @@ export function AutoPlanCreator() {
             />
           </div>
 
-          <div>
-            <Label>Days of Week *</Label>
+          <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
+            <div className="space-y-0.5">
+              <Label htmlFor="today-only">Today Only</Label>
+              <p className="text-sm text-muted-foreground">
+                Create a one-time workout plan for today
+              </p>
+            </div>
+            <Switch
+              id="today-only"
+              checked={todayOnly}
+              onCheckedChange={setTodayOnly}
+            />
+          </div>
+
+          {!todayOnly && (
+            <div>
+              <Label>Days of Week *</Label>
             <div className="grid grid-cols-2 gap-2 mt-2">
               {daysOfWeek.map((day) => (
                 <div key={day.value} className="flex items-center space-x-2">
@@ -307,12 +364,14 @@ export function AutoPlanCreator() {
                 </div>
               ))}
             </div>
-            {formData.selectedDays.length === 0 && (
-              <p className="text-sm text-destructive mt-1">Please select at least one day</p>
-            )}
-          </div>
+              {formData.selectedDays.length === 0 && (
+                <p className="text-sm text-destructive mt-1">Please select at least one day</p>
+              )}
+            </div>
+          )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {!todayOnly && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Start Date *</Label>
               <Popover>
@@ -367,8 +426,38 @@ export function AutoPlanCreator() {
                 </PopoverContent>
               </Popover>
             </div>
-          </div>
+            </div>
+          )}
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="start-time">Start Time</Label>
+              <div className="relative">
+                <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  id="start-time"
+                  type="time"
+                  value={formData.startTime}
+                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="end-time">End Time</Label>
+              <div className="relative">
+                <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  id="end-time"
+                  type="time"
+                  value={formData.endTime}
+                  onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+          </div>
 
           <div className="space-y-2">
             <Label>Select Workout *</Label>
@@ -426,7 +515,7 @@ export function AutoPlanCreator() {
             )}
           </div>
 
-          {selectedDayOccurrences > 0 && (
+          {!todayOnly && selectedDayOccurrences > 0 && (
             <Card>
               <CardContent className="pt-6">
                 <div className="text-center">
@@ -445,11 +534,30 @@ export function AutoPlanCreator() {
             </Card>
           )}
 
+          {todayOnly && formData.selectedWorkout && (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <CalendarIcon className="h-8 w-8 mx-auto mb-2 text-primary" />
+                  <p className="text-sm text-muted-foreground">
+                    This will create a workout plan for <span className="font-medium text-foreground">today</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {format(new Date(), 'EEEE, MMM d, yyyy')}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={selectedDayOccurrences === 0}>
+            <Button 
+              type="submit" 
+              disabled={todayOnly ? !formData.selectedWorkout : selectedDayOccurrences === 0}
+            >
               Create a Plan
             </Button>
           </div>
