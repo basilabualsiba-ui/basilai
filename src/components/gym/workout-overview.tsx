@@ -46,7 +46,11 @@ export function WorkoutOverview({
         </Card>
       </div>;
   }
-  const targetMuscles = Array.from(new Set(todayWorkout.exercises.map(ex => ex.muscle_group)));
+  // Calculate target muscles including side muscles
+  const targetMuscles = Array.from(new Set([
+    ...todayWorkout.exercises.map(ex => ex.muscle_group),
+    ...todayWorkout.exercises.flatMap(ex => ex.side_muscle_groups || [])
+  ]));
 
   // Get muscle group icons and colors
   const getMuscleGroupDetails = (muscleName: string) => {
@@ -112,7 +116,7 @@ export function WorkoutOverview({
                     <div className="flex-1">
                       <h3 className="font-medium text-foreground">{exercise.name}</h3>
                       <p className="text-sm text-muted-foreground">
-                        3 SETS • 10 REPS
+                        3 SETS • 12-10-8 REPS
                       </p>
                     </div>
                   </div>
@@ -127,14 +131,10 @@ export function WorkoutOverview({
         {isCompleted ? <div className="w-full h-14 bg-green-500/10 border border-green-500/20 rounded-lg flex items-center justify-center shadow-lg">
             <CheckCircle2 className="h-5 w-5 mr-2 text-green-500" />
             <span className="text-green-500 font-semibold text-lg">Workout Completed</span>
-          </div> : isToday ? <Button onClick={onStartWorkout} className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg shadow-lg">
+          </div> : <Button onClick={onStartWorkout} className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg shadow-lg">
             <Play className="h-5 w-5 mr-2" />
-            Start Workout
-          </Button> : <div className="w-full h-14 bg-muted/20 border border-muted/40 rounded-lg flex items-center justify-center shadow-lg">
-            <span className="text-muted-foreground font-medium text-lg">
-              {selectedDate ? `Workout for ${selectedDate.toDateString()}` : 'Historical Workout View'}
-            </span>
-          </div>}
+            {isToday ? 'Start Workout' : 'Log Workout'}
+          </Button>}
       </div>
 
       {/* Exercise Info Dialog */}

@@ -39,15 +39,15 @@ export function ExerciseDetail({
   
   const { startRestPeriod } = useLiveActivity();
 
-  // Create default sets based on workout configuration
+  // Create default sets with progressive reps (12-10-8)
   const createDefaultSets = () => {
     const defaultSets = workoutConfig?.sets || 3;
-    const defaultReps = workoutConfig?.reps?.toString() || '8';
     const defaultWeight = workoutConfig?.weight?.toString() || '25';
+    const repsProgression = ['12', '10', '8'];
     return Array.from({
       length: defaultSets
-    }, () => ({
-      reps: defaultReps,
+    }, (_, index) => ({
+      reps: repsProgression[index] || '8',
       weight: defaultWeight
     }));
   };
