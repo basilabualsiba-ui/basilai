@@ -52,8 +52,7 @@ export function WorkoutsList() {
     name: '',
     description: '',
     selectedMuscles: [] as string[],
-    selectedExercises: [] as string[],
-    exerciseDetails: {} as Record<string, { sets: number; reps: number; weight: number; rest_seconds: number }>
+    selectedExercises: [] as string[]
   });
   const { toast } = useToast();
 
@@ -103,25 +102,12 @@ export function WorkoutsList() {
   };
 
   const handleExerciseToggle = (exerciseId: string) => {
-    setFormData(prev => {
-      const isSelected = prev.selectedExercises.includes(exerciseId);
-      const newSelectedExercises = isSelected
+    setFormData(prev => ({
+      ...prev,
+      selectedExercises: prev.selectedExercises.includes(exerciseId)
         ? prev.selectedExercises.filter(id => id !== exerciseId)
-        : [...prev.selectedExercises, exerciseId];
-      
-      const newExerciseDetails = { ...prev.exerciseDetails };
-      if (isSelected) {
-        delete newExerciseDetails[exerciseId];
-      } else {
-        newExerciseDetails[exerciseId] = { sets: 3, reps: 10, weight: 0, rest_seconds: 60 };
-      }
-      
-      return {
-        ...prev,
-        selectedExercises: newSelectedExercises,
-        exerciseDetails: newExerciseDetails
-      };
-    });
+        : [...prev.selectedExercises, exerciseId]
+    }));
   };
 
   const handleNext = () => {
@@ -174,19 +160,16 @@ export function WorkoutsList() {
             .delete()
             .eq('workout_id', editingWorkout.id);
 
-          // Insert new workout exercises
-          const workoutExercises = formData.selectedExercises.map((exerciseId, index) => {
-            const details = formData.exerciseDetails[exerciseId];
-            return {
-              workout_id: editingWorkout.id,
-              exercise_id: exerciseId,
-              order_index: index + 1,
-              sets: details?.sets || 3,
-              reps: details?.reps || 10,
-              weight: details?.weight || 0,
-              rest_seconds: details?.rest_seconds || 60
-            };
-          });
+          // Insert new workout exercises with default values
+          const workoutExercises = formData.selectedExercises.map((exerciseId, index) => ({
+            workout_id: editingWorkout.id,
+            exercise_id: exerciseId,
+            order_index: index + 1,
+            sets: 3,
+            reps: 10,
+            weight: 0,
+            rest_seconds: 60
+          }));
 
           const { error: exerciseError } = await supabase
             .from('workout_exercises')
@@ -213,20 +196,17 @@ export function WorkoutsList() {
 
         if (error) throw error;
 
-        // Add exercises to workout if any selected
+        // Add exercises to workout with default values
         if (formData.selectedExercises.length > 0) {
-          const workoutExercises = formData.selectedExercises.map((exerciseId, index) => {
-            const details = formData.exerciseDetails[exerciseId];
-            return {
-              workout_id: workoutData.id,
-              exercise_id: exerciseId,
-              order_index: index + 1,
-              sets: details?.sets || 3,
-              reps: details?.reps || 10,
-              weight: details?.weight || 0,
-              rest_seconds: details?.rest_seconds || 60
-            };
-          });
+          const workoutExercises = formData.selectedExercises.map((exerciseId, index) => ({
+            workout_id: workoutData.id,
+            exercise_id: exerciseId,
+            order_index: index + 1,
+            sets: 3,
+            reps: 10,
+            weight: 0,
+            rest_seconds: 60
+          }));
 
           const { error: exerciseError } = await supabase
             .from('workout_exercises')
@@ -261,29 +241,18 @@ export function WorkoutsList() {
     try {
       const { data: workoutExercises, error } = await supabase
         .from('workout_exercises')
-        .select('exercise_id, sets, reps, weight, rest_seconds')
+        .select('exercise_id')
         .eq('workout_id', workout.id);
       
       if (error) throw error;
       
       const selectedExerciseIds = workoutExercises?.map(we => we.exercise_id) || [];
-      const exerciseDetails: Record<string, { sets: number; reps: number; weight: number; rest_seconds: number }> = {};
-      
-      workoutExercises?.forEach(we => {
-        exerciseDetails[we.exercise_id] = {
-          sets: we.sets || 3,
-          reps: we.reps || 10,
-          weight: we.weight || 0,
-          rest_seconds: we.rest_seconds || 60
-        };
-      });
       
       setFormData({
         name: workout.name,
         description: workout.description || '',
         selectedMuscles: workout.muscle_groups,
-        selectedExercises: selectedExerciseIds,
-        exerciseDetails
+        selectedExercises: selectedExerciseIds
       });
     } catch (error) {
       console.error('Error fetching workout exercises:', error);
@@ -291,8 +260,7 @@ export function WorkoutsList() {
         name: workout.name,
         description: workout.description || '',
         selectedMuscles: workout.muscle_groups,
-        selectedExercises: [],
-        exerciseDetails: {}
+        selectedExercises: []
       });
     }
     
@@ -336,8 +304,7 @@ export function WorkoutsList() {
       name: '',
       description: '',
       selectedMuscles: [],
-      selectedExercises: [],
-      exerciseDetails: {}
+      selectedExercises: []
     });
     setEditingWorkout(null);
     setCurrentStep(1);
@@ -516,94 +483,10 @@ export function WorkoutsList() {
                                 onClick={() => handleExerciseInfoClick(exercise)}
                                 className="h-8 w-8 p-0"
                               >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </div>
-                            
-                            {formData.selectedExercises.includes(exercise.id) && (
-                              <div className="ml-6 p-3 bg-muted/30 rounded-md">
-                                <div className="grid grid-cols-4 gap-2">
-                                  <div>
-                                    <Label className="text-xs">Sets</Label>
-                                    <Input
-                                      type="number"
-                                      min="1"
-                                      value={formData.exerciseDetails[exercise.id]?.sets || 3}
-                                      onChange={(e) => setFormData(prev => ({
-                                        ...prev,
-                                        exerciseDetails: {
-                                          ...prev.exerciseDetails,
-                                          [exercise.id]: {
-                                            ...prev.exerciseDetails[exercise.id],
-                                            sets: parseInt(e.target.value) || 3
-                                          }
-                                        }
-                                      }))}
-                                      className="h-8"
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label className="text-xs">Reps</Label>
-                                    <Input
-                                      type="number"
-                                      min="1"
-                                      value={formData.exerciseDetails[exercise.id]?.reps || 10}
-                                      onChange={(e) => setFormData(prev => ({
-                                        ...prev,
-                                        exerciseDetails: {
-                                          ...prev.exerciseDetails,
-                                          [exercise.id]: {
-                                            ...prev.exerciseDetails[exercise.id],
-                                            reps: parseInt(e.target.value) || 10
-                                          }
-                                        }
-                                      }))}
-                                      className="h-8"
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label className="text-xs">Weight (kg)</Label>
-                                    <Input
-                                      type="number"
-                                      min="0"
-                                      step="0.5"
-                                      value={formData.exerciseDetails[exercise.id]?.weight || 0}
-                                      onChange={(e) => setFormData(prev => ({
-                                        ...prev,
-                                        exerciseDetails: {
-                                          ...prev.exerciseDetails,
-                                          [exercise.id]: {
-                                            ...prev.exerciseDetails[exercise.id],
-                                            weight: parseFloat(e.target.value) || 0
-                                          }
-                                        }
-                                      }))}
-                                      className="h-8"
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label className="text-xs">Rest (sec)</Label>
-                                    <Input
-                                      type="number"
-                                      min="0"
-                                      value={formData.exerciseDetails[exercise.id]?.rest_seconds || 60}
-                                      onChange={(e) => setFormData(prev => ({
-                                        ...prev,
-                                        exerciseDetails: {
-                                          ...prev.exerciseDetails,
-                                          [exercise.id]: {
-                                            ...prev.exerciseDetails[exercise.id],
-                                            rest_seconds: parseInt(e.target.value) || 60
-                                          }
-                                        }
-                                      }))}
-                                      className="h-8"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                            )}
+                              <Eye className="h-4 w-4" />
+                            </Button>
                           </div>
+                        </div>
                         ))}
                         {filteredExercises.length === 0 && (
                           <p className="text-center text-muted-foreground py-4">
