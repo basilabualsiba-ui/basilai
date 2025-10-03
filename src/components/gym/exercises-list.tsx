@@ -20,7 +20,8 @@ export function ExercisesList() {
     addExercise,
     updateExercise,
     deleteExercise,
-    muscleGroups
+    muscleGroups,
+    exerciseSets
   } = useGym();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterMuscle, setFilterMuscle] = useState('all');
@@ -144,6 +145,17 @@ export function ExercisesList() {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  // Calculate PR for each exercise
+  const getExercisePR = (exerciseId: string): number | null => {
+    const exerciseSetsForExercise = exerciseSets.filter(
+      set => set.exercise_id === exerciseId && set.weight && set.completed_at
+    );
+    
+    if (exerciseSetsForExercise.length === 0) return null;
+    
+    return Math.max(...exerciseSetsForExercise.map(set => Number(set.weight) || 0));
   };
   return <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mt-6">
@@ -372,6 +384,13 @@ export function ExercisesList() {
               </div>
             </CardHeader>
             <CardContent onClick={() => handleExerciseClick(exercise)}>
+              {getExercisePR(exercise.id) !== null && (
+                <div className="mb-2 flex items-center gap-2">
+                  <Badge variant="outline" className="bg-primary/10 border-primary/20 text-primary font-semibold">
+                    PR: {getExercisePR(exercise.id)} kg
+                  </Badge>
+                </div>
+              )}
               {exercise.equipment && <p className="text-sm text-muted-foreground mb-2">
                   <strong>Equipment:</strong> {exercise.equipment}
                 </p>}
