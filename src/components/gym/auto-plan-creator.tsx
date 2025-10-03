@@ -141,11 +141,11 @@ export function AutoPlanCreator() {
     e.preventDefault();
     
     if (todayOnly) {
-      // Today only mode: only need name and workout
-      if (!formData.name || !formData.selectedWorkout) {
+      // One-time mode: only need name, workout, and date
+      if (!formData.name || !formData.selectedWorkout || !startDate) {
         toast({
           title: "Validation Error",
-          description: "Please fill in plan name and select a workout",
+          description: "Please fill in plan name, select a workout, and choose a date",
           variant: "destructive",
         });
         return;
@@ -185,9 +185,8 @@ export function AutoPlanCreator() {
       const selectedWorkout = workouts.find(w => w.id === formData.selectedWorkout);
       if (!selectedWorkout) return;
 
-      const today = new Date();
-      const todayStr = format(today, 'yyyy-MM-dd');
-      const todayDayOfWeek = today.getDay() === 0 ? 7 : today.getDay();
+      const selectedDateStr = format(startDate!, 'yyyy-MM-dd');
+      const selectedDayOfWeek = startDate!.getDay() === 0 ? 7 : startDate!.getDay();
 
       // Create the workout plan
       const { data: planData, error: planError } = await supabase
@@ -195,10 +194,10 @@ export function AutoPlanCreator() {
         .insert({
           name: formData.name,
           description: todayOnly 
-            ? 'One-time workout plan for today'
+            ? `One-time workout plan for ${format(startDate!, 'PPP')}`
             : `Auto-generated plan for ${formData.selectedDays.map(d => daysOfWeek.find(day => day.value === d)?.label).join(', ')} workouts`,
-          start_date: todayOnly ? todayStr : format(startDate!, 'yyyy-MM-dd'),
-          end_date: todayOnly ? todayStr : format(endDate!, 'yyyy-MM-dd'),
+          start_date: todayOnly ? selectedDateStr : format(startDate!, 'yyyy-MM-dd'),
+          end_date: todayOnly ? selectedDateStr : format(endDate!, 'yyyy-MM-dd'),
           is_active: true
         })
         .select()
@@ -210,7 +209,7 @@ export function AutoPlanCreator() {
       const planDayEntries = todayOnly 
         ? [{
             plan_id: planData.id,
-            day_of_week: todayDayOfWeek,
+            day_of_week: selectedDayOfWeek,
             muscle_groups: selectedWorkout.muscle_groups,
             start_time: formData.startTime || null,
             end_time: formData.endTime || null
@@ -242,7 +241,7 @@ export function AutoPlanCreator() {
         ? [{
             plan_id: planData.id,
             workout_id: formData.selectedWorkout,
-            day_of_week: todayDayOfWeek
+            day_of_week: selectedDayOfWeek
           }]
         : formData.selectedDays.flatMap(dayOfWeek => 
             getOccurrencesOfDay(startDate!, endDate!, dayOfWeek).map(() => ({
@@ -263,7 +262,7 @@ export function AutoPlanCreator() {
       toast({
         title: "Success",
         description: todayOnly 
-          ? "Workout plan created for today"
+          ? `Workout plan created for ${format(startDate!, 'PPP')}`
           : `Plan created with ${totalOccurrences} sessions across ${formData.selectedDays.length} days`,
       });
 
@@ -335,19 +334,20 @@ export function AutoPlanCreator() {
 
           <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
             <div className="space-y-0.5">
-              <Label htmlFor="today-only">Today Only</Label>
+              <Label htmlFor="one-time">One-Time Workout</Label>
               <p className="text-sm text-muted-foreground">
-                Create a one-time workout plan for today
+                Create a workout plan for a single day only
               </p>
             </div>
             <Switch
-              id="today-only"
+              id="one-time"
               checked={todayOnly}
               onCheckedChange={setTodayOnly}
             />
           </div>
 
           {!todayOnly && (
+            <>
             <div>
               <Label>Days of Week *</Label>
             <div className="grid grid-cols-2 gap-2 mt-2">
@@ -368,9 +368,7 @@ export function AutoPlanCreator() {
                 <p className="text-sm text-destructive mt-1">Please select at least one day</p>
               )}
             </div>
-          )}
 
-          {!todayOnly && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Start Date *</Label>
@@ -426,6 +424,36 @@ export function AutoPlanCreator() {
                 </PopoverContent>
               </Popover>
             </div>
+            </div>
+            </>
+          )}
+
+          {todayOnly && (
+            <div className="space-y-2">
+              <Label>Workout Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !startDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "PPP") : <span>Pick workout date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           )}
 
