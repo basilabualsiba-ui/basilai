@@ -19,6 +19,7 @@ import Financial from "./pages/Financial";
 import Gym from "./pages/Gym";
 import Food from "./pages/Food";
 import WeightStats from "./pages/WeightStats";
+import GymStatsPage from "./pages/GymStats";
 import WorkoutDay from "./pages/WorkoutDay";
 import Schedule from "./pages/Schedule";
 import Islamic from "./pages/Islamic";
@@ -39,6 +40,7 @@ function AppContent() {
           <Route path="/" element={<Index />} />
           <Route path="/financial" element={<Financial />} />
           <Route path="/gym" element={<Gym />} />
+          <Route path="/gym-stats" element={<GymStatsPage />} />
           <Route path="/workout-day" element={<WorkoutDay />} />
           <Route path="/food" element={<Food />} />
           <Route path="/weight-stats" element={<WeightStats />} />

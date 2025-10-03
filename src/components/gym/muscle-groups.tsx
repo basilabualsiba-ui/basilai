@@ -72,11 +72,14 @@ export function MuscleGroups() {
   // Get muscle group names for filtering
   const muscleGroupNames = muscleGroups.map(mg => mg.name).sort();
 
-  // Filter exercises based on search term and selected muscle
+  // Filter exercises based on search term and selected muscle (including side muscles)
   const filteredExercises = selectedMuscle 
-    ? getExercisesByMuscleGroup(selectedMuscle).filter(ex => 
-        ex.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+    ? exercises.filter(ex => {
+        const isMainMuscle = ex.muscle_group === selectedMuscle;
+        const isSideMuscle = ex.side_muscle_groups?.includes(selectedMuscle);
+        const matchesSearch = ex.name.toLowerCase().includes(searchTerm.toLowerCase());
+        return (isMainMuscle || isSideMuscle) && matchesSearch;
+      })
     : exercises.filter(ex => 
         ex.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         ex.muscle_group.toLowerCase().includes(searchTerm.toLowerCase())
@@ -248,6 +251,9 @@ export function MuscleGroups() {
               const lastReps = exerciseSetsRecent[0]?.reps || 0;
               const totalSets = exerciseSetsRecent.length;
 
+              const isMainMuscle = exercise.muscle_group === selectedMuscle;
+              const isSideMuscle = exercise.side_muscle_groups?.includes(selectedMuscle);
+
               return (
                 <Card key={exercise.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleExerciseClick(exercise)}>
                   <CardHeader className="pb-3">
@@ -257,8 +263,11 @@ export function MuscleGroups() {
                         <CardTitle className="text-lg">{exercise.name}</CardTitle>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <Badge variant="outline">{exercise.muscle_group}</Badge>
+                      {isSideMuscle && !isMainMuscle && (
+                        <Badge variant="secondary" className="bg-primary/10 text-primary">Side Muscle</Badge>
+                      )}
                       {exercise.equipment && (
                         <Badge variant="secondary">{exercise.equipment}</Badge>
                       )}

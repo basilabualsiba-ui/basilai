@@ -3,7 +3,7 @@ import { useGym } from '@/contexts/GymContext';
 import { Button } from '@/components/ui/button';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
-import { ArrowLeft, Dumbbell, Calendar, Target, TrendingUp, Users, Play } from "lucide-react";
+import { ArrowLeft, Dumbbell, Calendar, Target, TrendingUp, Users, Play, BarChart3 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 // Gym components (will be created next)
@@ -69,6 +69,15 @@ const Gym = () => {
               >
                 <Users className="h-4 w-4" />
                 <span className="hidden sm:inline">Muscle Groups</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate('/gym-stats')}
+                className="flex items-center gap-2"
+              >
+                <BarChart3 className="h-4 w-4" />
+                <span className="hidden sm:inline">Stats</span>
               </Button>
               {/* Desktop sidebar trigger */}
               <SidebarTrigger className="hover:bg-muted hidden md:flex" />

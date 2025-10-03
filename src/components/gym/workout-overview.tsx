@@ -46,11 +46,42 @@ export function WorkoutOverview({
         </Card>
       </div>;
   }
-  // Calculate target muscles including side muscles
-  const targetMuscles = Array.from(new Set([
-    ...todayWorkout.exercises.map(ex => ex.muscle_group),
-    ...todayWorkout.exercises.flatMap(ex => ex.side_muscle_groups || [])
-  ]));
+  // Calculate muscle distribution with percentages
+  const calculateMuscleDistribution = () => {
+    const muscleScores: Record<string, { score: number; isMain: boolean }> = {};
+    
+    todayWorkout.exercises.forEach(exercise => {
+      // Main muscle gets 75% weight
+      if (!muscleScores[exercise.muscle_group]) {
+        muscleScores[exercise.muscle_group] = { score: 0, isMain: true };
+      }
+      muscleScores[exercise.muscle_group].score += 0.75;
+      
+      // Side muscles get 25% weight (split among them)
+      const sideMuscles = exercise.side_muscle_groups || [];
+      if (sideMuscles.length > 0) {
+        const sideWeight = 0.25 / sideMuscles.length;
+        sideMuscles.forEach(sideMuscle => {
+          if (!muscleScores[sideMuscle]) {
+            muscleScores[sideMuscle] = { score: 0, isMain: false };
+          }
+          muscleScores[sideMuscle].score += sideWeight;
+        });
+      }
+    });
+    
+    // Calculate total and convert to percentages
+    const totalScore = Object.values(muscleScores).reduce((sum, { score }) => sum + score, 0);
+    const musclePercentages = Object.entries(muscleScores).map(([muscle, { score, isMain }]) => ({
+      muscle,
+      percentage: Math.round((score / totalScore) * 100),
+      isMain
+    })).sort((a, b) => b.percentage - a.percentage);
+    
+    return musclePercentages;
+  };
+  
+  const muscleDistribution = calculateMuscleDistribution();
 
   // Get muscle group icons and colors
   const getMuscleGroupDetails = (muscleName: string) => {
@@ -72,7 +103,7 @@ export function WorkoutOverview({
         </div>
         
         <div className="grid grid-cols-4 gap-4">
-          {targetMuscles.map(muscle => {
+          {muscleDistribution.map(({ muscle, percentage, isMain }) => {
           const details = getMuscleGroupDetails(muscle);
           return <div key={muscle} className="text-center">
                 <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center mb-2 mx-auto border-2" style={{
@@ -82,7 +113,10 @@ export function WorkoutOverview({
                   {details.photo_url ? <img src={details.photo_url} alt={muscle} className="w-full h-full object-cover" /> : <span className="text-2xl">{details.icon}</span>}
                 </div>
                 <div className="text-xs text-foreground font-medium">{muscle}</div>
-                <div className="text-xs text-muted-foreground">100%</div>
+                <div className="text-xs font-semibold" style={{ color: details.color }}>
+                  {percentage}%
+                </div>
+                {!isMain && <div className="text-[10px] text-muted-foreground">Side</div>}
               </div>;
         })}
         </div>
