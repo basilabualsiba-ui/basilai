@@ -3,7 +3,7 @@ import { useGym } from '@/contexts/GymContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Dumbbell, Play, Target, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Dumbbell, Play, Target, CheckCircle2, Timer, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { ExerciseInfoDialog } from './exercise-info-dialog';
 interface WorkoutOverviewProps {
@@ -92,73 +92,141 @@ export function WorkoutOverview({
       photo_url: muscleGroup?.photo_url || null
     };
   };
-  return <div className="min-h-screen bg-background p-4">
-      {/* Header */}
-      
+  return <div className="space-y-6">
+      {/* Workout Overview Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="h-5 w-5" />
+            Workout Overview
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="text-center p-4 bg-muted/30 rounded-lg">
+              <Dumbbell className="h-6 w-6 mx-auto mb-2 text-primary" />
+              <p className="text-sm text-muted-foreground">Exercises</p>
+              <p className="text-lg font-bold">{todayWorkout.exercises.length}</p>
+            </div>
+            <div className="text-center p-4 bg-muted/30 rounded-lg">
+              <Timer className="h-6 w-6 mx-auto mb-2 text-primary" />
+              <p className="text-sm text-muted-foreground">Est. Time</p>
+              <p className="text-lg font-bold">
+                {Math.round((todayWorkout.exercises.length * 3 * 40 + todayWorkout.exercises.length * 2 * 60) / 60)}min
+              </p>
+            </div>
+            <div className="text-center p-4 bg-muted/30 rounded-lg">
+              <Users className="h-6 w-6 mx-auto mb-2 text-primary" />
+              <p className="text-sm text-muted-foreground">Muscle Groups</p>
+              <p className="text-lg font-bold">{muscleDistribution.length}</p>
+            </div>
+          </div>
 
-      {/* Target Muscles Section */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-medium text-muted-foreground">Target Muscles</h2>
-        </div>
-        
-        <div className="grid grid-cols-4 gap-4">
-          {muscleDistribution.map(({ muscle, percentage, isMain }) => {
-          const details = getMuscleGroupDetails(muscle);
-          return <div key={muscle} className="text-center">
-                <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center mb-2 mx-auto border-2" style={{
-              backgroundColor: `${details.color}20`,
-              borderColor: details.color
-            }}>
-                  {details.photo_url ? <img src={details.photo_url} alt={muscle} className="w-full h-full object-cover" /> : <span className="text-2xl">{details.icon}</span>}
-                </div>
-                <div className="text-xs text-foreground font-medium">{muscle}</div>
-                <div className="text-xs font-semibold" style={{ color: details.color }}>
-                  {percentage}%
-                </div>
-                {!isMain && <div className="text-[10px] text-muted-foreground">Side</div>}
-              </div>;
-        })}
-        </div>
-      </div>
+          {/* Target Muscles */}
+          <div>
+            <h4 className="font-medium mb-3">Target Muscle Groups</h4>
+            <div className="grid grid-cols-4 gap-4">
+              {muscleDistribution.map(({ muscle, percentage, isMain }) => {
+                const details = getMuscleGroupDetails(muscle);
+                return <div key={muscle} className="text-center">
+                  <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center mb-2 mx-auto border-2" style={{
+                    backgroundColor: `${details.color}20`,
+                    borderColor: details.color
+                  }}>
+                    {details.photo_url ? <img src={details.photo_url} alt={muscle} className="w-full h-full object-cover" /> : <span className="text-2xl">{details.icon}</span>}
+                  </div>
+                  <div className="text-xs text-foreground font-medium">{muscle}</div>
+                  <div className="text-xs font-semibold" style={{ color: details.color }}>
+                    {percentage}%
+                  </div>
+                  {!isMain && <div className="text-[10px] text-muted-foreground">Side</div>}
+                </div>;
+              })}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Exercises Section */}
-      <div className="mb-20">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-medium text-muted-foreground">{todayWorkout.exercises.length} Exercises</h2>
-        </div>
-
-        <div className="space-y-3">
-          {todayWorkout.exercises.map((exercise, index) => {
-          const details = getMuscleGroupDetails(exercise.muscle_group);
-          return <Card key={exercise.id} className="bg-card border-border cursor-pointer hover:border-primary/30 transition-colors" onClick={() => handleExerciseClick(exercise)}>
-                <CardContent className="p-4">
+      {/* Exercises List Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Dumbbell className="h-5 w-5" />
+            Exercises ({todayWorkout.exercises.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {todayWorkout.exercises.map((exercise, index) => {
+              const details = getMuscleGroupDetails(exercise.muscle_group);
+              return <div 
+                key={exercise.id} 
+                className="border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                onClick={() => handleExerciseClick(exercise)}
+              >
+                <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-                        {exercise.photo_url ? <img src={exercise.photo_url} alt={exercise.name} className="w-full h-full object-cover rounded-lg" /> : <Dumbbell className="h-6 w-6 text-muted-foreground" />}
-                      </div>
-                      <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg overflow-hidden border-2 border-white">
-                        {details.photo_url ? <img src={details.photo_url} alt={exercise.muscle_group} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs" style={{
-                      backgroundColor: details.color
-                    }}>
-                            {details.icon}
-                          </div>}
-                      </div>
+                    <div className="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-bold">
+                      {index + 1}
                     </div>
-                    
-                    <div className="flex-1">
-                      <h3 className="font-medium text-foreground">{exercise.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        3 SETS • 12-10-8 REPS
-                      </p>
+                    <div>
+                      <h4 className="font-semibold">{exercise.name}</h4>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Badge variant="outline" className="text-xs">
+                          {exercise.muscle_group}
+                        </Badge>
+                        {exercise.side_muscle_groups && exercise.side_muscle_groups.length > 0 && (
+                          <>
+                            {exercise.side_muscle_groups.map(sideMuscle => (
+                              <Badge key={sideMuscle} variant="outline" className="text-xs">
+                                {sideMuscle} <span className="text-muted-foreground ml-1">(Side)</span>
+                              </Badge>
+                            ))}
+                          </>
+                        )}
+                        {exercise.equipment && (
+                          <Badge variant="outline" className="text-xs">
+                            {exercise.equipment}
+                          </Badge>
+                        )}
+                        {exercise.difficulty_level && (
+                          <Badge variant="outline" className="text-xs">
+                            {exercise.difficulty_level}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>;
-        })}
-        </div>
-      </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center p-3 bg-muted/30 rounded">
+                    <p className="text-sm text-muted-foreground">Sets</p>
+                    <p className="text-lg font-bold">3</p>
+                  </div>
+                  <div className="text-center p-3 bg-muted/30 rounded">
+                    <p className="text-sm text-muted-foreground">Reps</p>
+                    <p className="text-lg font-bold">12-10-8</p>
+                  </div>
+                  <div className="text-center p-3 bg-muted/30 rounded">
+                    <p className="text-sm text-muted-foreground">Rest</p>
+                    <p className="text-lg font-bold">60s</p>
+                  </div>
+                </div>
+
+                {exercise.instructions && (
+                  <div className="bg-muted/20 p-3 rounded mt-3">
+                    <p className="text-sm font-medium mb-1">Instructions</p>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {exercise.instructions}
+                    </p>
+                  </div>
+                )}
+              </div>;
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Start Workout Button */}
       <div className="fixed bottom-20 md:bottom-4 left-0 right-0 p-4 bg-gradient-to-t from-background via-background/80 to-transparent z-50">
