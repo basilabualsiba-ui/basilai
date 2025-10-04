@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Target, Timer, Dumbbell, Users, Calendar } from 'lucide-react';
+import { ArrowLeft, Target, Timer, Dumbbell, Users, Calendar, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -49,11 +49,13 @@ export function WorkoutDetail({ workoutId, onBack }: WorkoutDetailProps) {
   const [loading, setLoading] = useState(true);
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
   const [showExerciseDialog, setShowExerciseDialog] = useState(false);
+  const [exercisePRs, setExercisePRs] = useState<Record<string, { weight: number; reps: number }>>({});
   const { toast } = useToast();
   const { exercises, muscleGroups } = useGym();
 
   useEffect(() => {
     fetchWorkoutDetails();
+    fetchExercisePRs();
   }, [workoutId]);
 
   const fetchWorkoutDetails = async () => {
@@ -100,6 +102,79 @@ export function WorkoutDetail({ workoutId, onBack }: WorkoutDetailProps) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchExercisePRs = async () => {
+    try {
+      // Get all exercise IDs from the workout
+      const { data: workoutExercises } = await supabase
+        .from('workout_exercises')
+        .select('exercise_id')
+        .eq('workout_id', workoutId);
+
+      if (!workoutExercises) return;
+
+      const exerciseIds = workoutExercises.map(we => we.exercise_id);
+
+      // Fetch PRs for each exercise
+      const prs: Record<string, { weight: number; reps: number }> = {};
+      
+      for (const exerciseId of exerciseIds) {
+        const { data: sets } = await supabase
+          .from('exercise_sets')
+          .select('weight, reps')
+          .eq('exercise_id', exerciseId)
+          .not('completed_at', 'is', null)
+          .order('weight', { ascending: false })
+          .limit(1);
+
+        if (sets && sets.length > 0) {
+          prs[exerciseId] = {
+            weight: sets[0].weight || 0,
+            reps: sets[0].reps || 0
+          };
+        }
+      }
+
+      setExercisePRs(prs);
+    } catch (error) {
+      console.error('Error fetching exercise PRs:', error);
+    }
+  };
+
+  // Calculate muscle distribution with percentages
+  const calculateMuscleDistribution = () => {
+    const muscleScores: Record<string, { score: number; isMain: boolean }> = {};
+    
+    workoutExercises.forEach(we => {
+      // Main muscle gets 75% weight
+      if (!muscleScores[we.exercise.muscle_group]) {
+        muscleScores[we.exercise.muscle_group] = { score: 0, isMain: true };
+      }
+      muscleScores[we.exercise.muscle_group].score += 0.75;
+      
+      // Side muscles get 25% weight (split among them)
+      const sideMuscles = we.exercise.side_muscle_groups || [];
+      if (sideMuscles.length > 0) {
+        const sideWeight = 0.25 / sideMuscles.length;
+        sideMuscles.forEach(sideMuscle => {
+          if (!muscleScores[sideMuscle]) {
+            muscleScores[sideMuscle] = { score: 0, isMain: false };
+          }
+          muscleScores[sideMuscle].score += sideWeight;
+        });
+      }
+    });
+    
+    // Calculate total and convert to percentages
+    const totalScore = Object.values(muscleScores).reduce((sum, { score }) => sum + score, 0);
+    const musclePercentages = Object.entries(muscleScores).map(([muscle, { score, isMain }]) => ({
+      muscle,
+      percentage: Math.round((score / totalScore) * 100),
+      isMain
+    })).sort((a, b) => b.percentage - a.percentage);
+    
+    return musclePercentages;
   };
 
   const getTotalEstimatedTime = () => {
@@ -166,7 +241,7 @@ export function WorkoutDetail({ workoutId, onBack }: WorkoutDetailProps) {
         </div>
         
         <div className="grid grid-cols-4 gap-4">
-          {workout.muscle_groups.map((muscle) => {
+          {calculateMuscleDistribution().map(({ muscle, percentage, isMain }) => {
             const muscleGroup = muscleGroups.find(mg => mg.name === muscle);
             const color = muscleGroup?.color || '#ff7f00';
             const photo_url = muscleGroup?.photo_url;
@@ -179,6 +254,10 @@ export function WorkoutDetail({ workoutId, onBack }: WorkoutDetailProps) {
                 {photo_url ? <img src={photo_url} alt={muscle} className="w-full h-full object-cover" /> : <span className="text-2xl">💪</span>}
               </div>
               <div className="text-xs text-foreground font-medium">{muscle}</div>
+              <div className="text-xs font-semibold" style={{ color }}>
+                {percentage}%
+              </div>
+              {!isMain && <div className="text-[10px] text-muted-foreground">Side</div>}
             </div>;
           })}
         </div>
@@ -227,6 +306,14 @@ export function WorkoutDetail({ workoutId, onBack }: WorkoutDetailProps) {
                     <p className="text-sm text-muted-foreground">
                       {workoutExercise.sets} SETS • {workoutExercise.reps} REPS
                     </p>
+                    {exercisePRs[workoutExercise.exercise_id] && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <TrendingUp className="h-3 w-3 text-primary" />
+                        <span className="text-xs text-primary font-medium">
+                          PR: {exercisePRs[workoutExercise.exercise_id].weight}kg × {exercisePRs[workoutExercise.exercise_id].reps}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>

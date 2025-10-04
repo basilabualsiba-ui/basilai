@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGym } from '@/contexts/GymContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Dumbbell, Play, Target, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Dumbbell, Play, Target, CheckCircle2, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { ExerciseInfoDialog } from './exercise-info-dialog';
+import { supabase } from '@/integrations/supabase/client';
 interface WorkoutOverviewProps {
   onStartWorkout: () => void;
   onBack: () => void;
@@ -25,10 +26,45 @@ export function WorkoutOverview({
   } = useGym();
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [exercisePRs, setExercisePRs] = useState<Record<string, { weight: number; reps: number }>>({});
   const todayWorkout = selectedDate ? getWorkoutForDate(format(selectedDate, 'yyyy-MM-dd')) : getTodayWorkout();
   const isCompleted = todayWorkout?.session?.completed_at;
   console.log('WorkoutOverview - todayWorkout:', todayWorkout);
   console.log('WorkoutOverview - isCompleted:', isCompleted);
+
+  useEffect(() => {
+    const fetchExercisePRs = async () => {
+      if (!todayWorkout || todayWorkout.exercises.length === 0) return;
+
+      try {
+        const exerciseIds = todayWorkout.exercises.map(ex => ex.id);
+        const prs: Record<string, { weight: number; reps: number }> = {};
+
+        for (const exerciseId of exerciseIds) {
+          const { data: sets } = await supabase
+            .from('exercise_sets')
+            .select('weight, reps')
+            .eq('exercise_id', exerciseId)
+            .not('completed_at', 'is', null)
+            .order('weight', { ascending: false })
+            .limit(1);
+
+          if (sets && sets.length > 0) {
+            prs[exerciseId] = {
+              weight: sets[0].weight || 0,
+              reps: sets[0].reps || 0
+            };
+          }
+        }
+
+        setExercisePRs(prs);
+      } catch (error) {
+        console.error('Error fetching exercise PRs:', error);
+      }
+    };
+
+    fetchExercisePRs();
+  }, [todayWorkout?.exercises]);
   const handleExerciseClick = (exercise: any) => {
     setSelectedExercise(exercise);
     setIsDialogOpen(true);
@@ -149,6 +185,14 @@ export function WorkoutOverview({
                       <p className="text-sm text-muted-foreground">
                         3 SETS • 12-10-8 REPS
                       </p>
+                      {exercisePRs[exercise.id] && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <TrendingUp className="h-3 w-3 text-primary" />
+                          <span className="text-xs text-primary font-medium">
+                            PR: {exercisePRs[exercise.id].weight}kg × {exercisePRs[exercise.id].reps}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
