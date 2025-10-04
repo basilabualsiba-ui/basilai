@@ -29,6 +29,9 @@ interface WorkoutExercise {
     equipment?: string;
     difficulty_level?: string;
     instructions?: string;
+    photo_url?: string;
+    video_url?: string;
+    side_muscle_groups?: string[];
   };
 }
 
@@ -47,7 +50,7 @@ export function WorkoutDetail({ workoutId, onBack }: WorkoutDetailProps) {
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
   const [showExerciseDialog, setShowExerciseDialog] = useState(false);
   const { toast } = useToast();
-  const { exercises } = useGym();
+  const { exercises, muscleGroups } = useGym();
 
   useEffect(() => {
     fetchWorkoutDetails();
@@ -155,165 +158,82 @@ export function WorkoutDetail({ workoutId, onBack }: WorkoutDetailProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={onBack}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">{workout.name}</h1>
-          <p className="text-muted-foreground">Workout details and exercises</p>
+    <div className="min-h-screen bg-background p-4">
+      {/* Target Muscles Section */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-medium text-muted-foreground">Target Muscles</h2>
+        </div>
+        
+        <div className="grid grid-cols-4 gap-4">
+          {workout.muscle_groups.map((muscle) => {
+            const muscleGroup = muscleGroups.find(mg => mg.name === muscle);
+            const color = muscleGroup?.color || '#ff7f00';
+            const photo_url = muscleGroup?.photo_url;
+            
+            return <div key={muscle} className="text-center">
+              <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center mb-2 mx-auto border-2" style={{
+                backgroundColor: `${color}20`,
+                borderColor: color
+              }}>
+                {photo_url ? <img src={photo_url} alt={muscle} className="w-full h-full object-cover" /> : <span className="text-2xl">💪</span>}
+              </div>
+              <div className="text-xs text-foreground font-medium">{muscle}</div>
+            </div>;
+          })}
         </div>
       </div>
 
-      {/* Workout Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Workout Overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {workout.description && (
-            <div>
-              <h4 className="font-medium mb-2">Description</h4>
-              <p className="text-muted-foreground">{workout.description}</p>
-            </div>
-          )}
+      {/* Exercises Section */}
+      <div className="mb-20">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-medium text-muted-foreground">{workoutExercises.length} Exercises</h2>
+        </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-muted/30 rounded-lg">
-              <Dumbbell className="h-6 w-6 mx-auto mb-2 text-primary" />
-              <p className="text-sm text-muted-foreground">Exercises</p>
-              <p className="text-lg font-bold">{workoutExercises.length}</p>
-            </div>
-            <div className="text-center p-4 bg-muted/30 rounded-lg">
-              <Timer className="h-6 w-6 mx-auto mb-2 text-primary" />
-              <p className="text-sm text-muted-foreground">Est. Time</p>
-              <p className="text-lg font-bold">{getTotalEstimatedTime()}min</p>
-            </div>
-            <div className="text-center p-4 bg-muted/30 rounded-lg">
-              <Users className="h-6 w-6 mx-auto mb-2 text-primary" />
-              <p className="text-sm text-muted-foreground">Muscle Groups</p>
-              <p className="text-lg font-bold">{workout.muscle_groups.length}</p>
-            </div>
-            <div className="text-center p-4 bg-muted/30 rounded-lg">
-              <Calendar className="h-6 w-6 mx-auto mb-2 text-primary" />
-              <p className="text-sm text-muted-foreground">Created</p>
-              <p className="text-lg font-bold">{new Date(workout.created_at).toLocaleDateString()}</p>
-            </div>
-          </div>
-
-          <div>
-            <h4 className="font-medium mb-2">Target Muscle Groups</h4>
-            <div className="flex flex-wrap gap-2">
-              {workout.muscle_groups.map((muscle) => (
-                <Badge key={muscle} variant="secondary">
-                  {muscle}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          {getUniqueEquipment().length > 0 && (
-            <div>
-              <h4 className="font-medium mb-2">Equipment Needed</h4>
-              <div className="flex flex-wrap gap-2">
-                {getUniqueEquipment().map((equipment) => (
-                  <Badge key={equipment} variant="outline">
-                    {equipment}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Exercises List */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Dumbbell className="h-5 w-5" />
-            Exercises ({workoutExercises.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {workoutExercises.length === 0 ? (
-            <div className="text-center py-8">
-              <Dumbbell className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No exercises added</h3>
-              <p className="text-muted-foreground">This workout doesn't have any exercises yet.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {workoutExercises.map((workoutExercise, index) => (
-                 <div 
-                   key={workoutExercise.id} 
-                   className="border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-                   onClick={() => handleExerciseClick(workoutExercise.exercise)}
-                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-sm font-bold">
-                        {index + 1}
-                      </div>
-                      <div>
-                        <h4 className="font-semibold">{workoutExercise.exercise.name}</h4>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Badge variant="outline" className="text-xs">
-                            {workoutExercise.exercise.muscle_group}
-                          </Badge>
-                          {workoutExercise.exercise.equipment && (
-                            <Badge variant="outline" className="text-xs">
-                              {workoutExercise.exercise.equipment}
-                            </Badge>
-                          )}
-                          {workoutExercise.exercise.difficulty_level && (
-                            <Badge variant="outline" className="text-xs">
-                              {workoutExercise.exercise.difficulty_level}
-                            </Badge>
-                          )}
+        <div className="space-y-3">
+          {workoutExercises.map((workoutExercise, index) => {
+            const muscleGroup = muscleGroups.find(mg => mg.name === workoutExercise.exercise.muscle_group);
+            const color = muscleGroup?.color || '#ff7f00';
+            const photo_url = muscleGroup?.photo_url;
+            
+            return <Card 
+              key={workoutExercise.id} 
+              className="bg-card border-border cursor-pointer hover:border-primary/30 transition-colors" 
+              onClick={() => handleExerciseClick(workoutExercise.exercise)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                      {workoutExercise.exercise.photo_url ? 
+                        <img src={workoutExercise.exercise.photo_url} alt={workoutExercise.exercise.name} className="w-full h-full object-cover rounded-lg" /> : 
+                        <Dumbbell className="h-6 w-6 text-muted-foreground" />
+                      }
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg overflow-hidden border-2 border-white">
+                      {photo_url ? 
+                        <img src={photo_url} alt={workoutExercise.exercise.muscle_group} className="w-full h-full object-cover" /> : 
+                        <div className="w-full h-full flex items-center justify-center text-xs" style={{
+                          backgroundColor: color
+                        }}>
+                          💪
                         </div>
-                      </div>
+                      }
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-4 gap-4 mb-3">
-                    <div className="text-center p-3 bg-muted/30 rounded">
-                      <p className="text-sm text-muted-foreground">Sets</p>
-                      <p className="text-lg font-bold">{workoutExercise.sets}</p>
-                    </div>
-                    <div className="text-center p-3 bg-muted/30 rounded">
-                      <p className="text-sm text-muted-foreground">Reps</p>
-                      <p className="text-lg font-bold">{workoutExercise.reps}</p>
-                    </div>
-                    <div className="text-center p-3 bg-muted/30 rounded">
-                      <p className="text-sm text-muted-foreground">Weight</p>
-                      <p className="text-lg font-bold">{workoutExercise.weight}kg</p>
-                    </div>
-                    <div className="text-center p-3 bg-muted/30 rounded">
-                      <p className="text-sm text-muted-foreground">Rest</p>
-                      <p className="text-lg font-bold">{workoutExercise.rest_seconds}s</p>
-                    </div>
+                  
+                  <div className="flex-1">
+                    <h3 className="font-medium text-foreground">{workoutExercise.exercise.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {workoutExercise.sets} SETS • {workoutExercise.reps} REPS
+                    </p>
                   </div>
-
-                  {workoutExercise.exercise.instructions && (
-                    <div className="bg-muted/20 p-3 rounded">
-                      <p className="text-sm font-medium mb-1">Instructions</p>
-                      <p className="text-sm text-muted-foreground">
-                        {workoutExercise.exercise.instructions}
-                      </p>
-                    </div>
-                  )}
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>;
+          })}
+        </div>
+      </div>
 
       <ExerciseInfoDialog
         exercise={selectedExercise}
