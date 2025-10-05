@@ -57,23 +57,21 @@ const todayWorkout = selectedDate
 
   // Check for existing active session
   useEffect(() => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    const todayDate = `${year}-${month}-${day}`;
+    const checkDate = selectedDate || new Date();
+    const dateString = format(checkDate, 'yyyy-MM-dd');
     
     const activeSession = workoutSessions.find(session => 
-      session.scheduled_date === todayDate && 
+      session.scheduled_date === dateString && 
       session.started_at && 
       !session.completed_at
     );
     
     if (activeSession && !currentSession) {
+      console.log('Found existing active session:', activeSession);
       setCurrentSession(activeSession.id);
       setCurrentScreen('timer');
     }
-  }, [workoutSessions.length, currentSession]);
+  }, [workoutSessions, selectedDate, currentSession]);
 
   const getActivePlanIdForToday = (): string | null => {
     const today = new Date();
