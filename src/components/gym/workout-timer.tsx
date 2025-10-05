@@ -35,6 +35,7 @@ export function WorkoutTimer({
   const [isExerciseManagerOpen, setIsExerciseManagerOpen] = useState(false);
   const [workoutExerciseDetails, setWorkoutExerciseDetails] = useState<Record<string, any>>({});
   const [exercisePRs, setExercisePRs] = useState<Record<string, { weight: number; reps: number }>>({});
+  const [computedCompletedExercises, setComputedCompletedExercises] = useState<Set<string>>(new Set());
   const { toast } = useToast();
   
   const todayWorkout = getTodayWorkout();
@@ -67,6 +68,29 @@ export function WorkoutTimer({
     
     fetchWorkoutExerciseDetails();
   }, [currentExercises]);
+
+  // Compute completed exercises from database
+  useEffect(() => {
+    const computeCompletedExercises = () => {
+      const completed = new Set<string>();
+      
+      currentExercises.forEach(exercise => {
+        const exerciseHasSets = exerciseSets.some(
+          set => set.session_id === sessionId && 
+                 set.exercise_id === exercise.id && 
+                 set.completed_at !== null
+        );
+        
+        if (exerciseHasSets) {
+          completed.add(exercise.id);
+        }
+      });
+      
+      setComputedCompletedExercises(completed);
+    };
+    
+    computeCompletedExercises();
+  }, [currentExercises, exerciseSets, sessionId]);
 
   // Fetch exercise PRs
   useEffect(() => {
@@ -136,7 +160,7 @@ export function WorkoutTimer({
   };
 
   const totalExercises = currentExercises.length;
-  const completedCount = completedExercises.size;
+  const completedCount = computedCompletedExercises.size;
   const progressPercentage = totalExercises > 0 ? (completedCount / totalExercises) * 100 : 0;
 
   const toggleTimer = () => {
@@ -216,7 +240,7 @@ export function WorkoutTimer({
       {/* Exercise List */}
       <div className="space-y-3 mb-20">
         {currentExercises.map((exercise) => {
-          const isCompleted = completedExercises.has(exercise.id);
+          const isCompleted = computedCompletedExercises.has(exercise.id);
           const exerciseSetCount = exerciseSets.filter(
             set => set.session_id === sessionId && set.exercise_id === exercise.id
           ).length;
