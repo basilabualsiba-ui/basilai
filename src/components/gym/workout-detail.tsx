@@ -304,7 +304,7 @@ export function WorkoutDetail({ workoutId, onBack }: WorkoutDetailProps) {
                   <div className="flex-1">
                     <h3 className="font-medium text-foreground">{workoutExercise.exercise.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {workoutExercise.sets} SETS • {workoutExercise.reps} REPS
+                      {workoutExercise.sets} SETS • 12-10-8 REPS
                     </p>
                     {exercisePRs[workoutExercise.exercise_id] && (
                       <div className="flex items-center gap-1 mt-1">
