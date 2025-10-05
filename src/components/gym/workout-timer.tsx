@@ -3,7 +3,7 @@ import { useGym } from '@/contexts/GymContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { X, Clock, Settings, CheckCircle, Dumbbell, Pause, Play, Plus, Minus, RotateCcw } from 'lucide-react';
+import { X, Clock, Settings, CheckCircle, Dumbbell, Pause, Play, Plus, Minus, RotateCcw, TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { WorkoutExerciseManager } from './workout-exercise-manager';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,11 +29,12 @@ export function WorkoutTimer({
   currentExercises,
   onExercisesChange
 }: WorkoutTimerProps) {
-  const { getTodayWorkout, workoutSessions, exerciseSets } = useGym();
+  const { getTodayWorkout, workoutSessions, exerciseSets, muscleGroups } = useGym();
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(true);
   const [isExerciseManagerOpen, setIsExerciseManagerOpen] = useState(false);
   const [workoutExerciseDetails, setWorkoutExerciseDetails] = useState<Record<string, any>>({});
+  const [exercisePRs, setExercisePRs] = useState<Record<string, { weight: number; reps: number }>>({});
   const { toast } = useToast();
   
   const todayWorkout = getTodayWorkout();
@@ -65,6 +66,41 @@ export function WorkoutTimer({
     };
     
     fetchWorkoutExerciseDetails();
+  }, [currentExercises]);
+
+  // Fetch exercise PRs
+  useEffect(() => {
+    const fetchExercisePRs = async () => {
+      if (!currentExercises || currentExercises.length === 0) return;
+
+      try {
+        const exerciseIds = currentExercises.map(ex => ex.id);
+        const prs: Record<string, { weight: number; reps: number }> = {};
+
+        for (const exerciseId of exerciseIds) {
+          const { data: sets } = await supabase
+            .from('exercise_sets')
+            .select('weight, reps')
+            .eq('exercise_id', exerciseId)
+            .not('completed_at', 'is', null)
+            .order('weight', { ascending: false })
+            .limit(1);
+
+          if (sets && sets.length > 0) {
+            prs[exerciseId] = {
+              weight: sets[0].weight || 0,
+              reps: sets[0].reps || 0
+            };
+          }
+        }
+
+        setExercisePRs(prs);
+      } catch (error) {
+        console.error('Error fetching exercise PRs:', error);
+      }
+    };
+
+    fetchExercisePRs();
   }, [currentExercises]);
 
   // Timer effect
@@ -207,8 +243,20 @@ export function WorkoutTimer({
                         <Dumbbell className="h-6 w-6 text-muted-foreground" />
                       )}
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-xs font-bold text-primary-foreground">
-                      💪
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg overflow-hidden border-2 border-white">
+                      {(() => {
+                        const muscleGroup = muscleGroups.find(mg => mg.name === exercise.muscle_group);
+                        const color = muscleGroup?.color || '#ff7f00';
+                        const photo_url = muscleGroup?.photo_url;
+                        
+                        return photo_url ? (
+                          <img src={photo_url} alt={exercise.muscle_group} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-xs" style={{ backgroundColor: color }}>
+                            💪
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                   
@@ -220,11 +268,17 @@ export function WorkoutTimer({
                        {isCompleted ? `${exerciseSetCount} Sets Completed` : (() => {
                          const config = workoutExerciseDetails[exercise.id];
                          const sets = config?.sets || 3;
-                         const reps = config?.reps || 10;
-                         const weight = config?.weight || 0;
-                         return `${sets} Sets • ${reps} Reps • ${weight}kg`;
+                         return `${sets} SETS • 12-10-8 REPS`;
                        })()}
                      </p>
+                     {!isCompleted && exercisePRs[exercise.id] && (
+                       <div className="flex items-center gap-1 mt-1">
+                         <TrendingUp className="h-3 w-3 text-primary" />
+                         <span className="text-xs text-primary font-medium">
+                           PR: {exercisePRs[exercise.id].weight}kg × {exercisePRs[exercise.id].reps}
+                         </span>
+                       </div>
+                     )}
                    </div>
                   
                   {isCompleted ? (
