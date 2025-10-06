@@ -163,6 +163,41 @@ export function WorkoutTimer({
   const completedCount = computedCompletedExercises.size;
   const progressPercentage = totalExercises > 0 ? (completedCount / totalExercises) * 100 : 0;
 
+  // Calculate muscle distribution
+  const muscleDistribution = () => {
+    const mainMuscles: Record<string, number> = {};
+    const sideMuscles: Record<string, number> = {};
+    
+    currentExercises.forEach(exercise => {
+      // Count main muscle
+      mainMuscles[exercise.muscle_group] = (mainMuscles[exercise.muscle_group] || 0) + 1;
+      
+      // Count side muscles
+      if (exercise.side_muscle_groups && Array.isArray(exercise.side_muscle_groups)) {
+        exercise.side_muscle_groups.forEach((muscle: string) => {
+          sideMuscles[muscle] = (sideMuscles[muscle] || 0) + 1;
+        });
+      }
+    });
+    
+    const totalCount = currentExercises.length;
+    const mainMusclesWithPercentage = Object.entries(mainMuscles).map(([muscle, count]) => ({
+      muscle,
+      count,
+      percentage: Math.round((count / totalCount) * 100)
+    })).sort((a, b) => b.count - a.count);
+    
+    const sideMusclesWithPercentage = Object.entries(sideMuscles).map(([muscle, count]) => ({
+      muscle,
+      count,
+      percentage: Math.round((count / totalCount) * 100)
+    })).sort((a, b) => b.count - a.count);
+    
+    return { main: mainMusclesWithPercentage, side: sideMusclesWithPercentage };
+  };
+  
+  const { main: mainMuscles, side: sideMuscles } = muscleDistribution();
+
   const toggleTimer = () => {
     setIsRunning(!isRunning);
   };
@@ -236,6 +271,81 @@ export function WorkoutTimer({
           {completedCount}/{totalExercises} exercises complete
         </div>
       </div>
+
+      {/* Muscle Distribution Card */}
+      {(mainMuscles.length > 0 || sideMuscles.length > 0) && (
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-semibold text-foreground mb-3">Target Muscles</h3>
+            
+            {/* Main Muscles */}
+            {mainMuscles.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs font-medium text-muted-foreground mb-2">Main Muscles</p>
+                <div className="flex flex-wrap gap-2">
+                  {mainMuscles.map(({ muscle, percentage }) => {
+                    const muscleGroup = muscleGroups.find(mg => mg.name === muscle);
+                    const color = muscleGroup?.color || '#ff7f00';
+                    const photo_url = muscleGroup?.photo_url;
+                    
+                    return (
+                      <div 
+                        key={muscle}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card"
+                      >
+                        <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0">
+                          {photo_url ? (
+                            <img src={photo_url} alt={muscle} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-xs" style={{ backgroundColor: color }}>
+                              💪
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-xs font-medium text-foreground capitalize">{muscle}</span>
+                        <span className="text-xs font-semibold text-primary">{percentage}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            
+            {/* Side Muscles */}
+            {sideMuscles.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-2">Side Muscles</p>
+                <div className="flex flex-wrap gap-2">
+                  {sideMuscles.map(({ muscle, percentage }) => {
+                    const muscleGroup = muscleGroups.find(mg => mg.name === muscle);
+                    const color = muscleGroup?.color || '#ff7f00';
+                    const photo_url = muscleGroup?.photo_url;
+                    
+                    return (
+                      <div 
+                        key={muscle}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card"
+                      >
+                        <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0">
+                          {photo_url ? (
+                            <img src={photo_url} alt={muscle} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-xs" style={{ backgroundColor: color }}>
+                              💪
+                            </div>
+                          )}
+                        </div>
+                        <span className="text-xs font-medium text-muted-foreground capitalize">{muscle}</span>
+                        <span className="text-xs font-semibold text-muted-foreground">{percentage}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Exercise List */}
       <div className="space-y-3 mb-20">
