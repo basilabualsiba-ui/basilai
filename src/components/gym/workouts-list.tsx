@@ -70,33 +70,43 @@ function WorkoutMuscleDistribution({ workoutId }: { workoutId: string }) {
   }, [workoutId]);
 
   const muscleDistribution = () => {
-    const mainMuscles: Record<string, number> = {};
-    const sideMuscles: Record<string, number> = {};
+    const muscleScores: Record<string, { score: number; isMain: boolean }> = {};
     
     exercises.forEach(exercise => {
-      mainMuscles[exercise.muscle_group] = (mainMuscles[exercise.muscle_group] || 0) + 1;
+      // Main muscle gets 75% weight
+      if (!muscleScores[exercise.muscle_group]) {
+        muscleScores[exercise.muscle_group] = { score: 0, isMain: true };
+      }
+      muscleScores[exercise.muscle_group].score += 0.75;
+      muscleScores[exercise.muscle_group].isMain = true; // Mark as main muscle
       
-      if (exercise.side_muscle_groups && Array.isArray(exercise.side_muscle_groups)) {
-        exercise.side_muscle_groups.forEach((muscle: string) => {
-          sideMuscles[muscle] = (sideMuscles[muscle] || 0) + 1;
+      // Side muscles get 25% weight (split among them)
+      const sideMuscles = exercise.side_muscle_groups || [];
+      if (sideMuscles.length > 0) {
+        const sideWeight = 0.25 / sideMuscles.length;
+        sideMuscles.forEach((sideMuscle: string) => {
+          if (!muscleScores[sideMuscle]) {
+            muscleScores[sideMuscle] = { score: 0, isMain: false };
+          }
+          muscleScores[sideMuscle].score += sideWeight;
+          // Keep isMain as false only if it was never a main muscle
         });
       }
     });
     
-    const totalCount = exercises.length;
-    const mainMusclesWithPercentage = Object.entries(mainMuscles).map(([muscle, count]) => ({
+    // Calculate total and convert to percentages
+    const totalScore = Object.values(muscleScores).reduce((sum, { score }) => sum + score, 0);
+    const musclePercentages = Object.entries(muscleScores).map(([muscle, { score, isMain }]) => ({
       muscle,
-      count,
-      percentage: Math.round((count / totalCount) * 100)
-    })).sort((a, b) => b.count - a.count);
+      percentage: Math.round((score / totalScore) * 100),
+      isMain
+    })).sort((a, b) => b.percentage - a.percentage);
     
-    const sideMusclesWithPercentage = Object.entries(sideMuscles).map(([muscle, count]) => ({
-      muscle,
-      count,
-      percentage: Math.round((count / totalCount) * 100)
-    })).sort((a, b) => b.count - a.count);
+    // Separate into main and side based on isMain flag
+    const mainMuscles = musclePercentages.filter(m => m.isMain);
+    const sideMuscles = musclePercentages.filter(m => !m.isMain);
     
-    return { main: mainMusclesWithPercentage, side: sideMusclesWithPercentage };
+    return { main: mainMuscles, side: sideMuscles };
   };
 
   const { main: mainMuscles, side: sideMuscles } = muscleDistribution();
