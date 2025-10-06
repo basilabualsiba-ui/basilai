@@ -27,6 +27,7 @@ interface Exercise {
   id: string;
   name: string;
   muscle_group: string;
+  side_muscle_groups?: string[];
   equipment?: string;
   difficulty_level?: string;
   instructions?: string;
@@ -34,6 +35,147 @@ interface Exercise {
   photo_url?: string;
   created_at: string;
   updated_at: string;
+}
+
+function WorkoutMuscleDistribution({ workoutId }: { workoutId: string }) {
+  const { muscleGroups } = useGym();
+  const [exercises, setExercises] = useState<Exercise[]>([]);
+
+  useEffect(() => {
+    const fetchWorkoutExercises = async () => {
+      try {
+        const { data: workoutExercises, error: weError } = await supabase
+          .from('workout_exercises')
+          .select('exercise_id')
+          .eq('workout_id', workoutId);
+
+        if (weError) throw weError;
+
+        if (workoutExercises && workoutExercises.length > 0) {
+          const exerciseIds = workoutExercises.map(we => we.exercise_id);
+          const { data: exercisesData, error: exError } = await supabase
+            .from('exercises')
+            .select('*')
+            .in('id', exerciseIds);
+
+          if (exError) throw exError;
+          setExercises(exercisesData || []);
+        }
+      } catch (error) {
+        console.error('Error fetching workout exercises:', error);
+      }
+    };
+
+    fetchWorkoutExercises();
+  }, [workoutId]);
+
+  const muscleDistribution = () => {
+    const mainMuscles: Record<string, number> = {};
+    const sideMuscles: Record<string, number> = {};
+    
+    exercises.forEach(exercise => {
+      mainMuscles[exercise.muscle_group] = (mainMuscles[exercise.muscle_group] || 0) + 1;
+      
+      if (exercise.side_muscle_groups && Array.isArray(exercise.side_muscle_groups)) {
+        exercise.side_muscle_groups.forEach((muscle: string) => {
+          sideMuscles[muscle] = (sideMuscles[muscle] || 0) + 1;
+        });
+      }
+    });
+    
+    const totalCount = exercises.length;
+    const mainMusclesWithPercentage = Object.entries(mainMuscles).map(([muscle, count]) => ({
+      muscle,
+      count,
+      percentage: Math.round((count / totalCount) * 100)
+    })).sort((a, b) => b.count - a.count);
+    
+    const sideMusclesWithPercentage = Object.entries(sideMuscles).map(([muscle, count]) => ({
+      muscle,
+      count,
+      percentage: Math.round((count / totalCount) * 100)
+    })).sort((a, b) => b.count - a.count);
+    
+    return { main: mainMusclesWithPercentage, side: sideMusclesWithPercentage };
+  };
+
+  const { main: mainMuscles, side: sideMuscles } = muscleDistribution();
+
+  if (exercises.length === 0) {
+    return (
+      <div className="text-sm text-muted-foreground">
+        No exercises added yet
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {mainMuscles.length > 0 && (
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">Main Muscles</p>
+          <div className="flex flex-wrap gap-2">
+            {mainMuscles.map(({ muscle, percentage }) => {
+              const muscleGroup = muscleGroups.find(mg => mg.name === muscle);
+              const color = muscleGroup?.color || '#ff7f00';
+              const photo_url = muscleGroup?.photo_url;
+              
+              return (
+                <div 
+                  key={muscle}
+                  className="flex items-center gap-2 px-2.5 py-1 rounded-full border border-border bg-card"
+                >
+                  <div className="w-4 h-4 rounded-full overflow-hidden flex-shrink-0">
+                    {photo_url ? (
+                      <img src={photo_url} alt={muscle} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs" style={{ backgroundColor: color }}>
+                        💪
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-xs font-medium text-foreground capitalize">{muscle}</span>
+                  <span className="text-xs font-semibold text-primary">{percentage}%</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      
+      {sideMuscles.length > 0 && (
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">Side Muscles</p>
+          <div className="flex flex-wrap gap-2">
+            {sideMuscles.map(({ muscle, percentage }) => {
+              const muscleGroup = muscleGroups.find(mg => mg.name === muscle);
+              const color = muscleGroup?.color || '#ff7f00';
+              const photo_url = muscleGroup?.photo_url;
+              
+              return (
+                <div 
+                  key={muscle}
+                  className="flex items-center gap-2 px-2.5 py-1 rounded-full border border-border bg-card"
+                >
+                  <div className="w-4 h-4 rounded-full overflow-hidden flex-shrink-0">
+                    {photo_url ? (
+                      <img src={photo_url} alt={muscle} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xs" style={{ backgroundColor: color }}>
+                        💪
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-xs font-medium text-muted-foreground capitalize">{muscle}</span>
+                  <span className="text-xs font-semibold text-muted-foreground">{percentage}%</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 
@@ -558,18 +700,7 @@ export function WorkoutsList() {
               )}
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm font-medium mb-2">Target Muscles:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {workout.muscle_groups.map((muscle) => (
-                      <Badge key={muscle} variant="secondary" className="text-xs">
-                        {muscle}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <WorkoutMuscleDistribution workoutId={workout.id} />
             </CardContent>
           </Card>
         ))}
