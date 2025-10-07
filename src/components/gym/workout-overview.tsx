@@ -92,6 +92,7 @@ export function WorkoutOverview({
         muscleScores[exercise.muscle_group] = { score: 0, isMain: true };
       }
       muscleScores[exercise.muscle_group].score += 0.75;
+      muscleScores[exercise.muscle_group].isMain = true; // Mark as main muscle
       
       // Side muscles get 25% weight (split among them)
       const sideMuscles = exercise.side_muscle_groups || [];
@@ -102,6 +103,7 @@ export function WorkoutOverview({
             muscleScores[sideMuscle] = { score: 0, isMain: false };
           }
           muscleScores[sideMuscle].score += sideWeight;
+          // Keep isMain as false only if it was never a main muscle
         });
       }
     });
