@@ -21,7 +21,8 @@ export function WorkoutFlow({ onBack, selectedDate, isToday = true }: WorkoutFlo
   const { 
     getTodayWorkout,
     getWorkoutForDate, 
-    startWorkoutSession, 
+    startWorkoutSession,
+    updateSessionExercises,
     completeWorkoutSession, 
     resetWorkoutSession,
     workoutSessions,
@@ -48,12 +49,16 @@ const todayWorkout = selectedDate
   ? getWorkoutForDate(format(selectedDate, 'yyyy-MM-dd'))
   : getTodayWorkout();
 
-  // Initialize exercises when workout starts
+  // Initialize exercises from session or workout plan
   useEffect(() => {
-    if (todayWorkout.exercises && currentExercises.length === 0) {
-      setCurrentExercises(todayWorkout.exercises);
+    if (todayWorkout.exercises && todayWorkout.exercises.length > 0) {
+      // Only set if currentExercises is empty or different
+      if (currentExercises.length === 0 || 
+          JSON.stringify(currentExercises.map(e => e.id)) !== JSON.stringify(todayWorkout.exercises.map(e => e.id))) {
+        setCurrentExercises(todayWorkout.exercises);
+      }
     }
-  }, [todayWorkout.exercises.length, currentExercises.length]);
+  }, [todayWorkout.exercises]);
 
   // Check for existing active session
   useEffect(() => {
@@ -130,7 +135,8 @@ const handleStartWorkout = async () => {
     const sessionId = await startWorkoutSession(
       selectedPlanForDate.id,
       dateString,
-      todayWorkout.exercises.map(ex => ex.muscle_group)
+      todayWorkout.exercises.map(ex => ex.muscle_group),
+      todayWorkout.exercises.map(ex => ex.id)
     );
     
     // Start Live Activity for iOS
@@ -219,8 +225,14 @@ const handleStartWorkout = async () => {
     }
   };
 
-  const handleExercisesChange = (exercises: any[]) => {
+  const handleExercisesChange = async (exercises: any[]) => {
     setCurrentExercises(exercises);
+    
+    // Save to database if we have an active session
+    if (currentSession) {
+      await updateSessionExercises(currentSession, exercises.map(ex => ex.id));
+    }
+    
     // Remove completed status for exercises that are no longer in the list
     setCompletedExercises(prev => {
       const newCompleted = new Set<string>();

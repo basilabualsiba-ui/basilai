@@ -60,6 +60,7 @@ interface WorkoutSession {
   total_duration_minutes?: number;
   notes?: string;
   muscle_groups?: string[];
+  exercise_ids?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -105,7 +106,8 @@ interface GymContextType {
   deleteWorkoutPlan: (id: string) => Promise<void>;
   
   // Workout session functions
-  startWorkoutSession: (planId: string, scheduledDate: string, muscleGroups: string[]) => Promise<string>;
+  startWorkoutSession: (planId: string, scheduledDate: string, muscleGroups: string[], exerciseIds?: string[]) => Promise<string>;
+  updateSessionExercises: (sessionId: string, exerciseIds: string[]) => Promise<void>;
   completeWorkoutSession: (id: string, notes?: string) => Promise<void>;
   resetWorkoutSession: (id: string) => Promise<void>;
   
@@ -537,14 +539,15 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Workout session functions
-  const startWorkoutSession = async (planId: string, scheduledDate: string, muscleGroups: string[]) => {
+  const startWorkoutSession = async (planId: string, scheduledDate: string, muscleGroups: string[], exerciseIds?: string[]) => {
     const { data, error } = await supabase
       .from('workout_sessions')
       .insert([{
         plan_id: planId,
         scheduled_date: scheduledDate,
         started_at: new Date().toISOString(),
-        muscle_groups: muscleGroups
+        muscle_groups: muscleGroups,
+        exercise_ids: exerciseIds || []
       }])
       .select()
       .single();
@@ -565,6 +568,22 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
     });
     
     return data.id;
+  };
+
+  const updateSessionExercises = async (sessionId: string, exerciseIds: string[]) => {
+    const { data, error } = await supabase
+      .from('workout_sessions')
+      .update({ exercise_ids: exerciseIds })
+      .eq('id', sessionId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Failed to update session exercises:', error);
+      return;
+    }
+
+    setWorkoutSessions(prev => prev.map(s => s.id === sessionId ? data : s));
   };
 
   const completeWorkoutSession = async (id: string, notes?: string) => {
@@ -619,7 +638,8 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
           started_at: null,
           completed_at: null,
           total_duration_minutes: null,
-          notes: null
+          notes: null,
+          exercise_ids: []
         })
         .eq('id', id)
         .select()
@@ -730,6 +750,14 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
       session.scheduled_date === todayDate
     );
 
+    // If session has exercise_ids, use those instead of plan exercises
+    if (todaySession?.exercise_ids && todaySession.exercise_ids.length > 0) {
+      const sessionExercises = todaySession.exercise_ids
+        .map(exerciseId => exercises.find(ex => ex.id === exerciseId))
+        .filter(Boolean) as Exercise[];
+      return { session: todaySession, exercises: sessionExercises };
+    }
+
     // Try newer structure with workouts and workout_exercises first
     const todayPlanWorkout = planWorkouts.find(pw => 
       pw.plan_id === selectedPlan.id && pw.day_of_week === dayOfWeek
@@ -807,6 +835,26 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
       session.plan_id === selectedPlan.id && 
       session.scheduled_date === dateString
     );
+
+    // If session has exercise_ids, use those instead of plan exercises
+    if (existingSession?.exercise_ids && existingSession.exercise_ids.length > 0) {
+      const sessionExercises = existingSession.exercise_ids
+        .map(exerciseId => exercises.find(ex => ex.id === exerciseId))
+        .filter(Boolean) as Exercise[];
+      
+      // Get times from plan day
+      const todayPlanDay = workoutPlanDays.find(wpd => 
+        wpd.plan_id === selectedPlan.id && wpd.day_of_week === dayOfWeek
+      );
+      const startTime = todayPlanDay?.start_time || null;
+      const endTime = todayPlanDay?.end_time || null;
+      
+      return { 
+        session: existingSession, 
+        exercises: sessionExercises,
+        times: { start: startTime, end: endTime }
+      };
+    }
 
     // Check plan_workouts first (newer structure with times)
     const planWorkout = planWorkouts.find(pw => 
@@ -886,6 +934,7 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
     updateWorkoutPlan,
     deleteWorkoutPlan,
     startWorkoutSession,
+    updateSessionExercises,
     completeWorkoutSession,
     resetWorkoutSession,
     addExerciseSet,

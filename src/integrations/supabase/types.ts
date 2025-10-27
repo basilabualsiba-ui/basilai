@@ -1028,10 +1028,11 @@ export type Database = {
         Row: {
           completed_at: string | null
           created_at: string
+          exercise_ids: string[] | null
           id: string
           muscle_groups: string[] | null
           notes: string | null
-          plan_id: string
+          plan_id: string | null
           scheduled_date: string
           started_at: string | null
           total_duration_minutes: number | null
@@ -1040,10 +1041,11 @@ export type Database = {
         Insert: {
           completed_at?: string | null
           created_at?: string
+          exercise_ids?: string[] | null
           id?: string
           muscle_groups?: string[] | null
           notes?: string | null
-          plan_id: string
+          plan_id?: string | null
           scheduled_date: string
           started_at?: string | null
           total_duration_minutes?: number | null
@@ -1052,10 +1054,11 @@ export type Database = {
         Update: {
           completed_at?: string | null
           created_at?: string
+          exercise_ids?: string[] | null
           id?: string
           muscle_groups?: string[] | null
           notes?: string | null
-          plan_id?: string
+          plan_id?: string | null
           scheduled_date?: string
           started_at?: string | null
           total_duration_minutes?: number | null
