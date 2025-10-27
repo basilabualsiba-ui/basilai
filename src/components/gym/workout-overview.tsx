@@ -27,19 +27,21 @@ export function WorkoutOverview({
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [exercisePRs, setExercisePRs] = useState<Record<string, { weight: number; reps: number }>>({});
+  const [sessionSets, setSessionSets] = useState<Record<string, Array<{ weight: number; reps: number; set_number: number }>>>({});
   const todayWorkout = selectedDate ? getWorkoutForDate(format(selectedDate, 'yyyy-MM-dd')) : getTodayWorkout();
   const isCompleted = todayWorkout?.session?.completed_at;
   console.log('WorkoutOverview - todayWorkout:', todayWorkout);
   console.log('WorkoutOverview - isCompleted:', isCompleted);
 
   useEffect(() => {
-    const fetchExercisePRs = async () => {
+    const fetchExerciseData = async () => {
       if (!todayWorkout || todayWorkout.exercises.length === 0) return;
 
       try {
         const exerciseIds = todayWorkout.exercises.map(ex => ex.id);
         const prs: Record<string, { weight: number; reps: number }> = {};
 
+        // Fetch PRs for each exercise
         for (const exerciseId of exerciseIds) {
           const { data: sets } = await supabase
             .from('exercise_sets')
@@ -58,13 +60,38 @@ export function WorkoutOverview({
         }
 
         setExercisePRs(prs);
+
+        // If workout is completed, fetch the actual sets from this session
+        if (isCompleted && todayWorkout.session) {
+          const { data: completedSets } = await supabase
+            .from('exercise_sets')
+            .select('exercise_id, weight, reps, set_number')
+            .eq('session_id', todayWorkout.session.id)
+            .not('completed_at', 'is', null)
+            .order('set_number', { ascending: true });
+
+          if (completedSets) {
+            const setsGrouped: Record<string, Array<{ weight: number; reps: number; set_number: number }>> = {};
+            completedSets.forEach(set => {
+              if (!setsGrouped[set.exercise_id]) {
+                setsGrouped[set.exercise_id] = [];
+              }
+              setsGrouped[set.exercise_id].push({
+                weight: set.weight || 0,
+                reps: set.reps || 0,
+                set_number: set.set_number
+              });
+            });
+            setSessionSets(setsGrouped);
+          }
+        }
       } catch (error) {
-        console.error('Error fetching exercise PRs:', error);
+        console.error('Error fetching exercise data:', error);
       }
     };
 
-    fetchExercisePRs();
-  }, [todayWorkout?.exercises]);
+    fetchExerciseData();
+  }, [todayWorkout?.exercises, isCompleted, todayWorkout?.session?.id]);
   const handleExerciseClick = (exercise: any) => {
     setSelectedExercise(exercise);
     setIsDialogOpen(true);
@@ -184,10 +211,20 @@ export function WorkoutOverview({
                     
                     <div className="flex-1">
                       <h3 className="font-medium text-foreground">{exercise.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        3 SETS • 12-10-8 REPS
-                      </p>
-                      {exercisePRs[exercise.id] && (
+                      {isCompleted && sessionSets[exercise.id] ? (
+                        <div className="space-y-1 mt-1">
+                          {sessionSets[exercise.id].map((set, idx) => (
+                            <p key={idx} className="text-sm text-muted-foreground">
+                              Set {set.set_number}: {set.weight}kg × {set.reps} reps
+                            </p>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          3 SETS • 12-10-8 REPS
+                        </p>
+                      )}
+                      {!isCompleted && exercisePRs[exercise.id] && (
                         <div className="flex items-center gap-1 mt-1">
                           <TrendingUp className="h-3 w-3 text-primary" />
                           <span className="text-xs text-primary font-medium">
