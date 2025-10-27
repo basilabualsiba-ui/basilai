@@ -163,6 +163,22 @@ const handleStartWorkout = async () => {
     setCurrentScreen('exercise');
   };
 
+  const handleExerciseSwap = async (newExerciseId: string) => {
+    if (!currentSession || !selectedExercise) return;
+
+    const { exercises } = useGym();
+    const newExercise = exercises.find(ex => ex.id === newExerciseId);
+    if (!newExercise) return;
+
+    const updatedExercises = currentExercises.map(ex => 
+      ex.id === selectedExercise.exercise.id ? newExercise : ex
+    );
+
+    setCurrentExercises(updatedExercises);
+    await updateSessionExercises(currentSession, updatedExercises.map(ex => ex.id));
+    setSelectedExercise({ exercise: newExercise, workoutConfig: selectedExercise.workoutConfig });
+  };
+
   const handleExerciseFinish = () => {
     if (selectedExercise) {
       setCompletedExercises(prev => new Set([...prev, selectedExercise.exercise.id]));
@@ -298,6 +314,7 @@ const handleStartWorkout = async () => {
               sessionId={currentSession}
               onFinish={handleExerciseFinish}
               onBack={() => setCurrentScreen('timer')}
+              onSwap={handleExerciseSwap}
               workoutConfig={selectedExercise.workoutConfig}
             />
           </div>

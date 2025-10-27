@@ -5,15 +5,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ArrowLeft, Play, Clock, TrendingUp, RotateCcw, CheckCircle2, X } from 'lucide-react';
+import { ArrowLeft, Play, Clock, TrendingUp, RotateCcw, CheckCircle2, X, Repeat } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ExerciseHistoryDialog } from './exercise-history-dialog';
+import { SwapExerciseDialog } from './swap-exercise-dialog';
 import { useLiveActivity } from '@/hooks/useLiveActivity';
 interface ExerciseDetailProps {
   exercise: any;
   sessionId: string;
   onFinish: () => void;
   onBack: () => void;
+  onSwap?: (newExerciseId: string) => void;
   workoutConfig?: {
     sets?: number;
     reps?: number;
@@ -30,6 +32,7 @@ export function ExerciseDetail({
   sessionId,
   onFinish,
   onBack,
+  onSwap,
   workoutConfig
 }: ExerciseDetailProps) {
   const {
@@ -58,6 +61,7 @@ export function ExerciseDetail({
   const [restTimeLeft, setRestTimeLeft] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
   const [showVideoDialog, setShowVideoDialog] = useState(false);
+  const [showSwapDialog, setShowSwapDialog] = useState(false);
   const {
     toast
   } = useToast();
@@ -244,7 +248,7 @@ export function ExerciseDetail({
         </div>
       </div>
 
-      {/* Action Buttons */}
+        {/* Action Buttons */}
       <div className="p-4">
         <div className="flex gap-3 mb-6">
           <Button size="sm" className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold" title={`Rest: ${workoutConfig?.rest_seconds || 90} seconds`}>
@@ -255,7 +259,12 @@ export function ExerciseDetail({
             <TrendingUp className="h-4 w-4 mr-2" />
             History
           </Button>
-          
+          {onSwap && (
+            <Button variant="outline" size="sm" className="flex-1" onClick={() => setShowSwapDialog(true)}>
+              <Repeat className="h-4 w-4 mr-2" />
+              Swap
+            </Button>
+          )}
         </div>
 
         {/* Exercise Info */}
@@ -314,6 +323,16 @@ export function ExerciseDetail({
 
       {/* Exercise History Dialog */}
       <ExerciseHistoryDialog open={showHistory} onOpenChange={setShowHistory} exercise={exercise} />
+
+      {/* Swap Exercise Dialog */}
+      {onSwap && (
+        <SwapExerciseDialog
+          open={showSwapDialog}
+          onOpenChange={setShowSwapDialog}
+          currentExercise={exercise}
+          onSwap={onSwap}
+        />
+      )}
 
       {/* Video Dialog */}
       <Dialog open={showVideoDialog} onOpenChange={setShowVideoDialog}>

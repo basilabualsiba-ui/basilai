@@ -212,6 +212,27 @@ export type Database = {
         }
         Relationships: []
       }
+      exercise_alternatives: {
+        Row: {
+          alternative_exercise_id: string
+          created_at: string
+          exercise_id: string
+          id: string
+        }
+        Insert: {
+          alternative_exercise_id: string
+          created_at?: string
+          exercise_id: string
+          id?: string
+        }
+        Update: {
+          alternative_exercise_id?: string
+          created_at?: string
+          exercise_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
       exercise_sets: {
         Row: {
           completed_at: string | null

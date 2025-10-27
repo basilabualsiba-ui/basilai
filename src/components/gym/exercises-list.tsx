@@ -8,10 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Search, Edit2, Trash2, Dumbbell, Link, Image, Play, Download } from 'lucide-react';
 import { ExerciseInfoDialog } from './exercise-info-dialog';
+import { AlternativesManager } from './alternatives-manager';
 
 const difficultyLevels = ['beginner', 'intermediate', 'advanced'];
 export function ExercisesList() {
@@ -158,11 +160,18 @@ export function ExercisesList() {
     return Math.max(...exerciseSetsForExercise.map(set => Number(set.weight) || 0));
   };
   return <div className="space-y-6">
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mt-6">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Exercise Library</h2>
-          <p className="text-muted-foreground">Manage your exercise database</p>
-        </div>
+      <Tabs defaultValue="exercises" className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="exercises">Exercises</TabsTrigger>
+          <TabsTrigger value="alternatives">Alternatives</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="exercises" className="space-y-6">
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mt-6">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">Exercise Library</h2>
+              <p className="text-muted-foreground">Manage your exercise database</p>
+            </div>
         
         
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -409,8 +418,8 @@ export function ExercisesList() {
           </p>
         </div>}
 
-      {/* Exercise Info Dialog */}
-      <ExerciseInfoDialog exercise={selectedExercise} open={isExerciseInfoOpen} onOpenChange={setIsExerciseInfoOpen} />
+          {/* Exercise Info Dialog */}
+          <ExerciseInfoDialog exercise={selectedExercise} open={isExerciseInfoOpen} onOpenChange={setIsExerciseInfoOpen} />
 
       {/* Edit Dialog */}
       <Dialog open={!!editingExercise} onOpenChange={open => !open && setEditingExercise(null)}>
@@ -529,7 +538,13 @@ export function ExercisesList() {
               </Button>
             </div>
           </form>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+        </TabsContent>
+
+        <TabsContent value="alternatives" className="mt-6">
+          <AlternativesManager />
+        </TabsContent>
+      </Tabs>
     </div>;
 }

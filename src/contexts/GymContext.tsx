@@ -26,6 +26,13 @@ interface Exercise {
   updated_at: string;
 }
 
+interface ExerciseAlternative {
+  id: string;
+  exercise_id: string;
+  alternative_exercise_id: string;
+  created_at: string;
+}
+
 interface WorkoutPlan {
   id: string;
   name: string;
@@ -85,6 +92,7 @@ interface GymContextType {
   workoutPlanDays: WorkoutPlanDay[];
   workoutSessions: WorkoutSession[];
   exerciseSets: ExerciseSet[];
+  exerciseAlternatives: ExerciseAlternative[];
   workouts: any[];
   workoutExercises: any[];
   planWorkouts: any[];
@@ -99,6 +107,11 @@ interface GymContextType {
   addExercise: (exercise: Omit<Exercise, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
   updateExercise: (id: string, exercise: Partial<Exercise>) => Promise<void>;
   deleteExercise: (id: string) => Promise<void>;
+  
+  // Exercise Alternative functions
+  addExerciseAlternative: (exerciseId: string, alternativeExerciseId: string) => Promise<void>;
+  removeExerciseAlternative: (exerciseId: string, alternativeExerciseId: string) => Promise<void>;
+  getExerciseAlternatives: (exerciseId: string) => Exercise[];
   
   // Workout plan functions
   addWorkoutPlan: (plan: Omit<WorkoutPlan, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
@@ -139,6 +152,7 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
   const [workoutPlanDays, setWorkoutPlanDays] = useState<WorkoutPlanDay[]>([]);
   const [workoutSessions, setWorkoutSessions] = useState<WorkoutSession[]>([]);
   const [exerciseSets, setExerciseSets] = useState<ExerciseSet[]>([]);
+  const [exerciseAlternatives, setExerciseAlternatives] = useState<ExerciseAlternative[]>([]);
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [workoutExercises, setWorkoutExercises] = useState<any[]>([]);
   const [planWorkouts, setPlanWorkouts] = useState<any[]>([]);
@@ -160,6 +174,7 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
         planDaysRes,
         sessionsRes,
         setsRes,
+        alternativesRes,
         workoutsRes,
         workoutExercisesRes,
         planWorkoutsRes
@@ -170,6 +185,7 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
         supabase.from('workout_plan_days').select('*').order('day_of_week'),
         supabase.from('workout_sessions').select('*').order('scheduled_date', { ascending: false }),
         supabase.from('exercise_sets').select('*').order('created_at', { ascending: false }),
+        supabase.from('exercise_alternatives').select('*'),
         supabase.from('workouts').select('*').order('name'),
         supabase.from('workout_exercises').select('*').order('order_index'),
         supabase.from('plan_workouts').select('*').order('day_of_week')
@@ -181,6 +197,7 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
       if (planDaysRes.data) setWorkoutPlanDays(planDaysRes.data);
       if (sessionsRes.data) setWorkoutSessions(sessionsRes.data);
       if (setsRes.data) setExerciseSets(setsRes.data);
+      if (alternativesRes.data) setExerciseAlternatives(alternativesRes.data);
       if (workoutsRes.data) setWorkouts(workoutsRes.data);
       if (workoutExercisesRes.data) setWorkoutExercises(workoutExercisesRes.data);
       if (planWorkoutsRes.data) setPlanWorkouts(planWorkoutsRes.data);
@@ -913,6 +930,85 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [workoutPlans, planWorkouts, workoutPlanDays, workoutSessions, workouts, workoutExercises, exercises]);
 
+  // Exercise Alternative Functions
+  const addExerciseAlternative = async (exerciseId: string, alternativeExerciseId: string) => {
+    try {
+      // Check if already exists
+      const existingAlt = exerciseAlternatives.find(
+        alt => (alt.exercise_id === exerciseId && alt.alternative_exercise_id === alternativeExerciseId) ||
+               (alt.exercise_id === alternativeExerciseId && alt.alternative_exercise_id === exerciseId)
+      );
+
+      if (existingAlt) {
+        toast({
+          title: "Already added",
+          description: "This alternative already exists",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await supabase
+        .from('exercise_alternatives')
+        .insert({
+          exercise_id: exerciseId,
+          alternative_exercise_id: alternativeExerciseId
+        });
+      
+      // Also add the reverse relationship
+      await supabase
+        .from('exercise_alternatives')
+        .insert({
+          exercise_id: alternativeExerciseId,
+          alternative_exercise_id: exerciseId
+        });
+
+      await loadAllData();
+      toast({
+        title: "Success",
+        description: "Alternative exercise added successfully",
+      });
+    } catch (error: any) {
+      console.error('Error adding exercise alternative:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add alternative exercise",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const removeExerciseAlternative = async (exerciseId: string, alternativeExerciseId: string) => {
+    try {
+      // Remove both directions of the relationship
+      await supabase
+        .from('exercise_alternatives')
+        .delete()
+        .or(`and(exercise_id.eq.${exerciseId},alternative_exercise_id.eq.${alternativeExerciseId}),and(exercise_id.eq.${alternativeExerciseId},alternative_exercise_id.eq.${exerciseId})`);
+
+      await loadAllData();
+      toast({
+        title: "Success",
+        description: "Alternative exercise removed successfully",
+      });
+    } catch (error: any) {
+      console.error('Error removing exercise alternative:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove alternative exercise",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getExerciseAlternatives = (exerciseId: string): Exercise[] => {
+    const alternativeIds = exerciseAlternatives
+      .filter(alt => alt.exercise_id === exerciseId)
+      .map(alt => alt.alternative_exercise_id);
+    
+    return exercises.filter(ex => alternativeIds.includes(ex.id));
+  };
+
   const value: GymContextType = {
     muscleGroups,
     exercises,
@@ -920,6 +1016,7 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
     workoutPlanDays,
     workoutSessions,
     exerciseSets,
+    exerciseAlternatives,
     workouts,
     workoutExercises,
     planWorkouts,
@@ -942,7 +1039,10 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
     getExercisesByMuscleGroup,
     getWorkoutPlanDays,
     getTodayWorkout,
-    getWorkoutForDate
+    getWorkoutForDate,
+    addExerciseAlternative,
+    removeExerciseAlternative,
+    getExerciseAlternatives,
   };
 
   return (
