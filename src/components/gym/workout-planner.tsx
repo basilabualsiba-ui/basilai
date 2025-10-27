@@ -10,7 +10,7 @@ import { AutoPlanCreator } from './auto-plan-creator';
 import { WorkoutPlanManager } from './workout-plan-manager';
 
 export function WorkoutPlanner() {
-  const { workoutPlans, workoutPlanDays, planWorkouts } = useGym();
+  const { workoutPlans, workoutPlanDays, planWorkouts, workoutSessions } = useGym();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [showWorkoutFlow, setShowWorkoutFlow] = useState(false);
   const [isToday, setIsToday] = useState(true);
@@ -46,6 +46,32 @@ export function WorkoutPlanner() {
       (planWorkouts?.some(pw => pw.plan_id === plan.id && pw.day_of_week === dayOfWeek)) ||
       workoutPlanDays.some(day => day.plan_id === plan.id && day.day_of_week === dayOfWeek)
     );
+  };
+
+  const hasCompletedWorkout = (date: Date) => {
+    const dateString = format(date, 'yyyy-MM-dd');
+    return workoutSessions.some(session => 
+      session.scheduled_date === dateString && session.completed_at !== null
+    );
+  };
+
+  const hasMissedWorkout = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+    
+    // Only check past dates (not today or future)
+    if (checkDate >= today) return false;
+    
+    const dateString = format(date, 'yyyy-MM-dd');
+    const hasScheduled = hasWorkoutForDate(date);
+    const hasCompleted = workoutSessions.some(session => 
+      session.scheduled_date === dateString && session.completed_at !== null
+    );
+    
+    // Missed if scheduled but not completed on a past date
+    return hasScheduled && !hasCompleted;
   };
 
   if (showWorkoutFlow && selectedDate) {
@@ -97,10 +123,24 @@ export function WorkoutPlanner() {
                   onSelect={handleDateSelect}
                   className="rounded-md border pointer-events-auto"
                   modifiers={{
-                    hasWorkout: (date) => hasWorkoutForDate(date),
+                    completedWorkout: (date) => hasCompletedWorkout(date),
+                    missedWorkout: (date) => hasMissedWorkout(date),
+                    scheduledWorkout: (date) => hasWorkoutForDate(date) && !hasCompletedWorkout(date) && !hasMissedWorkout(date),
                   }}
                   modifiersStyles={{
-                    hasWorkout: { 
+                    completedWorkout: { 
+                      backgroundColor: 'hsl(142 76% 36% / 0.15)',
+                      border: '1px solid hsl(142 76% 36% / 0.4)',
+                      color: 'hsl(142 76% 36%)',
+                      fontWeight: '600'
+                    },
+                    missedWorkout: { 
+                      backgroundColor: 'hsl(0 84% 60% / 0.15)',
+                      border: '1px solid hsl(0 84% 60% / 0.4)',
+                      color: 'hsl(0 84% 60%)',
+                      fontWeight: '600'
+                    },
+                    scheduledWorkout: { 
                       backgroundColor: 'hsl(var(--primary) / 0.1)',
                       border: '1px solid hsl(var(--primary) / 0.3)'
                     },
