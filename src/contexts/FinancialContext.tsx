@@ -191,18 +191,28 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
 
       if (error) throw error;
 
-      setTransactions(data?.map(item => ({
-        id: item.id,
-        amount: parseFloat(item.amount.toString()),
-        type: item.type as 'income' | 'expense' | 'transfer',
-        categoryId: item.category_id,
-        subcategoryId: item.subcategory_id,
-        accountId: item.account_id,
-        date: new Date(item.date),
-        time: item.time || '',
-        description: item.description,
-        transferId: item.transfer_id
-      })) || []);
+      setTransactions(data?.map(item => {
+        // Parse date correctly to avoid timezone issues
+        const dateParts = item.date.split('-');
+        const localDate = new Date(
+          parseInt(dateParts[0]),
+          parseInt(dateParts[1]) - 1,
+          parseInt(dateParts[2])
+        );
+        
+        return {
+          id: item.id,
+          amount: parseFloat(item.amount.toString()),
+          type: item.type as 'income' | 'expense' | 'transfer',
+          categoryId: item.category_id,
+          subcategoryId: item.subcategory_id,
+          accountId: item.account_id,
+          date: localDate,
+          time: item.time || '',
+          description: item.description,
+          transferId: item.transfer_id
+        };
+      }) || []);
     } catch (error) {
       console.error('Error fetching transactions:', error);
       toast({
