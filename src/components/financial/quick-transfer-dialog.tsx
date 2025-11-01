@@ -7,7 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useFinancial } from '@/contexts/FinancialContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeftRight, Edit2 } from 'lucide-react';
+import { ArrowLeftRight, Edit2, Calendar as CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 // This component now uses the CurrencyContext for live rates
 
@@ -21,6 +25,8 @@ export const QuickTransferDialog = () => {
   const [amount, setAmount] = useState('');
   const [customRate, setCustomRate] = useState<number | null>(null);
   const [isEditingRate, setIsEditingRate] = useState(false);
+  const [transferDate, setTransferDate] = useState<Date>(new Date());
+  const [transferTime, setTransferTime] = useState<string>(format(new Date(), 'HH:mm'));
 
   const fromAccount = accounts.find(acc => acc.id === fromAccountId);
   const toAccount = accounts.find(acc => acc.id === toAccountId);
@@ -89,7 +95,7 @@ export const QuickTransferDialog = () => {
       return;
     }
 
-    transferBetweenAccounts(fromAccountId, toAccountId, transferAmount, exchangeRate);
+    transferBetweenAccounts(fromAccountId, toAccountId, transferAmount, exchangeRate, transferDate, transferTime);
     
     const convertedAmount = transferAmount * exchangeRate;
     
@@ -106,6 +112,8 @@ export const QuickTransferDialog = () => {
     setAmount('');
     setCustomRate(null);
     setIsEditingRate(false);
+    setTransferDate(new Date());
+    setTransferTime(format(new Date(), 'HH:mm'));
   };
 
   return (
@@ -162,6 +170,45 @@ export const QuickTransferDialog = () => {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !transferDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {transferDate ? format(transferDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={transferDate}
+                    onSelect={(date) => date && setTransferDate(date)}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div>
+              <Label htmlFor="time">Time</Label>
+              <Input
+                id="time"
+                type="time"
+                value={transferTime}
+                onChange={(e) => setTransferTime(e.target.value)}
+              />
+            </div>
           </div>
 
           {hasDifferentCurrency && parseFloat(amount || '0') > 0 && !isNaN(parseFloat(amount || '0')) && (

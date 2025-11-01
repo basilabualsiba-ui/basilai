@@ -80,7 +80,7 @@ interface FinancialContextType {
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   updateTransaction: (id: string, updates: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
-  transferBetweenAccounts: (fromAccountId: string, toAccountId: string, amount: number, exchangeRate?: number) => Promise<void>;
+  transferBetweenAccounts: (fromAccountId: string, toAccountId: string, amount: number, exchangeRate?: number, date?: Date, time?: string) => Promise<void>;
   addBudget: (budget: Omit<Budget, 'id'>) => Promise<void>;
   updateBudget: (id: string, updates: Partial<Budget>) => Promise<void>;
   deleteBudget: (id: string) => Promise<void>;
@@ -619,7 +619,7 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   };
 
-  const transferBetweenAccounts = async (fromAccountId: string, toAccountId: string, amount: number, exchangeRate: number = 1) => {
+  const transferBetweenAccounts = async (fromAccountId: string, toAccountId: string, amount: number, exchangeRate: number = 1, date?: Date, time?: string) => {
     try {
       const fromAccount = accounts.find(acc => acc.id === fromAccountId);
       const toAccount = accounts.find(acc => acc.id === toAccountId);
@@ -630,6 +630,7 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
 
       const convertedAmount = amount * exchangeRate;
       const transferId = crypto.randomUUID();
+      const transferDate = date || new Date();
 
       // Create outgoing transaction
       const outgoingTransaction = {
@@ -638,7 +639,8 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
         categoryId: '',
         subcategoryId: '',
         accountId: fromAccountId,
-        date: new Date(),
+        date: transferDate,
+        time: time,
         description: `Transfer to ${toAccount.name}${exchangeRate !== 1 ? ` (Rate: ${exchangeRate})` : ''}`,
         transferId
       };
@@ -650,7 +652,8 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
         categoryId: '',
         subcategoryId: '',
         accountId: toAccountId,
-        date: new Date(),
+        date: transferDate,
+        time: time,
         description: `Transfer from ${fromAccount.name}${exchangeRate !== 1 ? ` (Rate: ${1/exchangeRate})` : ''}`,
         transferId
       };
@@ -660,7 +663,8 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
         amount: outgoingTransaction.amount,
         type: outgoingTransaction.type,
         account_id: outgoingTransaction.accountId,
-        date: outgoingTransaction.date.toISOString(),
+        date: outgoingTransaction.date.toISOString().split('T')[0],
+        time: outgoingTransaction.time,
         description: outgoingTransaction.description,
         transfer_id: transferId
       });
@@ -671,7 +675,8 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
         amount: incomingTransaction.amount,
         type: incomingTransaction.type,
         account_id: incomingTransaction.accountId,
-        date: incomingTransaction.date.toISOString(),
+        date: incomingTransaction.date.toISOString().split('T')[0],
+        time: incomingTransaction.time,
         description: incomingTransaction.description,
         transfer_id: transferId
       });
