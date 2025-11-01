@@ -35,7 +35,10 @@ export function SwapExerciseDialog({
       return;
     }
 
-    onSwap(selectedExercise);
+    const selectedExerciseObject = alternatives.find(ex => ex.id === selectedExercise);
+    if (!selectedExerciseObject) return;
+
+    onSwap(selectedExerciseObject.id);
     onOpenChange(false);
   };
 

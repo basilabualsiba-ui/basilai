@@ -30,7 +30,7 @@ export function WorkoutTimer({
   currentExercises,
   onExercisesChange
 }: WorkoutTimerProps) {
-  const { getTodayWorkout, workoutSessions, exerciseSets, muscleGroups } = useGym();
+  const { getTodayWorkout, workoutSessions, exerciseSets, muscleGroups, exercises } = useGym();
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(true);
   const [isExerciseManagerOpen, setIsExerciseManagerOpen] = useState(false);
@@ -225,8 +225,21 @@ export function WorkoutTimer({
     onComplete();
   };
 
-  const handleSwapExercise = (newExercise: any) => {
+  const handleSwapExercise = (newExerciseId: string) => {
     if (!exerciseToSwap) return;
+    
+    // Fetch the full exercise object
+    const { exercises, getExerciseAlternatives } = useGym();
+    const newExercise = exercises.find(ex => ex.id === newExerciseId);
+    
+    if (!newExercise) {
+      toast({
+        title: "Error",
+        description: "Could not find the selected exercise",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const updatedExercises = currentExercises.map(ex => 
       ex.id === exerciseToSwap.id ? newExercise : ex
