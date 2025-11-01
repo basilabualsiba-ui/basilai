@@ -3,9 +3,10 @@ import { useGym } from '@/contexts/GymContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { X, Clock, Settings, CheckCircle, Dumbbell, Pause, Play, Plus, Minus, RotateCcw, TrendingUp } from 'lucide-react';
+import { X, Clock, Settings, CheckCircle, Dumbbell, Pause, Play, Plus, Minus, RotateCcw, TrendingUp, RefreshCw, ChevronUp, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { WorkoutExerciseManager } from './workout-exercise-manager';
+import { SwapExerciseDialog } from './swap-exercise-dialog';
 import { supabase } from '@/integrations/supabase/client';
 
 interface WorkoutTimerProps {
@@ -33,6 +34,8 @@ export function WorkoutTimer({
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(true);
   const [isExerciseManagerOpen, setIsExerciseManagerOpen] = useState(false);
+  const [isSwapDialogOpen, setIsSwapDialogOpen] = useState(false);
+  const [exerciseToSwap, setExerciseToSwap] = useState<any>(null);
   const [workoutExerciseDetails, setWorkoutExerciseDetails] = useState<Record<string, any>>({});
   const [exercisePRs, setExercisePRs] = useState<Record<string, { weight: number; reps: number }>>({});
   const [computedCompletedExercises, setComputedCompletedExercises] = useState<Set<string>>(new Set());
@@ -222,6 +225,38 @@ export function WorkoutTimer({
     onComplete();
   };
 
+  const handleSwapExercise = (newExercise: any) => {
+    if (!exerciseToSwap) return;
+    
+    const updatedExercises = currentExercises.map(ex => 
+      ex.id === exerciseToSwap.id ? newExercise : ex
+    );
+    
+    onExercisesChange(updatedExercises);
+    setIsSwapDialogOpen(false);
+    setExerciseToSwap(null);
+    
+    toast({
+      title: "Exercise swapped",
+      description: `${exerciseToSwap.name} replaced with ${newExercise.name}`,
+    });
+  };
+
+  const handleMoveExercise = (exerciseId: string, direction: 'up' | 'down') => {
+    const currentIndex = currentExercises.findIndex(ex => ex.id === exerciseId);
+    if (currentIndex === -1) return;
+    
+    if (direction === 'up' && currentIndex === 0) return;
+    if (direction === 'down' && currentIndex === currentExercises.length - 1) return;
+    
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    const updatedExercises = [...currentExercises];
+    const [movedExercise] = updatedExercises.splice(currentIndex, 1);
+    updatedExercises.splice(newIndex, 0, movedExercise);
+    
+    onExercisesChange(updatedExercises);
+  };
+
   return (
     <div className="min-h-screen bg-background p-4">
       {/* Header */}
@@ -357,7 +392,7 @@ export function WorkoutTimer({
 
       {/* Exercise List */}
       <div className="space-y-3 mb-20">
-        {currentExercises.map((exercise) => {
+        {currentExercises.map((exercise, index) => {
           const isCompleted = computedCompletedExercises.has(exercise.id);
           const exerciseSetCount = exerciseSets.filter(
             set => set.session_id === sessionId && set.exercise_id === exercise.id
@@ -366,14 +401,16 @@ export function WorkoutTimer({
           return (
             <Card 
               key={exercise.id} 
-              className={`cursor-pointer transition-all ${
-                isCompleted ? 'bg-success/10 border-success/30' : 'bg-card border-border hover:border-primary/30'
+              className={`transition-all ${
+                isCompleted ? 'bg-success/10 border-success/30' : 'bg-card border-border'
               }`}
-              onClick={() => !isCompleted && onExerciseSelect(exercise, workoutExerciseDetails[exercise.id])}
             >
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <div className="relative">
+                  <div 
+                    className="relative cursor-pointer"
+                    onClick={() => !isCompleted && onExerciseSelect(exercise, workoutExerciseDetails[exercise.id])}
+                  >
                     <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
                       {exercise.photo_url ? (
                         <img 
@@ -402,7 +439,10 @@ export function WorkoutTimer({
                     </div>
                   </div>
                   
-                   <div className="flex-1">
+                   <div 
+                     className="flex-1 cursor-pointer"
+                     onClick={() => !isCompleted && onExerciseSelect(exercise, workoutExerciseDetails[exercise.id])}
+                   >
                      <h3 className={`font-medium ${isCompleted ? 'text-success' : 'text-foreground'}`}>
                        {exercise.name}
                      </h3>
@@ -426,9 +466,45 @@ export function WorkoutTimer({
                   {isCompleted ? (
                     <CheckCircle className="h-6 w-6 text-success" />
                   ) : (
-                    <Button variant="ghost" size="icon">
-                      <Settings className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <div className="flex flex-col gap-0.5">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveExercise(exercise.id, 'up');
+                          }}
+                          disabled={index === 0}
+                        >
+                          <ChevronUp className="h-3 w-3" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveExercise(exercise.id, 'down');
+                          }}
+                          disabled={index === currentExercises.length - 1}
+                        >
+                          <ChevronDown className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExerciseToSwap(exercise);
+                          setIsSwapDialogOpen(true);
+                        }}
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    </div>
                   )}
                 </div>
               </CardContent>
@@ -458,6 +534,14 @@ export function WorkoutTimer({
         onOpenChange={setIsExerciseManagerOpen}
         currentExercises={currentExercises}
         onExercisesChange={onExercisesChange}
+      />
+
+      {/* Swap Exercise Dialog */}
+      <SwapExerciseDialog
+        open={isSwapDialogOpen}
+        onOpenChange={setIsSwapDialogOpen}
+        currentExercise={exerciseToSwap}
+        onSwap={handleSwapExercise}
       />
     </div>
   );
