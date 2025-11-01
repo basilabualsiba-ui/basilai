@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useGym } from '@/contexts/GymContext';
 import { Button } from '@/components/ui/button';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-
 import { ArrowLeft, Dumbbell, Calendar, Target, TrendingUp, Users, Play, BarChart3 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -14,14 +13,19 @@ import { WorkoutTracker } from '@/components/gym/workout-tracker';
 import { GymSidebar } from '@/components/gym/gym-sidebar';
 import { MuscleGroups } from '@/components/gym/muscle-groups';
 import { WorkoutFlow } from '@/components/gym/workout-flow';
-
-
-const gymItems = [
-  { title: "Exercises", value: "exercises", icon: Dumbbell },
-  { title: "Workouts", value: "workouts", icon: Target },
-  { title: "Planner", value: "planner", icon: Calendar }
-];
-
+const gymItems = [{
+  title: "Exercises",
+  value: "exercises",
+  icon: Dumbbell
+}, {
+  title: "Workouts",
+  value: "workouts",
+  icon: Target
+}, {
+  title: "Planner",
+  value: "planner",
+  icon: Calendar
+}];
 const Gym = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,9 +37,7 @@ const Gym = () => {
       setActiveTab(location.state.activeTab);
     }
   }, [location.state]);
-
-  return (
-    <SidebarProvider defaultOpen={false}>
+  return <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen bg-background flex w-full">
         {/* Header */}
         <header className="absolute top-0 left-0 right-0 z-50 border-b border-border/50 bg-card/50 backdrop-blur-sm">
@@ -52,33 +54,15 @@ const Gym = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setActiveTab('workout')}
-                className={`flex items-center gap-2 ${activeTab === 'workout' ? 'bg-primary/10 text-primary' : ''}`}
-              >
+              <Button variant="outline" size="sm" onClick={() => setActiveTab('workout')} className={`flex items-center gap-2 ${activeTab === 'workout' ? 'bg-primary/10 text-primary' : ''}`}>
                 <Play className="h-4 w-4" />
                 <span className="hidden sm:inline">Workout</span>
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setActiveTab('muscle-groups')}
-                className={`flex items-center gap-2 ${activeTab === 'muscle-groups' ? 'bg-primary/10 text-primary' : ''}`}
-              >
+              <Button variant="outline" size="sm" onClick={() => setActiveTab('muscle-groups')} className={`flex items-center gap-2 ${activeTab === 'muscle-groups' ? 'bg-primary/10 text-primary' : ''}`}>
                 <Users className="h-4 w-4" />
                 <span className="hidden sm:inline">Muscle Groups</span>
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => navigate('/gym-stats')}
-                className="flex items-center gap-2"
-              >
-                <BarChart3 className="h-4 w-4" />
-                <span className="hidden sm:inline">Stats</span>
-              </Button>
+              
               {/* Desktop sidebar trigger */}
               <SidebarTrigger className="hover:bg-muted hidden md:flex" />
             </div>
@@ -105,44 +89,29 @@ const Gym = () => {
         {/* Mobile Bottom Tabs */}
         <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card border-t border-border">
           <div className="grid grid-cols-3 h-16">
-            {gymItems.map((item) => (
-              <button
-                key={item.value}
-                onClick={() => setActiveTab(item.value)}
-                className={`flex flex-col items-center justify-center gap-1 transition-colors ${
-                  activeTab === item.value
-                    ? 'text-primary bg-primary/10'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
+            {gymItems.map(item => <button key={item.value} onClick={() => setActiveTab(item.value)} className={`flex flex-col items-center justify-center gap-1 transition-colors ${activeTab === item.value ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground'}`}>
                 <item.icon className="h-5 w-5" />
                 <span className="text-xs font-medium">{item.title}</span>
-              </button>
-            ))}
+              </button>)}
           </div>
         </div>
       </div>
-    </SidebarProvider>
-  );
+    </SidebarProvider>;
 };
-
 const GymWithLoading = () => {
-  const { isLoading } = useGym();
-  
+  const {
+    isLoading
+  } = useGym();
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
+    return <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Dumbbell className="h-12 w-12 mx-auto mb-4 text-primary animate-pulse" />
           <h2 className="text-2xl font-bold mb-4">Loading your gym data...</h2>
         </div>
-      </div>
-    );
+      </div>;
   }
-  
   return <Gym />;
 };
-
 export default function GymWithAuth() {
   return <GymWithLoading />;
 }
