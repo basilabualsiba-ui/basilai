@@ -228,8 +228,6 @@ export function WorkoutTimer({
   const handleSwapExercise = (newExerciseId: string) => {
     if (!exerciseToSwap) return;
     
-    // Fetch the full exercise object
-    const { exercises, getExerciseAlternatives } = useGym();
     const newExercise = exercises.find(ex => ex.id === newExerciseId);
     
     if (!newExercise) {
