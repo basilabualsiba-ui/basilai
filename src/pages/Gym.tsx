@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useGym } from '@/contexts/GymContext';
 import { Button } from '@/components/ui/button';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { ArrowLeft, Dumbbell, Calendar, Target, TrendingUp, Users, Play, BarChart3 } from "lucide-react";
+import { ArrowLeft, Dumbbell, Calendar, Target, TrendingUp, Users, Play, BarChart3, Activity } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 // Gym components (will be created next)
@@ -13,6 +13,7 @@ import { WorkoutTracker } from '@/components/gym/workout-tracker';
 import { GymSidebar } from '@/components/gym/gym-sidebar';
 import { MuscleGroups } from '@/components/gym/muscle-groups';
 import { WorkoutFlow } from '@/components/gym/workout-flow';
+import { MuscleRecoveryMap } from '@/components/gym/muscle-recovery-map';
 const gymItems = [{
   title: "Exercises",
   value: "exercises",
@@ -25,6 +26,10 @@ const gymItems = [{
   title: "Planner",
   value: "planner",
   icon: Calendar
+}, {
+  title: "Recovery",
+  value: "recovery",
+  icon: Activity
 }];
 const Gym = () => {
   const navigate = useNavigate();
@@ -82,13 +87,14 @@ const Gym = () => {
             {activeTab === 'planner' && <WorkoutPlanner />}
             {activeTab === 'tracker' && <WorkoutTracker />}
             {activeTab === 'muscle-groups' && <MuscleGroups />}
+            {activeTab === 'recovery' && <MuscleRecoveryMap />}
             {activeTab === 'workout' && <WorkoutFlow onBack={() => setActiveTab('exercises')} />}
           </div>
         </main>
 
         {/* Mobile Bottom Tabs */}
         <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card border-t border-border">
-          <div className="grid grid-cols-3 h-16">
+          <div className="grid grid-cols-4 h-16">
             {gymItems.map(item => <button key={item.value} onClick={() => setActiveTab(item.value)} className={`flex flex-col items-center justify-center gap-1 transition-colors ${activeTab === item.value ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground'}`}>
                 <item.icon className="h-5 w-5" />
                 <span className="text-xs font-medium">{item.title}</span>
