@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { FlipHorizontal2, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
-import muscleMapImg from '@/assets/muscle-map.webp';
 
 type RecoveryState = 'recovered' | 'recovering' | 'not-recovered';
 type ViewSide = 'front' | 'back' | 'side';
@@ -20,35 +19,45 @@ interface MuscleRecovery {
   lastIntensity?: number;
 }
 
-// Muscle group positioning for each view (percentage-based)
-const musclePositions = {
+// Muscle group SVG paths and positions for each view
+const muscleSVGs = {
   front: [
-    { name: 'chest', x: 50, y: 25, width: 25, height: 12 },
-    { name: 'shoulders', x: 50, y: 18, width: 35, height: 8 },
-    { name: 'biceps', x: 50, y: 30, width: 45, height: 10 },
-    { name: 'abs', x: 50, y: 40, width: 20, height: 15 },
-    { name: 'quadriceps', x: 50, y: 65, width: 25, height: 20 },
-    { name: 'forearms', x: 50, y: 45, width: 50, height: 8 },
+    { name: 'neck', path: 'M90,25 Q100,20 110,25 L110,35 Q100,33 90,35 Z', label: { x: 100, y: 30 } },
+    { name: 'shoulders', path: 'M70,40 Q85,35 100,40 L100,55 L85,50 L70,55 Z M100,40 Q115,35 130,40 L130,55 L115,50 L100,55 Z', label: { x: 100, y: 48 } },
+    { name: 'chest', path: 'M85,55 Q100,50 115,55 L115,75 Q100,78 85,75 Z', label: { x: 100, y: 65 } },
+    { name: 'biceps', path: 'M70,55 L70,80 Q75,82 80,80 L80,55 Z M120,55 L120,80 Q115,82 110,80 L110,55 Z', label: { x: 75, y: 68 } },
+    { name: 'abs', path: 'M88,78 L112,78 L112,105 Q100,108 88,105 Z', label: { x: 100, y: 92 } },
+    { name: 'forearms', path: 'M68,82 L68,105 Q73,107 78,105 L78,82 Z M122,82 L122,105 Q117,107 112,105 L112,82 Z', label: { x: 73, y: 94 } },
+    { name: 'quadriceps', path: 'M85,110 L85,155 Q90,157 95,155 L95,110 Z M105,110 L105,155 Q100,157 95,155 L95,110 Z', label: { x: 100, y: 133 } },
+    { name: 'calves', path: 'M85,160 L85,185 Q90,188 95,185 L95,160 Z M105,160 L105,185 Q100,188 95,185 L95,160 Z', label: { x: 100, y: 173 } },
   ],
   back: [
-    { name: 'trapezius', x: 50, y: 18, width: 25, height: 8 },
-    { name: 'back', x: 50, y: 30, width: 30, height: 20 },
-    { name: 'triceps', x: 50, y: 32, width: 45, height: 8 },
-    { name: 'lower-back', x: 50, y: 48, width: 25, height: 8 },
-    { name: 'glutes', x: 50, y: 55, width: 25, height: 10 },
-    { name: 'hamstrings', x: 50, y: 68, width: 25, height: 18 },
+    { name: 'neck', path: 'M90,25 Q100,20 110,25 L110,35 Q100,33 90,35 Z', label: { x: 100, y: 30 } },
+    { name: 'trapezius', path: 'M80,35 Q100,30 120,35 L115,50 Q100,48 85,50 Z', label: { x: 100, y: 42 } },
+    { name: 'shoulders', path: 'M65,40 L80,35 L80,55 L65,58 Z M120,35 L135,40 L135,58 L120,55 Z', label: { x: 73, y: 48 } },
+    { name: 'back', path: 'M85,52 L115,52 L118,90 Q100,95 82,90 Z', label: { x: 100, y: 72 } },
+    { name: 'triceps', path: 'M65,58 L65,85 Q70,87 75,85 L75,58 Z M125,58 L125,85 Q120,87 115,85 L115,58 Z', label: { x: 70, y: 72 } },
+    { name: 'lower-back', path: 'M85,92 L115,92 L112,108 Q100,110 88,108 Z', label: { x: 100, y: 100 } },
+    { name: 'glutes', path: 'M88,110 L112,110 L112,128 Q100,130 88,128 Z', label: { x: 100, y: 119 } },
+    { name: 'hamstrings', path: 'M85,130 L85,165 Q90,167 95,165 L95,130 Z M105,130 L105,165 Q100,167 95,165 L95,130 Z', label: { x: 100, y: 148 } },
+    { name: 'calves', path: 'M85,168 L85,188 Q90,190 95,188 L95,168 Z M105,168 L105,188 Q100,190 95,188 L95,168 Z', label: { x: 100, y: 178 } },
   ],
   side: [
-    { name: 'shoulders', x: 50, y: 20, width: 20, height: 8 },
-    { name: 'chest', x: 45, y: 28, width: 15, height: 10 },
-    { name: 'abs', x: 48, y: 42, width: 15, height: 12 },
-    { name: 'quadriceps', x: 52, y: 65, width: 18, height: 20 },
-    { name: 'calves', x: 52, y: 82, width: 12, height: 12 },
+    { name: 'neck', path: 'M95,25 Q100,22 105,25 L105,35 Q100,33 95,35 Z', label: { x: 100, y: 30 } },
+    { name: 'shoulders', path: 'M85,38 Q95,35 105,38 L105,52 Q95,50 85,52 Z', label: { x: 95, y: 45 } },
+    { name: 'chest', path: 'M95,52 L115,55 L115,75 L95,72 Z', label: { x: 105, y: 64 } },
+    { name: 'back', path: 'M75,52 L95,52 L95,75 L78,72 Z', label: { x: 85, y: 64 } },
+    { name: 'abs', path: 'M95,75 L110,77 L110,100 L95,98 Z', label: { x: 103, y: 88 } },
+    { name: 'lower-back', path: 'M80,77 L95,75 L95,98 L82,100 Z', label: { x: 88, y: 88 } },
+    { name: 'glutes', path: 'M82,102 L95,100 L95,120 L85,122 Z', label: { x: 90, y: 111 } },
+    { name: 'quadriceps', path: 'M95,122 L105,120 L105,160 L95,162 Z', label: { x: 100, y: 141 } },
+    { name: 'hamstrings', path: 'M85,124 L95,122 L95,162 L87,164 Z', label: { x: 91, y: 143 } },
+    { name: 'calves', path: 'M90,165 L100,163 L100,188 L90,188 Z', label: { x: 95, y: 176 } },
   ],
 };
 
 export const MuscleRecoveryMap = () => {
-  const { muscleGroups, exercises } = useGym();
+  const { muscleGroups } = useGym();
   const [view, setView] = useState<ViewSide>('front');
   const [muscleRecovery, setMuscleRecovery] = useState<Map<string, MuscleRecovery>>(new Map());
   const [selectedMuscle, setSelectedMuscle] = useState<MuscleRecovery | null>(null);
@@ -60,7 +69,6 @@ export const MuscleRecoveryMap = () => {
 
   const loadRecoveryData = async () => {
     try {
-      // Get all exercise sets from the last 7 days
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -73,7 +81,6 @@ export const MuscleRecoveryMap = () => {
 
       const recoveryMap = new Map<string, MuscleRecovery>();
 
-      // Initialize all muscle groups
       muscleGroups.forEach(mg => {
         recoveryMap.set(mg.name.toLowerCase(), {
           name: mg.name,
@@ -83,7 +90,6 @@ export const MuscleRecoveryMap = () => {
         });
       });
 
-      // Process workout history
       if (sets) {
         const muscleLastWorkout = new Map<string, Date>();
         const muscleExercises = new Map<string, Set<string>>();
@@ -106,7 +112,6 @@ export const MuscleRecoveryMap = () => {
           }
         });
 
-        // Calculate recovery states
         muscleLastWorkout.forEach((lastWorkout, muscleName) => {
           const hoursSince = (Date.now() - lastWorkout.getTime()) / (1000 * 60 * 60);
           let state: RecoveryState = 'recovered';
@@ -140,9 +145,9 @@ export const MuscleRecoveryMap = () => {
       case 'not-recovered':
         return 'hsl(var(--destructive))';
       case 'recovering':
-        return 'hsl(45 93% 47%)'; // Yellow/warning color
+        return 'hsl(45 93% 47%)';
       case 'recovered':
-        return 'hsl(142 71% 45%)'; // Green color
+        return 'hsl(142 71% 45%)';
     }
   };
 
@@ -169,7 +174,7 @@ export const MuscleRecoveryMap = () => {
     setView(views[nextIndex]);
   };
 
-  const currentMuscles = musclePositions[view];
+  const currentMuscles = muscleSVGs[view];
 
   return (
     <div className="space-y-4">
@@ -186,7 +191,7 @@ export const MuscleRecoveryMap = () => {
         </div>
 
         {/* Legend */}
-        <div className="flex gap-4 mb-4 p-3 bg-muted/50 rounded-lg">
+        <div className="flex gap-4 mb-6 p-3 bg-muted/50 rounded-lg flex-wrap">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(142 71% 45%)' }} />
             <span className="text-sm">✅ Recovered (48h+)</span>
@@ -201,20 +206,28 @@ export const MuscleRecoveryMap = () => {
           </div>
         </div>
 
-        {/* Interactive Muscle Map */}
-        <div className="relative w-full max-w-md mx-auto aspect-[1/3]">
-          <img 
-            src={muscleMapImg} 
-            alt="Muscle Map" 
-            className="w-full h-full object-contain"
-            style={{ 
-              filter: 'grayscale(100%) brightness(1.2)',
-              opacity: 0.3
-            }}
-          />
-          
-          {/* Overlay muscle regions */}
-          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+        {/* SVG Body Map */}
+        <div className="relative w-full max-w-md mx-auto">
+          <svg 
+            viewBox="0 0 200 200" 
+            className="w-full h-auto"
+            style={{ minHeight: '500px' }}
+          >
+            {/* Body outline */}
+            <g className="opacity-20" stroke="hsl(var(--foreground))" strokeWidth="1" fill="none">
+              {/* Head */}
+              <circle cx="100" cy="15" r="10" />
+              {/* Torso */}
+              <path d="M100,25 L100,110" />
+              {/* Arms */}
+              <path d="M100,40 L{view === 'side' ? '75' : '70'},40 L{view === 'side' ? '75' : '68'},105" />
+              <path d="M100,40 L{view === 'side' ? '125' : '130'},40 L{view === 'side' ? '125' : '132'},105" />
+              {/* Legs */}
+              <path d="M95,110 L90,190" />
+              <path d="M105,110 L110,190" />
+            </g>
+
+            {/* Muscle groups with recovery colors */}
             {currentMuscles.map((muscle) => {
               const recovery = muscleRecovery.get(muscle.name.toLowerCase());
               const state = recovery?.state || 'recovered';
@@ -222,25 +235,24 @@ export const MuscleRecoveryMap = () => {
 
               return (
                 <g key={muscle.name}>
-                  <ellipse
-                    cx={muscle.x}
-                    cy={muscle.y}
-                    rx={muscle.width / 2}
-                    ry={muscle.height / 2}
+                  <path
+                    d={muscle.path}
                     fill={color}
-                    opacity="0.4"
-                    className="cursor-pointer hover:opacity-60 transition-opacity"
+                    opacity="0.6"
+                    stroke={color}
+                    strokeWidth="1"
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
                     onClick={() => handleMuscleClick(muscle.name)}
                   />
                   <text
-                    x={muscle.x}
-                    y={muscle.y}
+                    x={muscle.label.x}
+                    y={muscle.label.y}
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    fontSize="3"
+                    fontSize="8"
                     fill="hsl(var(--foreground))"
                     className="pointer-events-none font-semibold"
-                    style={{ textShadow: '0 0 2px hsl(var(--background))' }}
+                    style={{ textShadow: '0 0 3px hsl(var(--background))' }}
                   >
                     {getRecoveryEmoji(state)}
                   </text>
