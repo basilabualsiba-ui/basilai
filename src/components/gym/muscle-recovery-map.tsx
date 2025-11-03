@@ -19,41 +19,189 @@ interface MuscleRecovery {
   lastIntensity?: number;
 }
 
-// Muscle group SVG paths and positions for each view
+// Detailed muscle paths for each view
 const muscleSVGs = {
   front: [
-    { name: 'neck', path: 'M90,25 Q100,20 110,25 L110,35 Q100,33 90,35 Z', label: { x: 100, y: 30 } },
-    { name: 'shoulders', path: 'M70,40 Q85,35 100,40 L100,55 L85,50 L70,55 Z M100,40 Q115,35 130,40 L130,55 L115,50 L100,55 Z', label: { x: 100, y: 48 } },
-    { name: 'chest', path: 'M85,55 Q100,50 115,55 L115,75 Q100,78 85,75 Z', label: { x: 100, y: 65 } },
-    { name: 'biceps', path: 'M70,55 L70,80 Q75,82 80,80 L80,55 Z M120,55 L120,80 Q115,82 110,80 L110,55 Z', label: { x: 75, y: 68 } },
-    { name: 'abs', path: 'M88,78 L112,78 L112,105 Q100,108 88,105 Z', label: { x: 100, y: 92 } },
-    { name: 'forearms', path: 'M68,82 L68,105 Q73,107 78,105 L78,82 Z M122,82 L122,105 Q117,107 112,105 L112,82 Z', label: { x: 73, y: 94 } },
-    { name: 'quadriceps', path: 'M85,110 L85,155 Q90,157 95,155 L95,110 Z M105,110 L105,155 Q100,157 95,155 L95,110 Z', label: { x: 100, y: 133 } },
-    { name: 'calves', path: 'M85,160 L85,185 Q90,188 95,185 L95,160 Z M105,160 L105,185 Q100,188 95,185 L95,160 Z', label: { x: 100, y: 173 } },
+    { 
+      name: 'neck', 
+      path: 'M 95 30 L 105 30 L 108 40 L 92 40 Z',
+      label: { x: 100, y: 35 }
+    },
+    { 
+      name: 'shoulders', 
+      path: 'M 75 42 Q 85 40 95 42 L 95 55 Q 85 52 75 55 Z M 105 42 Q 115 40 125 42 L 125 55 Q 115 52 105 55 Z',
+      label: { x: 100, y: 48 }
+    },
+    { 
+      name: 'chest', 
+      path: 'M 85 55 Q 100 52 115 55 L 115 75 Q 108 78 100 78 Q 92 78 85 75 Z',
+      label: { x: 100, y: 66 }
+    },
+    { 
+      name: 'biceps', 
+      path: 'M 70 52 Q 75 50 80 52 L 82 75 Q 77 77 72 75 Z M 118 52 Q 123 50 128 52 L 128 75 Q 123 77 118 75 Z',
+      label: { x: 76, y: 64 }
+    },
+    { 
+      name: 'abs', 
+      path: 'M 88 80 L 112 80 L 112 110 Q 100 112 88 110 Z M 95 85 L 105 85 M 95 92 L 105 92 M 95 99 L 105 99 M 95 106 L 105 106',
+      label: { x: 100, y: 95 }
+    },
+    { 
+      name: 'forearms', 
+      path: 'M 68 77 Q 72 75 76 77 L 78 105 Q 74 107 70 105 Z M 122 77 Q 126 75 130 77 L 132 105 Q 128 107 124 105 Z',
+      label: { x: 73, y: 91 }
+    },
+    { 
+      name: 'quadriceps', 
+      path: 'M 85 115 L 90 115 L 92 165 L 87 165 Z M 95 115 L 100 115 L 102 165 L 97 165 Z M 105 115 L 110 115 L 112 165 L 107 165 Z',
+      label: { x: 100, y: 140 }
+    },
+    { 
+      name: 'calves', 
+      path: 'M 87 168 L 92 168 L 94 195 L 89 195 Z M 106 168 L 111 168 L 113 195 L 108 195 Z',
+      label: { x: 100, y: 182 }
+    },
   ],
   back: [
-    { name: 'neck', path: 'M90,25 Q100,20 110,25 L110,35 Q100,33 90,35 Z', label: { x: 100, y: 30 } },
-    { name: 'trapezius', path: 'M80,35 Q100,30 120,35 L115,50 Q100,48 85,50 Z', label: { x: 100, y: 42 } },
-    { name: 'shoulders', path: 'M65,40 L80,35 L80,55 L65,58 Z M120,35 L135,40 L135,58 L120,55 Z', label: { x: 73, y: 48 } },
-    { name: 'back', path: 'M85,52 L115,52 L118,90 Q100,95 82,90 Z', label: { x: 100, y: 72 } },
-    { name: 'triceps', path: 'M65,58 L65,85 Q70,87 75,85 L75,58 Z M125,58 L125,85 Q120,87 115,85 L115,58 Z', label: { x: 70, y: 72 } },
-    { name: 'lower-back', path: 'M85,92 L115,92 L112,108 Q100,110 88,108 Z', label: { x: 100, y: 100 } },
-    { name: 'glutes', path: 'M88,110 L112,110 L112,128 Q100,130 88,128 Z', label: { x: 100, y: 119 } },
-    { name: 'hamstrings', path: 'M85,130 L85,165 Q90,167 95,165 L95,130 Z M105,130 L105,165 Q100,167 95,165 L95,130 Z', label: { x: 100, y: 148 } },
-    { name: 'calves', path: 'M85,168 L85,188 Q90,190 95,188 L95,168 Z M105,168 L105,188 Q100,190 95,188 L95,168 Z', label: { x: 100, y: 178 } },
+    { 
+      name: 'neck', 
+      path: 'M 95 30 L 105 30 L 108 40 L 92 40 Z',
+      label: { x: 100, y: 35 }
+    },
+    { 
+      name: 'trapezius', 
+      path: 'M 85 40 Q 100 38 115 40 L 118 55 Q 100 52 82 55 Z',
+      label: { x: 100, y: 47 }
+    },
+    { 
+      name: 'shoulders', 
+      path: 'M 70 42 L 82 40 L 82 58 L 70 60 Z M 118 40 L 130 42 L 130 60 L 118 58 Z',
+      label: { x: 76, y: 50 }
+    },
+    { 
+      name: 'back', 
+      path: 'M 82 58 L 118 58 L 120 95 Q 100 98 80 95 Z M 90 65 L 110 65 M 88 75 L 112 75 M 87 85 L 113 85',
+      label: { x: 100, y: 77 }
+    },
+    { 
+      name: 'triceps', 
+      path: 'M 66 60 Q 70 58 74 60 L 76 85 Q 72 87 68 85 Z M 124 60 Q 128 58 132 60 L 134 85 Q 130 87 126 85 Z',
+      label: { x: 71, y: 73 }
+    },
+    { 
+      name: 'lower-back', 
+      path: 'M 85 98 L 115 98 L 115 115 Q 100 117 85 115 Z',
+      label: { x: 100, y: 107 }
+    },
+    { 
+      name: 'glutes', 
+      path: 'M 87 117 L 113 117 L 113 135 Q 100 137 87 135 Z',
+      label: { x: 100, y: 126 }
+    },
+    { 
+      name: 'hamstrings', 
+      path: 'M 85 138 L 92 138 L 94 170 L 87 170 Z M 97 138 L 103 138 L 105 170 L 98 170 Z M 108 138 L 115 138 L 117 170 L 110 170 Z',
+      label: { x: 100, y: 154 }
+    },
+    { 
+      name: 'calves', 
+      path: 'M 87 173 L 92 173 L 94 195 L 89 195 Z M 106 173 L 111 173 L 113 195 L 108 195 Z',
+      label: { x: 100, y: 184 }
+    },
   ],
   side: [
-    { name: 'neck', path: 'M95,25 Q100,22 105,25 L105,35 Q100,33 95,35 Z', label: { x: 100, y: 30 } },
-    { name: 'shoulders', path: 'M85,38 Q95,35 105,38 L105,52 Q95,50 85,52 Z', label: { x: 95, y: 45 } },
-    { name: 'chest', path: 'M95,52 L115,55 L115,75 L95,72 Z', label: { x: 105, y: 64 } },
-    { name: 'back', path: 'M75,52 L95,52 L95,75 L78,72 Z', label: { x: 85, y: 64 } },
-    { name: 'abs', path: 'M95,75 L110,77 L110,100 L95,98 Z', label: { x: 103, y: 88 } },
-    { name: 'lower-back', path: 'M80,77 L95,75 L95,98 L82,100 Z', label: { x: 88, y: 88 } },
-    { name: 'glutes', path: 'M82,102 L95,100 L95,120 L85,122 Z', label: { x: 90, y: 111 } },
-    { name: 'quadriceps', path: 'M95,122 L105,120 L105,160 L95,162 Z', label: { x: 100, y: 141 } },
-    { name: 'hamstrings', path: 'M85,124 L95,122 L95,162 L87,164 Z', label: { x: 91, y: 143 } },
-    { name: 'calves', path: 'M90,165 L100,163 L100,188 L90,188 Z', label: { x: 95, y: 176 } },
+    { 
+      name: 'neck', 
+      path: 'M 95 30 L 105 30 L 105 40 L 95 40 Z',
+      label: { x: 100, y: 35 }
+    },
+    { 
+      name: 'shoulders', 
+      path: 'M 85 40 Q 95 38 105 40 L 108 55 Q 98 53 88 55 Z',
+      label: { x: 97, y: 47 }
+    },
+    { 
+      name: 'chest', 
+      path: 'M 100 55 L 120 58 L 120 78 L 100 75 Z',
+      label: { x: 110, y: 67 }
+    },
+    { 
+      name: 'back', 
+      path: 'M 80 55 L 100 55 L 100 78 L 80 75 Z',
+      label: { x: 90, y: 67 }
+    },
+    { 
+      name: 'abs', 
+      path: 'M 100 80 L 115 82 L 115 110 L 100 108 Z M 105 87 L 112 87 M 105 95 L 112 95 M 105 103 L 112 103',
+      label: { x: 108, y: 95 }
+    },
+    { 
+      name: 'lower-back', 
+      path: 'M 85 80 L 100 80 L 100 110 L 85 108 Z',
+      label: { x: 93, y: 95 }
+    },
+    { 
+      name: 'glutes', 
+      path: 'M 87 112 L 100 112 L 100 130 L 90 132 Z',
+      label: { x: 94, y: 121 }
+    },
+    { 
+      name: 'quadriceps', 
+      path: 'M 100 132 L 108 130 L 110 170 L 102 170 Z',
+      label: { x: 105, y: 151 }
+    },
+    { 
+      name: 'hamstrings', 
+      path: 'M 88 134 L 98 132 L 100 170 L 90 170 Z',
+      label: { x: 94, y: 151 }
+    },
+    { 
+      name: 'calves', 
+      path: 'M 92 173 L 106 173 L 108 195 L 94 195 Z',
+      label: { x: 100, y: 184 }
+    },
   ],
+};
+
+// Detailed body outline SVG for each view
+const bodyOutlines = {
+  front: `
+    M 100 20 
+    A 10 10 0 1 1 100 20
+    M 100 28 L 100 40
+    M 92 40 Q 85 42 75 42 L 70 52 L 68 77 L 70 105 L 75 115 L 85 115 L 85 200
+    M 108 40 Q 115 42 125 42 L 130 52 L 132 77 L 130 105 L 125 115 L 115 115 L 115 200
+    M 100 40 L 100 80
+    M 85 80 L 115 80
+    M 85 115 L 92 115 L 92 168 L 94 200
+    M 97 115 L 103 115 L 103 168 L 103 200
+    M 108 115 L 115 115 L 113 168 L 111 200
+  `,
+  back: `
+    M 100 20 
+    A 10 10 0 1 1 100 20
+    M 100 28 L 100 40
+    M 92 40 Q 85 42 75 42 L 70 60 L 68 85 L 75 117 L 85 138 L 85 200
+    M 108 40 Q 115 42 125 42 L 130 60 L 132 85 L 125 117 L 115 138 L 115 200
+    M 100 40 L 100 98
+    M 82 58 L 118 58
+    M 85 98 L 115 98
+    M 85 117 L 115 117
+    M 85 138 L 92 138 L 94 173 L 94 200
+    M 97 138 L 103 138 L 103 173 L 103 200
+    M 108 138 L 115 138 L 113 173 L 111 200
+  `,
+  side: `
+    M 100 20 
+    A 10 10 0 1 1 100 20
+    M 100 28 L 100 40
+    M 95 40 L 85 40 L 80 55 L 80 80 L 85 112 L 87 134 L 88 173 L 90 200
+    M 105 40 L 115 40 L 120 58 L 120 82 L 115 110 L 108 130 L 110 170 L 108 200
+    M 100 40 L 100 112
+    M 85 80 L 120 82
+    M 85 112 L 115 110
+  `,
 };
 
 export const MuscleRecoveryMap = () => {
@@ -143,11 +291,11 @@ export const MuscleRecoveryMap = () => {
   const getRecoveryColor = (state: RecoveryState): string => {
     switch (state) {
       case 'not-recovered':
-        return 'hsl(var(--destructive))';
+        return '#ff4d6d';  // Pink/red like reference
       case 'recovering':
-        return 'hsl(45 93% 47%)';
+        return '#ffb703';  // Orange/yellow
       case 'recovered':
-        return 'hsl(142 71% 45%)';
+        return '#06d6a0';  // Green/teal
     }
   };
 
@@ -175,6 +323,7 @@ export const MuscleRecoveryMap = () => {
   };
 
   const currentMuscles = muscleSVGs[view];
+  const bodyOutline = bodyOutlines[view];
 
   return (
     <div className="space-y-4">
@@ -193,41 +342,39 @@ export const MuscleRecoveryMap = () => {
         {/* Legend */}
         <div className="flex gap-4 mb-6 p-3 bg-muted/50 rounded-lg flex-wrap">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(142 71% 45%)' }} />
+            <div className="w-4 h-4 rounded" style={{ backgroundColor: '#06d6a0' }} />
             <span className="text-sm">✅ Recovered (48h+)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(45 93% 47%)' }} />
+            <div className="w-4 h-4 rounded" style={{ backgroundColor: '#ffb703' }} />
             <span className="text-sm">⚠️ Recovering (24-48h)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded" style={{ backgroundColor: 'hsl(var(--destructive))' }} />
+            <div className="w-4 h-4 rounded" style={{ backgroundColor: '#ff4d6d' }} />
             <span className="text-sm">❌ Not Recovered (&lt;24h)</span>
           </div>
         </div>
 
-        {/* SVG Body Map */}
+        {/* Anatomical Body Map */}
         <div className="relative w-full max-w-md mx-auto">
           <svg 
-            viewBox="0 0 200 200" 
+            viewBox="0 0 200 220" 
             className="w-full h-auto"
-            style={{ minHeight: '500px' }}
+            style={{ minHeight: '600px' }}
           >
-            {/* Body outline */}
-            <g className="opacity-20" stroke="hsl(var(--foreground))" strokeWidth="1" fill="none">
-              {/* Head */}
-              <circle cx="100" cy="15" r="10" />
-              {/* Torso */}
-              <path d="M100,25 L100,110" />
-              {/* Arms */}
-              <path d="M100,40 L{view === 'side' ? '75' : '70'},40 L{view === 'side' ? '75' : '68'},105" />
-              <path d="M100,40 L{view === 'side' ? '125' : '130'},40 L{view === 'side' ? '125' : '132'},105" />
-              {/* Legs */}
-              <path d="M95,110 L90,190" />
-              <path d="M105,110 L110,190" />
+            {/* Base body outline - light blue tint */}
+            <g opacity="0.3">
+              <path
+                d={bodyOutline}
+                fill="#a8dadc"
+                stroke="#457b9d"
+                strokeWidth="1"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </g>
 
-            {/* Muscle groups with recovery colors */}
+            {/* Muscle groups with recovery state highlighting */}
             {currentMuscles.map((muscle) => {
               const recovery = muscleRecovery.get(muscle.name.toLowerCase());
               const state = recovery?.state || 'recovered';
@@ -235,24 +382,24 @@ export const MuscleRecoveryMap = () => {
 
               return (
                 <g key={muscle.name}>
+                  {/* Highlighted muscle region */}
                   <path
                     d={muscle.path}
                     fill={color}
-                    opacity="0.6"
+                    opacity="0.7"
                     stroke={color}
-                    strokeWidth="1"
-                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                    strokeWidth="0.5"
+                    className="cursor-pointer hover:opacity-90 transition-opacity"
                     onClick={() => handleMuscleClick(muscle.name)}
                   />
+                  {/* Emoji indicator */}
                   <text
                     x={muscle.label.x}
                     y={muscle.label.y}
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    fontSize="8"
-                    fill="hsl(var(--foreground))"
-                    className="pointer-events-none font-semibold"
-                    style={{ textShadow: '0 0 3px hsl(var(--background))' }}
+                    fontSize="10"
+                    className="pointer-events-none"
                   >
                     {getRecoveryEmoji(state)}
                   </text>
@@ -275,7 +422,10 @@ export const MuscleRecoveryMap = () => {
 
           {selectedMuscle && (
             <div className="space-y-4">
-              <div className="p-4 rounded-lg" style={{ backgroundColor: `${getRecoveryColor(selectedMuscle.state)}20` }}>
+              <div 
+                className="p-4 rounded-lg" 
+                style={{ backgroundColor: `${getRecoveryColor(selectedMuscle.state)}30` }}
+              >
                 <div className="text-lg font-semibold mb-2">
                   {selectedMuscle.state === 'not-recovered' && 'Not Recovered'}
                   {selectedMuscle.state === 'recovering' && 'Recovering'}
