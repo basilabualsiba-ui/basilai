@@ -294,7 +294,6 @@ export type Database = {
           equipment: string | null
           id: string
           instructions: string | null
-          movement_type: string | null
           muscle_group: string
           name: string
           photo_url: string | null
@@ -308,7 +307,6 @@ export type Database = {
           equipment?: string | null
           id?: string
           instructions?: string | null
-          movement_type?: string | null
           muscle_group: string
           name: string
           photo_url?: string | null
@@ -322,7 +320,6 @@ export type Database = {
           equipment?: string | null
           id?: string
           instructions?: string | null
-          movement_type?: string | null
           muscle_group?: string
           name?: string
           photo_url?: string | null
