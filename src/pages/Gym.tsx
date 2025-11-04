@@ -30,6 +30,7 @@ const Gym = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('exercises');
+  const [previousTab, setPreviousTab] = useState<string>('planner');
 
   // Handle navigation from Schedule page
   useEffect(() => {
@@ -37,15 +38,30 @@ const Gym = () => {
       setActiveTab(location.state.activeTab);
     }
   }, [location.state]);
+
+  // Track previous tab for back navigation
+  const handleTabChange = (newTab: string) => {
+    setPreviousTab(activeTab);
+    setActiveTab(newTab);
+  };
+
+  // Check if we should show back button (for secondary views)
+  const showBackButton = ['workout', 'muscle-groups', 'tracker'].includes(activeTab);
   return <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen bg-background flex w-full">
         {/* Header */}
         <header className="absolute top-0 left-0 right-0 z-50 border-b border-border/50 bg-card/50 backdrop-blur-sm">
           <div className="container mx-auto px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="hover:bg-muted">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
+              {showBackButton ? (
+                <Button variant="ghost" size="icon" onClick={() => setActiveTab(previousTab)} className="hover:bg-muted">
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="hover:bg-muted">
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              )}
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-full bg-gradient-accent">
                   <Dumbbell className="h-5 w-5 text-primary" />
@@ -54,11 +70,11 @@ const Gym = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setActiveTab('workout')} className={`flex items-center gap-2 ${activeTab === 'workout' ? 'bg-primary/10 text-primary' : ''}`}>
+              <Button variant="outline" size="sm" onClick={() => handleTabChange('workout')} className={`flex items-center gap-2 ${activeTab === 'workout' ? 'bg-primary/10 text-primary' : ''}`}>
                 <Play className="h-4 w-4" />
                 <span className="hidden sm:inline">Workout</span>
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setActiveTab('muscle-groups')} className={`flex items-center gap-2 ${activeTab === 'muscle-groups' ? 'bg-primary/10 text-primary' : ''}`}>
+              <Button variant="outline" size="sm" onClick={() => handleTabChange('muscle-groups')} className={`flex items-center gap-2 ${activeTab === 'muscle-groups' ? 'bg-primary/10 text-primary' : ''}`}>
                 <Users className="h-4 w-4" />
                 <span className="hidden sm:inline">Muscle Groups</span>
               </Button>
@@ -71,7 +87,7 @@ const Gym = () => {
 
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
-          <GymSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+          <GymSidebar activeTab={activeTab} onTabChange={handleTabChange} />
         </div>
 
         {/* Main Content */}
@@ -82,14 +98,14 @@ const Gym = () => {
             {activeTab === 'planner' && <WorkoutPlanner />}
             {activeTab === 'tracker' && <WorkoutTracker />}
             {activeTab === 'muscle-groups' && <MuscleGroups />}
-            {activeTab === 'workout' && <WorkoutFlow onBack={() => setActiveTab('exercises')} />}
+            {activeTab === 'workout' && <WorkoutFlow onBack={() => setActiveTab(previousTab)} />}
           </div>
         </main>
 
         {/* Mobile Bottom Tabs */}
         <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card border-t border-border">
           <div className="grid grid-cols-3 h-16">
-            {gymItems.map(item => <button key={item.value} onClick={() => setActiveTab(item.value)} className={`flex flex-col items-center justify-center gap-1 transition-colors ${activeTab === item.value ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground'}`}>
+            {gymItems.map(item => <button key={item.value} onClick={() => handleTabChange(item.value)} className={`flex flex-col items-center justify-center gap-1 transition-colors ${activeTab === item.value ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground'}`}>
                 <item.icon className="h-5 w-5" />
                 <span className="text-xs font-medium">{item.title}</span>
               </button>)}
