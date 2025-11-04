@@ -14,6 +14,7 @@ import { ScheduleProvider } from "./contexts/ScheduleContext";
 import { FinancialProvider } from "./contexts/FinancialContext";
 import { CurrencyProvider } from "./contexts/CurrencyContext";
 import { PrivacyProvider } from "./contexts/PrivacyContext";
+import { DreamsProvider } from "./contexts/DreamsContext";
 import Index from "./pages/Index";
 import Financial from "./pages/Financial";
 import Gym from "./pages/Gym";
@@ -23,6 +24,7 @@ import GymStatsPage from "./pages/GymStats";
 import WorkoutDay from "./pages/WorkoutDay";
 import Schedule from "./pages/Schedule";
 import Islamic from "./pages/Islamic";
+import Dreams from "./pages/Dreams";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +48,7 @@ function AppContent() {
           <Route path="/weight-stats" element={<WeightStats />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/islamic" element={<Islamic />} />
+          <Route path="/dreams" element={<Dreams />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -63,7 +66,9 @@ const App = () => (
             <FoodProvider>
               <PrayerNotificationProvider>
                 <ScheduleProvider>
-                  <AppContent />
+                  <DreamsProvider>
+                    <AppContent />
+                  </DreamsProvider>
                 </ScheduleProvider>
               </PrayerNotificationProvider>
             </FoodProvider>

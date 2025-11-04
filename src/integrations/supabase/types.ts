@@ -212,6 +212,142 @@ export type Database = {
         }
         Relationships: []
       }
+      dream_photos: {
+        Row: {
+          caption: string | null
+          dream_id: string
+          id: string
+          is_before: boolean | null
+          photo_url: string
+          uploaded_at: string
+        }
+        Insert: {
+          caption?: string | null
+          dream_id: string
+          id?: string
+          is_before?: boolean | null
+          photo_url: string
+          uploaded_at?: string
+        }
+        Update: {
+          caption?: string | null
+          dream_id?: string
+          id?: string
+          is_before?: boolean | null
+          photo_url?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dream_photos_dream_id_fkey"
+            columns: ["dream_id"]
+            isOneToOne: false
+            referencedRelation: "dreams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dream_steps: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          dream_id: string
+          id: string
+          is_completed: boolean | null
+          order_index: number
+          title: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          dream_id: string
+          id?: string
+          is_completed?: boolean | null
+          order_index?: number
+          title: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          dream_id?: string
+          id?: string
+          is_completed?: boolean | null
+          order_index?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dream_steps_dream_id_fkey"
+            columns: ["dream_id"]
+            isOneToOne: false
+            referencedRelation: "dreams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dreams: {
+        Row: {
+          completed_at: string | null
+          completion_notes: string | null
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          estimated_cost: number | null
+          id: string
+          lessons_learned: string | null
+          location: string | null
+          priority: string
+          progress_percentage: number | null
+          rating: number | null
+          status: string
+          target_date: string | null
+          title: string
+          type: string
+          updated_at: string
+          why_important: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          completion_notes?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_cost?: number | null
+          id?: string
+          lessons_learned?: string | null
+          location?: string | null
+          priority?: string
+          progress_percentage?: number | null
+          rating?: number | null
+          status?: string
+          target_date?: string | null
+          title: string
+          type?: string
+          updated_at?: string
+          why_important?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          completion_notes?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          estimated_cost?: number | null
+          id?: string
+          lessons_learned?: string | null
+          location?: string | null
+          priority?: string
+          progress_percentage?: number | null
+          rating?: number | null
+          status?: string
+          target_date?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          why_important?: string | null
+        }
+        Relationships: []
+      }
       exercise_alternatives: {
         Row: {
           alternative_exercise_id: string
@@ -294,6 +430,7 @@ export type Database = {
           equipment: string | null
           id: string
           instructions: string | null
+          movement_type: string | null
           muscle_group: string
           name: string
           photo_url: string | null
@@ -307,6 +444,7 @@ export type Database = {
           equipment?: string | null
           id?: string
           instructions?: string | null
+          movement_type?: string | null
           muscle_group: string
           name: string
           photo_url?: string | null
@@ -320,6 +458,7 @@ export type Database = {
           equipment?: string | null
           id?: string
           instructions?: string | null
+          movement_type?: string | null
           muscle_group?: string
           name?: string
           photo_url?: string | null

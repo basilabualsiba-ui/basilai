@@ -1,6 +1,7 @@
 import { Logo } from "@/components/ui/logo";
 import { StatsOverview } from "@/components/dashboard/stats-overview";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
+import { DreamsCard } from "@/components/dashboard/dreams-card";
 import { SettingsDialog } from "@/components/ui/settings-dialog";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -101,6 +102,11 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8 space-y-8">
         {/* Stats Overview */}
         <StatsOverview />
+
+        {/* Dreams Card */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <DreamsCard />
+        </div>
 
         {/* Recent Activity */}
         <RecentActivity />
