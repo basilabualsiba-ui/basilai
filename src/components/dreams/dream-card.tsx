@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { DreamCompletionDialog } from "./dream-completion-dialog";
+import { DreamDetailDialog } from "./dream-detail-dialog";
 import { useDreams } from "@/contexts/DreamsContext";
 
 interface Dream {
@@ -50,6 +51,7 @@ const getTypeLabel = (type: string) => {
 
 export const DreamCard = ({ dream, onEdit }: DreamCardProps) => {
   const [showCompletion, setShowCompletion] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
   const { deleteDream } = useDreams();
 
   const handleComplete = () => {
@@ -65,7 +67,7 @@ export const DreamCard = ({ dream, onEdit }: DreamCardProps) => {
 
   return (
     <>
-      <Card className="hover:shadow-lg transition-shadow">
+      <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setShowDetail(true)}>
         <CardHeader>
           <div className="flex items-start justify-between mb-2">
             <Badge variant={getPriorityColor(dream.priority)}>
@@ -118,7 +120,7 @@ export const DreamCard = ({ dream, onEdit }: DreamCardProps) => {
             </div>
           )}
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
             {dream.status !== 'completed' && (
               <Button
                 variant="default"
@@ -147,6 +149,12 @@ export const DreamCard = ({ dream, onEdit }: DreamCardProps) => {
         onOpenChange={setShowCompletion}
         dreamId={dream.id}
         dreamTitle={dream.title}
+      />
+      
+      <DreamDetailDialog
+        dreamId={dream.id}
+        open={showDetail}
+        onOpenChange={setShowDetail}
       />
     </>
   );

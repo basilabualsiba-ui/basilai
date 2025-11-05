@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { useDreams } from "@/contexts/DreamsContext";
-import { Plus } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const dreamTypes = [
   { value: 'general', label: 'General' },
@@ -29,6 +30,7 @@ export const AddDreamDialog = () => {
   const [open, setOpen] = useState(false);
   const { addDream } = useDreams();
   const [createFinancialGoal, setCreateFinancialGoal] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -43,14 +45,33 @@ export const AddDreamDialog = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setIsGeneratingImage(true);
+      
+      // Generate AI cover image
+      let coverImageUrl: string | undefined;
+      try {
+        const { data: imageData, error: imageError } = await supabase.functions.invoke('generate-dream-image', {
+          body: { prompt: `${formData.title}. ${formData.description}` }
+        });
+        
+        if (imageData?.image) {
+          coverImageUrl = imageData.image;
+        }
+      } catch (err) {
+        console.error('Failed to generate image:', err);
+        toast.error('Could not generate image, but dream will still be created');
+      }
+
       // Create the dream
       const dreamData = {
         ...formData,
         estimated_cost: formData.estimated_cost ? parseFloat(formData.estimated_cost) : undefined,
         target_date: formData.target_date || undefined,
+        cover_image_url: coverImageUrl,
       };
       
       await addDream(dreamData);
+      setIsGeneratingImage(false);
 
       // Create financial goal if requested and estimated cost exists
       if (createFinancialGoal && formData.estimated_cost) {
@@ -109,6 +130,7 @@ export const AddDreamDialog = () => {
       setOpen(false);
     } catch (error) {
       console.error('Error adding dream:', error);
+      setIsGeneratingImage(false);
     }
   };
 
@@ -248,7 +270,19 @@ export const AddDreamDialog = () => {
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit">Add Dream</Button>
+            <Button type="submit" disabled={isGeneratingImage}>
+              {isGeneratingImage ? (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2 animate-spin" />
+                  Generating Dream Image...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Dream
+                </>
+              )}
+            </Button>
           </div>
         </form>
       </DialogContent>
