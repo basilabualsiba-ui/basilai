@@ -15,6 +15,7 @@ import { FinancialProvider } from "./contexts/FinancialContext";
 import { CurrencyProvider } from "./contexts/CurrencyContext";
 import { PrivacyProvider } from "./contexts/PrivacyContext";
 import { DreamsProvider } from "./contexts/DreamsContext";
+import { useDreamProgress } from "./hooks/useDreamProgress";
 import Index from "./pages/Index";
 import Financial from "./pages/Financial";
 import Gym from "./pages/Gym";
@@ -31,6 +32,7 @@ const queryClient = new QueryClient();
 
 function AppContent() {
   const { scheduleAllNotifications } = useBackgroundNotifications();
+  useDreamProgress(); // Auto-update dream progress based on activities
   
   return (
     <BrowserRouter>

@@ -1,13 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Home, Search, Filter } from "lucide-react";
+import { Home, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Logo } from "@/components/ui/logo";
 import { useDreams } from "@/contexts/DreamsContext";
 import { AddDreamDialog } from "@/components/dreams/add-dream-dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { DreamCard } from "@/components/dreams/dream-card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -26,26 +24,6 @@ const Dreams = () => {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'destructive';
-      case 'medium': return 'default';
-      case 'low': return 'secondary';
-      default: return 'default';
-    }
-  };
-
-  const getTypeLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      general: 'General',
-      travel: 'Travel',
-      adventure: 'Adventure',
-      career: 'Career',
-      personal: 'Personal',
-      creative: 'Creative',
-    };
-    return labels[type] || type;
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -128,52 +106,7 @@ const Dreams = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredDreams.map((dream) => (
-              <Card key={dream.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader>
-                  <div className="flex items-start justify-between mb-2">
-                    <Badge variant={getPriorityColor(dream.priority)}>
-                      {dream.priority}
-                    </Badge>
-                    <Badge variant="outline">{getTypeLabel(dream.type)}</Badge>
-                  </div>
-                  <CardTitle className="text-xl">{dream.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {dream.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {dream.description}
-                    </p>
-                  )}
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Progress</span>
-                      <span className="font-medium">{dream.progress_percentage}%</span>
-                    </div>
-                    <Progress value={dream.progress_percentage} />
-                  </div>
-
-                  {dream.target_date && (
-                    <p className="text-sm text-muted-foreground">
-                      Target: {new Date(dream.target_date).toLocaleDateString()}
-                    </p>
-                  )}
-
-                  {dream.location && (
-                    <p className="text-sm text-muted-foreground">
-                      📍 {dream.location}
-                    </p>
-                  )}
-
-                  {dream.status === 'completed' && dream.completed_at && (
-                    <div className="pt-2 border-t border-border">
-                      <p className="text-sm text-green-600 dark:text-green-400 font-medium">
-                        ✓ Completed {new Date(dream.completed_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <DreamCard key={dream.id} dream={dream} />
             ))}
           </div>
         )}

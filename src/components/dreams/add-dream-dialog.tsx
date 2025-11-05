@@ -4,9 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { useDreams } from "@/contexts/DreamsContext";
 import { Plus } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const dreamTypes = [
   { value: 'general', label: 'General' },
@@ -26,6 +28,7 @@ const priorities = [
 export const AddDreamDialog = () => {
   const [open, setOpen] = useState(false);
   const { addDream } = useDreams();
+  const [createFinancialGoal, setCreateFinancialGoal] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -40,11 +43,58 @@ export const AddDreamDialog = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await addDream({
+      // Create the dream
+      const dreamData = {
         ...formData,
         estimated_cost: formData.estimated_cost ? parseFloat(formData.estimated_cost) : undefined,
         target_date: formData.target_date || undefined,
-      });
+      };
+      
+      await addDream(dreamData);
+
+      // Create financial goal if requested and estimated cost exists
+      if (createFinancialGoal && formData.estimated_cost) {
+        const goalName = `${formData.title} - Savings Goal`;
+        const targetAmount = parseFloat(formData.estimated_cost);
+        
+        // Create a category for dream savings if it doesn't exist
+        const { data: existingCategories } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('name', 'Dream Savings')
+          .eq('type', 'expense')
+          .single();
+
+        let categoryId = existingCategories?.id;
+
+        if (!categoryId) {
+          const { data: newCategory } = await supabase
+            .from('categories')
+            .insert({
+              name: 'Dream Savings',
+              type: 'expense',
+              icon: 'Sparkles'
+            })
+            .select()
+            .single();
+          
+          categoryId = newCategory?.id;
+        }
+
+        // Create a budget for tracking savings
+        if (categoryId && formData.target_date) {
+          const targetDate = new Date(formData.target_date);
+          await supabase
+            .from('budgets')
+            .insert({
+              category_id: categoryId,
+              amount: targetAmount,
+              month: targetDate.getMonth() + 1,
+              year: targetDate.getFullYear()
+            });
+        }
+      }
+
       setFormData({
         title: '',
         description: '',
@@ -55,6 +105,7 @@ export const AddDreamDialog = () => {
         estimated_cost: '',
         location: '',
       });
+      setCreateFinancialGoal(false);
       setOpen(false);
     } catch (error) {
       console.error('Error adding dream:', error);
@@ -174,6 +225,24 @@ export const AddDreamDialog = () => {
               placeholder="e.g., Paris, France"
             />
           </div>
+
+          {formData.estimated_cost && (
+            <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/30">
+              <div className="space-y-1">
+                <Label htmlFor="create-goal" className="text-base">
+                  Create Financial Savings Goal
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Track your savings progress towards this dream in the Financial app
+                </p>
+              </div>
+              <Switch
+                id="create-goal"
+                checked={createFinancialGoal}
+                onCheckedChange={setCreateFinancialGoal}
+              />
+            </div>
+          )}
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
