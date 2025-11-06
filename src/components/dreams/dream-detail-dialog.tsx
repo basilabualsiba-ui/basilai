@@ -42,9 +42,6 @@ export const DreamDetailDialog = ({ dreamId, open, onOpenChange }: DreamDetailDi
           )}
 
           <div className="flex gap-2">
-            <Badge variant={dream.priority === 'high' ? 'destructive' : dream.priority === 'medium' ? 'default' : 'secondary'}>
-              {dream.priority}
-            </Badge>
             <Badge variant="outline">{dream.type}</Badge>
             <Badge variant={dream.status === 'completed' ? 'default' : 'secondary'}>
               {dream.status.replace('_', ' ')}

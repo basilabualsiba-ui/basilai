@@ -69,10 +69,7 @@ export const DreamCard = ({ dream, onEdit }: DreamCardProps) => {
     <>
       <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setShowDetail(true)}>
         <CardHeader>
-          <div className="flex items-start justify-between mb-2">
-            <Badge variant={getPriorityColor(dream.priority)}>
-              {dream.priority}
-            </Badge>
+          <div className="flex items-end justify-between mb-2">
             <Badge variant="outline">{getTypeLabel(dream.type)}</Badge>
           </div>
           <CardTitle className="text-xl">{dream.title}</CardTitle>

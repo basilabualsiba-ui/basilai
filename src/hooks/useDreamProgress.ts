@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
  * Hook to automatically update dream progress based on related activities
  * - Gym-related dreams track workout completion
  * - Weight-related dreams track body stats
+ * - Net worth dreams track financial progress
  * - Can be extended for other activity types
  */
 export const useDreamProgress = () => {
@@ -15,52 +16,17 @@ export const useDreamProgress = () => {
 
   useEffect(() => {
     const updateDreamsProgress = async () => {
-      // Update gym-related dreams
-      const gymRelatedDreams = dreams.filter(
-        (dream) => 
-          dream.status === 'in_progress' && 
-          (dream.type === 'personal' || dream.description?.toLowerCase().includes('workout') || 
-           dream.description?.toLowerCase().includes('gym') || 
-           dream.description?.toLowerCase().includes('fitness'))
-      );
+      for (const dream of dreams.filter(d => d.status === 'in_progress')) {
+        let calculatedProgress = dream.progress_percentage;
+        let shouldUpdate = false;
 
-      for (const dream of gymRelatedDreams) {
-        const completedWorkouts = workoutSessions.filter(
-          (session) => session.completed_at !== null
-        ).length;
-
-        const targetWorkouts = 50;
-        const calculatedProgress = Math.min(
-          Math.round((completedWorkouts / targetWorkouts) * 100),
-          100
-        );
-
-        if (Math.abs(calculatedProgress - dream.progress_percentage) > 5) {
-          await updateDream(dream.id, {
-            progress_percentage: calculatedProgress,
-          });
-        }
-      }
-
-      // Update weight-related dreams
-      const weightRelatedDreams = dreams.filter(
-        (dream) =>
-          dream.status === 'in_progress' &&
-          (dream.title.toLowerCase().match(/\d+\s*kg/) ||
-           dream.title.toLowerCase().includes('weight') ||
-           dream.description?.toLowerCase().includes('weight') ||
-           dream.description?.toLowerCase().match(/\d+\s*kg/))
-      );
-
-      for (const dream of weightRelatedDreams) {
-        // Extract target weight from title or description
-        const targetMatch = dream.title.match(/(\d+)\s*kg/) || 
+        // Weight-related dreams (e.g., "Reach 75 kg")
+        const weightMatch = dream.title.match(/(\d+)\s*kg/) || 
                            dream.description?.match(/(\d+)\s*kg/);
         
-        if (targetMatch) {
-          const targetWeight = parseFloat(targetMatch[1]);
+        if (weightMatch) {
+          const targetWeight = parseFloat(weightMatch[1]);
           
-          // Get latest weight from body stats
           const { data: bodyStats } = await supabase
             .from('user_body_stats')
             .select('weight')
@@ -71,20 +37,72 @@ export const useDreamProgress = () => {
             const currentWeight = bodyStats[0].weight;
             const startWeight = bodyStats[bodyStats.length - 1].weight;
             
-            // Calculate progress based on how close to target
             const totalChange = Math.abs(Number(targetWeight) - Number(startWeight));
             const currentChange = Math.abs(Number(currentWeight) - Number(startWeight));
-            const calculatedProgress = Math.min(
+            calculatedProgress = Math.min(
               Math.round((currentChange / totalChange) * 100),
               100
             );
-
-            if (Math.abs(calculatedProgress - dream.progress_percentage) > 5) {
-              await updateDream(dream.id, {
-                progress_percentage: calculatedProgress,
-              });
-            }
+            shouldUpdate = true;
           }
+        }
+        
+        // Net worth dreams (e.g., "Reach 30000 in net worth")
+        const netWorthMatch = dream.title.match(/(\d+)\s*in\s*net\s*worth/) ||
+                             dream.description?.match(/(\d+)\s*in\s*net\s*worth/) ||
+                             dream.title.match(/net\s*worth.*?(\d+)/) ||
+                             dream.description?.match(/net\s*worth.*?(\d+)/);
+        
+        if (netWorthMatch) {
+          const targetNetWorth = parseFloat(netWorthMatch[1]);
+          
+          // Calculate current net worth from accounts
+          const { data: accounts } = await supabase
+            .from('accounts')
+            .select('amount');
+
+          if (accounts && accounts.length > 0) {
+            const currentNetWorth = accounts.reduce((sum, acc) => sum + Number(acc.amount), 0);
+            
+            // Get initial net worth (could be 0 or first recorded value)
+            const startNetWorth = 0; // Assuming starting from zero
+            const totalChange = Math.abs(targetNetWorth - startNetWorth);
+            const currentChange = Math.abs(currentNetWorth - startNetWorth);
+            
+            calculatedProgress = Math.min(
+              Math.round((currentChange / totalChange) * 100),
+              100
+            );
+            shouldUpdate = true;
+          }
+        }
+        
+        // Gym/Fitness-related dreams
+        const gymKeywords = ['workout', 'gym', 'fitness', 'exercise', 'training', 'muscle', 'strength'];
+        const isGymRelated = dream.type === 'personal' || 
+          gymKeywords.some(keyword => 
+            dream.title.toLowerCase().includes(keyword) || 
+            dream.description?.toLowerCase().includes(keyword)
+          );
+
+        if (isGymRelated && !weightMatch) {
+          const completedWorkouts = workoutSessions.filter(
+            (session) => session.completed_at !== null
+          ).length;
+
+          const targetWorkouts = 50;
+          calculatedProgress = Math.min(
+            Math.round((completedWorkouts / targetWorkouts) * 100),
+            100
+          );
+          shouldUpdate = true;
+        }
+
+        // Update if there's a significant change (>5%)
+        if (shouldUpdate && Math.abs(calculatedProgress - dream.progress_percentage) > 5) {
+          await updateDream(dream.id, {
+            progress_percentage: calculatedProgress,
+          });
         }
       }
     };

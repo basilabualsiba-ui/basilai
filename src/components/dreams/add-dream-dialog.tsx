@@ -3,28 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { useDreams } from "@/contexts/DreamsContext";
 import { Plus, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-const dreamTypes = [
-  { value: 'general', label: 'General' },
-  { value: 'travel', label: 'Places to Visit' },
-  { value: 'adventure', label: 'Adventures to Do' },
-  { value: 'career', label: 'Career Goals' },
-  { value: 'personal', label: 'Personal Growth' },
-  { value: 'creative', label: 'Creative Projects' },
-];
-
-const priorities = [
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-];
 
 export const AddDreamDialog = () => {
   const [open, setOpen] = useState(false);
@@ -34,18 +18,50 @@ export const AddDreamDialog = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    type: 'general',
-    priority: 'medium',
     why_important: '',
     target_date: '',
     estimated_cost: '',
     location: '',
   });
 
+  const detectDreamType = (title: string, description: string): string => {
+    const text = `${title} ${description}`.toLowerCase();
+    
+    // Travel & Places
+    if (text.match(/visit|travel|trip|country|city|landmark|destination|explore|journey|vacation|tour/)) {
+      return 'travel';
+    }
+    
+    // Personal Development
+    if (text.match(/kg|weight|fitness|workout|gym|exercise|habit|overcome|learn|skill|fear|health|meditation|yoga/)) {
+      return 'personal';
+    }
+    
+    // Career & Learning
+    if (text.match(/business|career|job|certification|course|startup|company|promotion|degree|study|training/)) {
+      return 'career';
+    }
+    
+    // Adventures & Sports
+    if (text.match(/skydiving|marathon|climbing|adventure|sport|race|hiking|diving|surfing|extreme/)) {
+      return 'adventure';
+    }
+    
+    // Family & Relationships
+    if (text.match(/marry|wedding|kids|child|family|relationship|friend|reconnect|parent/)) {
+      return 'creative'; // Using creative as closest match
+    }
+    
+    return 'general';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setIsGeneratingImage(true);
+      
+      // Detect dream type using AI logic
+      const detectedType = detectDreamType(formData.title, formData.description);
       
       // Generate AI cover image
       let coverImageUrl: string | undefined;
@@ -65,6 +81,8 @@ export const AddDreamDialog = () => {
       // Create the dream
       const dreamData = {
         ...formData,
+        type: detectedType,
+        priority: 'medium', // Default priority since we removed the field
         estimated_cost: formData.estimated_cost ? parseFloat(formData.estimated_cost) : undefined,
         target_date: formData.target_date || undefined,
         cover_image_url: coverImageUrl,
@@ -119,8 +137,6 @@ export const AddDreamDialog = () => {
       setFormData({
         title: '',
         description: '',
-        type: 'general',
-        priority: 'medium',
         why_important: '',
         target_date: '',
         estimated_cost: '',
@@ -158,40 +174,6 @@ export const AddDreamDialog = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="type">Type *</Label>
-              <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {dreamTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="priority">Priority *</Label>
-              <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {priorities.map((priority) => (
-                    <SelectItem key={priority.value} value={priority.value}>
-                      {priority.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
@@ -201,6 +183,9 @@ export const AddDreamDialog = () => {
               placeholder="Describe your dream..."
               rows={3}
             />
+            <p className="text-xs text-muted-foreground">
+              💡 AI will automatically categorize your dream based on your description
+            </p>
           </div>
 
           <div className="space-y-2">

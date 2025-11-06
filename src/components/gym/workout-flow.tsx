@@ -276,14 +276,9 @@ const handleStartWorkout = async () => {
       return currentSession ? (
         <div className="relative">
           <div className="fixed top-20 left-0 right-0 z-50 md:left-auto md:right-6 md:left-6">
-            <WorkoutMusicPlayer 
-              isWorkoutActive={true}
-              onWorkoutStart={() => {}}
-              onWorkoutEnd={() => {}}
-            />
             <LiveActivityStatus />
           </div>
-          <div className="pt-36">
+          <div className="pt-24">
             <WorkoutTimer
               sessionId={currentSession}
               onExerciseSelect={handleExerciseSelect}
@@ -301,14 +296,7 @@ const handleStartWorkout = async () => {
     case 'exercise':
       return selectedExercise && currentSession ? (
         <div className="relative">
-          <div className="fixed top-20 left-0 right-0 z-50 md:left-auto md:right-6 md:left-6">
-            <WorkoutMusicPlayer 
-              isWorkoutActive={true}
-              onWorkoutStart={() => {}}
-              onWorkoutEnd={() => {}}
-            />
-          </div>
-          <div className="pt-28">
+          <div className="pt-4">
             <ExerciseDetail
               exercise={selectedExercise.exercise}
               sessionId={currentSession}
@@ -324,14 +312,7 @@ const handleStartWorkout = async () => {
     case 'summary':
       return currentSession ? (
         <div className="relative">
-          <div className="fixed top-20 left-0 right-0 z-50 md:left-auto md:right-6 md:left-6">
-            <WorkoutMusicPlayer 
-              isWorkoutActive={false}
-              onWorkoutStart={() => {}}
-              onWorkoutEnd={() => {}}
-            />
-          </div>
-          <div className="pt-28">
+          <div className="pt-4">
             <WorkoutSummary
               sessionId={currentSession}
               onFinish={handleSummaryFinish}
