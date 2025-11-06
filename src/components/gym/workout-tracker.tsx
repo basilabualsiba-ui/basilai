@@ -10,23 +10,28 @@ import { Play, Square, Timer, Dumbbell, Plus, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { SaveWorkoutTemplateDialog } from './save-workout-template-dialog';
 
 export function WorkoutTracker() {
   const { 
     getTodayWorkout, 
-    startWorkoutSession, 
+    startWorkoutSession,
+    startBlankWorkoutSession,
     completeWorkoutSession, 
     addExerciseSet,
     exerciseSets,
     workoutSessions,
     workoutPlans,
-    workoutPlanDays
+    workoutPlanDays,
+    exercises: allExercises
   } = useGym();
   
   const [currentSession, setCurrentSession] = useState<string | null>(null);
   const [isWorkoutDialogOpen, setIsWorkoutDialogOpen] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
   const [workoutExerciseDetails, setWorkoutExerciseDetails] = useState<Record<string, any>>({});
+  const [isSaveTemplateOpen, setIsSaveTemplateOpen] = useState(false);
+  const [sessionExercises, setSessionExercises] = useState<any[]>([]);
   const [setData, setSetData] = useState({
     weight: '',
     reps: '',
@@ -65,6 +70,30 @@ export function WorkoutTracker() {
     
     fetchWorkoutExerciseDetails();
   }, [todayWorkout]);
+
+  // Load session exercises when session changes
+  useEffect(() => {
+    const loadSessionExercises = async () => {
+      if (!currentSession) {
+        setSessionExercises([]);
+        return;
+      }
+
+      const session = workoutSessions.find(s => s.id === currentSession);
+      if (!session?.exercise_ids || session.exercise_ids.length === 0) {
+        setSessionExercises([]);
+        return;
+      }
+
+      // Filter exercises based on session's exercise_ids
+      const exercises = allExercises.filter(ex => 
+        session.exercise_ids?.includes(ex.id)
+      );
+      setSessionExercises(exercises);
+    };
+
+    loadSessionExercises();
+  }, [currentSession, workoutSessions, allExercises]);
 
   // Check if there's an active session from today
   useEffect(() => {
@@ -117,20 +146,51 @@ export function WorkoutTracker() {
       const sessionId = await startWorkoutSession(
         planId,
         today,
-        todayWorkout.exercises.map(ex => ex.muscle_group)
+        todayWorkout.exercises.map(ex => ex.muscle_group),
+        todayWorkout.exercises.map(ex => ex.id)
       );
       setCurrentSession(sessionId);
+      setSessionExercises(todayWorkout.exercises);
       setIsWorkoutDialogOpen(true);
     } catch (error) {
       console.error('Failed to start workout:', error);
     }
   };
 
+  const handleStartBlankWorkout = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const sessionId = await startBlankWorkoutSession(today);
+      setCurrentSession(sessionId);
+      setSessionExercises([]);
+      setIsWorkoutDialogOpen(true);
+    } catch (error) {
+      console.error('Failed to start blank workout:', error);
+    }
+  };
+
   const handleCompleteWorkout = async () => {
     if (!currentSession) return;
     
+    const session = workoutSessions.find(s => s.id === currentSession);
+    const isBlankWorkout = !session?.plan_id;
+    
     await completeWorkoutSession(currentSession);
+    
+    // Show save template dialog for blank workouts with exercises
+    if (isBlankWorkout && sessionExercises.length > 0) {
+      setIsSaveTemplateOpen(true);
+    } else {
+      setCurrentSession(null);
+      setSessionExercises([]);
+      setIsWorkoutDialogOpen(false);
+    }
+  };
+
+  const handleSaveTemplateComplete = () => {
+    setIsSaveTemplateOpen(false);
     setCurrentSession(null);
+    setSessionExercises([]);
     setIsWorkoutDialogOpen(false);
   };
 
@@ -220,30 +280,44 @@ export function WorkoutTracker() {
           <p className="text-muted-foreground">Today's workout session</p>
         </div>
         
-        {!currentSession ? (
-          <Button onClick={handleStartWorkout} className="flex items-center gap-2">
-            <Play className="h-4 w-4" />
-            Start Workout
-          </Button>
-        ) : (
-          <div className="flex gap-2">
-            <Button 
-              variant="outline"
-              onClick={() => setIsWorkoutDialogOpen(true)}
-              className="flex items-center gap-2"
-            >
-              <Dumbbell className="h-4 w-4" />
-              Continue Workout
-            </Button>
-            <Button 
-              onClick={handleCompleteWorkout}
-              className="flex items-center gap-2"
-            >
-              <Square className="h-4 w-4" />
-              Finish Workout
-            </Button>
-          </div>
-        )}
+        <div className="flex gap-2">
+          {!currentSession ? (
+            <>
+              {todayWorkout && todayWorkout.exercises.length > 0 && (
+                <Button onClick={handleStartWorkout} className="flex items-center gap-2">
+                  <Play className="h-4 w-4" />
+                  Start Today's Workout
+                </Button>
+              )}
+              <Button 
+                onClick={handleStartBlankWorkout} 
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Start Blank Workout
+              </Button>
+            </>
+          ) : (
+            <div className="flex gap-2">
+              <Button 
+                variant="outline"
+                onClick={() => setIsWorkoutDialogOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <Dumbbell className="h-4 w-4" />
+                Continue Workout
+              </Button>
+              <Button 
+                onClick={handleCompleteWorkout}
+                className="flex items-center gap-2"
+              >
+                <Square className="h-4 w-4" />
+                Finish Workout
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Today's Workout Overview */}
@@ -465,6 +539,14 @@ export function WorkoutTracker() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Save Workout Template Dialog */}
+      <SaveWorkoutTemplateDialog
+        open={isSaveTemplateOpen}
+        onOpenChange={setIsSaveTemplateOpen}
+        exercises={sessionExercises}
+        onSave={handleSaveTemplateComplete}
+      />
     </div>
   );
 }

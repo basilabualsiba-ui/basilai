@@ -200,6 +200,8 @@ export function WorkoutsList() {
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [isExerciseInfoOpen, setIsExerciseInfoOpen] = useState(false);
   const [selectedWorkoutId, setSelectedWorkoutId] = useState<string | null>(null);
+  const [muscleFilter, setMuscleFilter] = useState('all');
+  const [equipmentFilter, setEquipmentFilter] = useState('all');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -233,14 +235,20 @@ export function WorkoutsList() {
     }
   };
 
+  const uniqueEquipment = Array.from(
+    new Set(gymExercises.map(ex => ex.equipment).filter(Boolean))
+  ).sort();
+
   const filteredExercises = gymExercises.filter(exercise => {
-    const matchesMuscle = formData.selectedMuscles.some(muscle => 
-      exercise.muscle_group.toLowerCase().includes(muscle.toLowerCase())
-    );
-    const matchesSearch = exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = searchTerm === '' || 
+      exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       exercise.muscle_group.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesMuscle = muscleFilter === 'all' || 
+      exercise.muscle_group === muscleFilter ||
+      exercise.side_muscle_groups?.includes(muscleFilter);
+    const matchesEquipment = equipmentFilter === 'all' || exercise.equipment === equipmentFilter;
     
-    return matchesMuscle && matchesSearch;
+    return matchesSearch && matchesMuscle && matchesEquipment;
   });
 
   const handleMuscleToggle = (muscle: string) => {
@@ -263,10 +271,10 @@ export function WorkoutsList() {
   };
 
   const handleNext = () => {
-    if (formData.name.trim() === '' || formData.selectedMuscles.length === 0) {
+    if (formData.name.trim() === '') {
       toast({
         title: "Validation Error",
-        description: "Please fill in workout name and select at least one muscle group",
+        description: "Please fill in workout name",
         variant: "destructive",
       });
       return;
@@ -298,7 +306,10 @@ export function WorkoutsList() {
           .update({
             name: formData.name,
             description: formData.description || null,
-            muscle_groups: formData.selectedMuscles,
+            muscle_groups: Array.from(new Set(formData.selectedExercises.map(exId => {
+              const ex = gymExercises.find(e => e.id === exId);
+              return ex?.muscle_group || '';
+            }).filter(Boolean))),
           })
           .eq('id', editingWorkout.id);
 
@@ -341,7 +352,10 @@ export function WorkoutsList() {
           .insert({
             name: formData.name,
             description: formData.description || null,
-            muscle_groups: formData.selectedMuscles,
+            muscle_groups: Array.from(new Set(formData.selectedExercises.map(exId => {
+              const ex = gymExercises.find(e => e.id === exId);
+              return ex?.muscle_group || '';
+            }).filter(Boolean))),
           })
           .select()
           .single();
@@ -518,7 +532,7 @@ export function WorkoutsList() {
             
             {currentStep === 1 && (
               <form onSubmit={(e) => { e.preventDefault(); handleNext(); }} className="space-y-6">
-                <div className="grid gap-4">
+                 <div className="grid gap-4">
                   <div>
                     <Label htmlFor="name">Workout Name</Label>
                     <Input
@@ -540,42 +554,13 @@ export function WorkoutsList() {
                   </div>
                 </div>
 
-                <div>
-                  <Label>Select Muscle Groups</Label>
-                  <div className="grid grid-cols-3 gap-2 mt-2">
-                    {muscleGroups.map((muscleGroup) => (
-                      <div key={muscleGroup.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={muscleGroup.id}
-                          checked={formData.selectedMuscles.includes(muscleGroup.name)}
-                          onCheckedChange={() => handleMuscleToggle(muscleGroup.name)}
-                        />
-                        <Label htmlFor={muscleGroup.id} className="text-sm flex items-center gap-1">
-                          <div className="w-4 h-4 rounded overflow-hidden flex items-center justify-center flex-shrink-0">
-                            {muscleGroup.photo_url ? (
-                              <img 
-                                src={muscleGroup.photo_url} 
-                                alt={muscleGroup.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <span>💪</span>
-                            )}
-                          </div>
-                          {muscleGroup.name}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                     Cancel
                   </Button>
                   <Button 
                     type="submit"
-                    disabled={!formData.name.trim() || formData.selectedMuscles.length === 0}
+                    disabled={!formData.name.trim()}
                   >
                     Next: Select Exercises
                     <ArrowRight className="h-4 w-4 ml-2" />
@@ -589,23 +574,32 @@ export function WorkoutsList() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <span className="font-medium">{formData.name}</span>
-                    <span>•</span>
-                    <span>{formData.selectedMuscles.join(', ')}</span>
                   </div>
                   
-                  <div>
-                    <Label htmlFor="search">Search Exercises</Label>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="search"
-                        type="text"
-                        placeholder="Search exercises by name or muscle group..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Select value={muscleFilter} onValueChange={setMuscleFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Filter by muscle" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Muscles</SelectItem>
+                        {muscleGroups.map(mg => (
+                          <SelectItem key={mg.id} value={mg.name}>{mg.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={equipmentFilter} onValueChange={setEquipmentFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Filter by equipment" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Equipment</SelectItem>
+                        {uniqueEquipment.map(eq => (
+                          <SelectItem key={eq} value={eq as string}>{eq}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                      <div>
