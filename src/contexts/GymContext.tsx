@@ -120,7 +120,6 @@ interface GymContextType {
   
   // Workout session functions
   startWorkoutSession: (planId: string, scheduledDate: string, muscleGroups: string[], exerciseIds?: string[]) => Promise<string>;
-  startBlankWorkoutSession: (scheduledDate: string) => Promise<string>;
   updateSessionExercises: (sessionId: string, exerciseIds: string[]) => Promise<void>;
   completeWorkoutSession: (id: string, notes?: string) => Promise<void>;
   resetWorkoutSession: (id: string) => Promise<void>;
@@ -588,37 +587,6 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
     return data.id;
   };
 
-  const startBlankWorkoutSession = async (scheduledDate: string) => {
-    const { data, error } = await supabase
-      .from('workout_sessions')
-      .insert([{
-        plan_id: null,
-        scheduled_date: scheduledDate,
-        started_at: new Date().toISOString(),
-        muscle_groups: [],
-        exercise_ids: []
-      }])
-      .select()
-      .single();
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to start blank workout",
-        variant: "destructive"
-      });
-      throw error;
-    }
-
-    setWorkoutSessions(prev => [...prev, data]);
-    toast({
-      title: "Success",
-      description: "Blank workout started!"
-    });
-    
-    return data.id;
-  };
-
   const updateSessionExercises = async (sessionId: string, exerciseIds: string[]) => {
     const { data, error } = await supabase
       .from('workout_sessions')
@@ -1063,7 +1031,6 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
     updateWorkoutPlan,
     deleteWorkoutPlan,
     startWorkoutSession,
-    startBlankWorkoutSession,
     updateSessionExercises,
     completeWorkoutSession,
     resetWorkoutSession,

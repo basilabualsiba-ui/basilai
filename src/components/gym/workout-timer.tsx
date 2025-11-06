@@ -6,7 +6,6 @@ import { Progress } from '@/components/ui/progress';
 import { X, Clock, Settings, CheckCircle, Dumbbell, Pause, Play, Plus, Minus, RotateCcw, TrendingUp, RefreshCw, ChevronUp, ChevronDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { WorkoutExerciseManager } from './workout-exercise-manager';
-import { AddExerciseToSessionDialog } from './add-exercise-to-session-dialog';
 import { SwapExerciseDialog } from './swap-exercise-dialog';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -35,7 +34,6 @@ export function WorkoutTimer({
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(true);
   const [isExerciseManagerOpen, setIsExerciseManagerOpen] = useState(false);
-  const [isAddExerciseOpen, setIsAddExerciseOpen] = useState(false);
   const [isSwapDialogOpen, setIsSwapDialogOpen] = useState(false);
   const [exerciseToSwap, setExerciseToSwap] = useState<any>(null);
   const [workoutExerciseDetails, setWorkoutExerciseDetails] = useState<Record<string, any>>({});
@@ -268,17 +266,6 @@ export function WorkoutTimer({
     updatedExercises.splice(newIndex, 0, movedExercise);
     
     onExercisesChange(updatedExercises);
-  };
-
-  const handleAddExerciseToSession = (exercise: any) => {
-    const updatedExercises = [...currentExercises, exercise];
-    onExercisesChange(updatedExercises);
-    setIsAddExerciseOpen(false);
-    
-    toast({
-      title: "Exercise added",
-      description: `${exercise.name} added to your workout`,
-    });
   };
 
   return (
