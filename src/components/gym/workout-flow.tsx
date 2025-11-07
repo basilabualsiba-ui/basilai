@@ -8,6 +8,7 @@ import { LiveActivityStatus } from './live-activity-status';
 import { WorkoutMusicPlayer } from './workout-music-player';
 import { format } from 'date-fns';
 import { useLiveActivity } from '@/hooks/useLiveActivity';
+import { supabase } from '@/integrations/supabase/client';
 
 type WorkoutScreen = 'overview' | 'timer' | 'exercise' | 'summary';
 
@@ -28,7 +29,8 @@ export function WorkoutFlow({ onBack, selectedDate, isToday = true }: WorkoutFlo
     workoutSessions,
     workoutPlans,
     workoutPlanDays,
-    planWorkouts
+    planWorkouts,
+    exercises
   } = useGym();
   
   const {
@@ -105,6 +107,75 @@ const todayWorkout = selectedDate
     );
     
     return (todayPlanWorkout || todayPlanDay) ? activePlan.id : null;
+  };
+
+  const handleStartBlankWorkout = async () => {
+    try {
+      const baseDate = selectedDate || new Date();
+      const dateString = format(baseDate, 'yyyy-MM-dd');
+
+      // Create a blank workout session with no plan
+      const sessionId = await startWorkoutSession(
+        '', // Empty planId for blank workout
+        dateString,
+        [],
+        []
+      );
+      
+      await startWorkoutActivity('Blank Workout', []);
+      
+      setCurrentSession(sessionId);
+      setCurrentScreen('timer');
+    } catch (error) {
+      console.error('Failed to start blank workout:', error);
+    }
+  };
+
+  const handleSelectWorkout = async (workoutId: string) => {
+    try {
+      const baseDate = selectedDate || new Date();
+      const dateString = format(baseDate, 'yyyy-MM-dd');
+
+      // Fetch workout details
+      const { data: workout, error: workoutError } = await supabase
+        .from('workouts')
+        .select('*')
+        .eq('id', workoutId)
+        .single();
+
+      if (workoutError) throw workoutError;
+
+      // Fetch workout exercises
+      const { data: workoutExercises, error: exercisesError } = await supabase
+        .from('workout_exercises')
+        .select('exercise_id, order_index')
+        .eq('workout_id', workoutId)
+        .order('order_index');
+
+      if (exercisesError) throw exercisesError;
+
+      const exerciseIds = workoutExercises?.map(we => we.exercise_id) || [];
+
+      // Create session with the workout's data
+      const sessionId = await startWorkoutSession(
+        '', // No plan needed
+        dateString,
+        workout.muscle_groups || [],
+        exerciseIds
+      );
+
+      // Fetch full exercise details
+      const sessionExercises = exerciseIds
+        .map(id => exercises.find(ex => ex.id === id))
+        .filter(Boolean);
+
+      await startWorkoutActivity(workout.name, sessionExercises.map(ex => ex?.name || ''));
+      setCurrentExercises(sessionExercises);
+      setCurrentSession(sessionId);
+      setCurrentScreen('timer');
+    } catch (error) {
+      console.error('Failed to start workout from template:', error);
+    }
   };
 
 const handleStartWorkout = async () => {
@@ -269,6 +340,8 @@ const handleStartWorkout = async () => {
           onBack={onBack}
           selectedDate={selectedDate}
           isToday={isToday}
+          onStartBlankWorkout={handleStartBlankWorkout}
+          onSelectWorkout={handleSelectWorkout}
         />
       );
     

@@ -3,31 +3,43 @@ import { useGym } from '@/contexts/GymContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Dumbbell, Play, Target, CheckCircle2, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Dumbbell, Play, Target, CheckCircle2, TrendingUp, Plus, List } from 'lucide-react';
 import { format } from 'date-fns';
 import { ExerciseInfoDialog } from './exercise-info-dialog';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 interface WorkoutOverviewProps {
   onStartWorkout: () => void;
   onBack: () => void;
   selectedDate?: Date;
   isToday?: boolean;
+  onStartBlankWorkout?: () => void;
+  onSelectWorkout?: (workoutId: string) => void;
 }
 export function WorkoutOverview({
   onStartWorkout,
   onBack,
   selectedDate,
-  isToday = true
+  isToday = true,
+  onStartBlankWorkout,
+  onSelectWorkout
 }: WorkoutOverviewProps) {
   const {
     getTodayWorkout,
     getWorkoutForDate,
-    muscleGroups
+    muscleGroups,
+    workouts
   } = useGym();
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [exercisePRs, setExercisePRs] = useState<Record<string, { weight: number; reps: number }>>({});
   const [sessionSets, setSessionSets] = useState<Record<string, Array<{ weight: number; reps: number; set_number: number }>>>({});
+  const [isWorkoutSelectOpen, setIsWorkoutSelectOpen] = useState(false);
   const todayWorkout = selectedDate ? getWorkoutForDate(format(selectedDate, 'yyyy-MM-dd')) : getTodayWorkout();
   const isCompleted = todayWorkout?.session?.completed_at;
   console.log('WorkoutOverview - todayWorkout:', todayWorkout);
@@ -96,18 +108,89 @@ export function WorkoutOverview({
     setSelectedExercise(exercise);
     setIsDialogOpen(true);
   };
+  const handleWorkoutSelect = (workoutId: string) => {
+    setIsWorkoutSelectOpen(false);
+    if (onSelectWorkout) {
+      onSelectWorkout(workoutId);
+    }
+  };
+
   if (!todayWorkout || todayWorkout.exercises.length === 0) {
-    return <div className="min-h-screen bg-background p-4">
-        
-        
+    return (
+      <div className="min-h-screen bg-background p-4">
         <Card className="text-center py-12">
-          <CardContent>
-            <Dumbbell className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-medium text-foreground mb-2">No workout scheduled</h3>
-            <p className="text-muted-foreground">Create a workout plan to get started</p>
+          <CardContent className="space-y-6">
+            <Dumbbell className="h-12 w-12 mx-auto text-muted-foreground" />
+            <div>
+              <h3 className="text-lg font-medium text-foreground mb-2">No workout scheduled</h3>
+              <p className="text-muted-foreground">Choose how you'd like to start</p>
+            </div>
+            
+            <div className="flex flex-col gap-3 max-w-md mx-auto">
+              <Button 
+                onClick={onStartBlankWorkout} 
+                variant="default" 
+                className="w-full h-12"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Start Blank Workout
+              </Button>
+              
+              <Button 
+                onClick={() => setIsWorkoutSelectOpen(true)} 
+                variant="outline" 
+                className="w-full h-12"
+              >
+                <List className="h-5 w-5 mr-2" />
+                Select from Saved Workouts
+              </Button>
+            </div>
           </CardContent>
         </Card>
-      </div>;
+
+        {/* Workout Selection Dialog */}
+        <Dialog open={isWorkoutSelectOpen} onOpenChange={setIsWorkoutSelectOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Select a Workout</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+              {workouts.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No saved workouts. Create one first!
+                </p>
+              ) : (
+                workouts.map((workout) => (
+                  <Card 
+                    key={workout.id}
+                    className="cursor-pointer hover:bg-accent transition-colors"
+                    onClick={() => handleWorkoutSelect(workout.id)}
+                  >
+                    <CardContent className="p-4">
+                      <h4 className="font-medium text-foreground">{workout.name}</h4>
+                      {workout.description && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {workout.description}
+                        </p>
+                      )}
+                      {workout.muscle_groups && workout.muscle_groups.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {workout.muscle_groups.map((muscle: string) => (
+                            <Badge key={muscle} variant="secondary" className="text-xs">
+                              {muscle}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
   }
   // Calculate muscle distribution with percentages
   const calculateMuscleDistribution = () => {

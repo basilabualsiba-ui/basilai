@@ -560,7 +560,7 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
     const { data, error } = await supabase
       .from('workout_sessions')
       .insert([{
-        plan_id: planId,
+        plan_id: planId || null, // Allow null for blank workouts
         scheduled_date: scheduledDate,
         started_at: new Date().toISOString(),
         muscle_groups: muscleGroups,
