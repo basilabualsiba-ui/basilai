@@ -9,16 +9,18 @@ import { AccountsOverview } from '@/components/financial/accounts-overview';
 import { StatsOverview } from '@/components/financial/stats-overview';
 import { TransactionCalendar } from '@/components/financial/transaction-calendar';
 import { BudgetCategories } from '@/components/financial/budget-categories';
+import { GoalsOverview } from '@/components/financial/goals-overview';
 
 import { FinancialSidebar } from '@/components/financial/financial-sidebar';
 
-import { ArrowLeft, CreditCard, PieChart, Calendar, TrendingUp } from "lucide-react";
+import { ArrowLeft, CreditCard, PieChart, Calendar, TrendingUp, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { CurrencyRatesDialog } from '@/components/financial/currency-rates-dialog';
 
 const financialItems = [
   { title: "Accounts", value: "accounts", icon: CreditCard },
   { title: "Transactions", value: "transactions", icon: Calendar },
+  { title: "Goals", value: "goals", icon: Target },
   { title: "Stats", value: "stats", icon: TrendingUp }
 ];
 
@@ -71,12 +73,13 @@ const Financial = () => {
           {activeTab === 'accounts' && <AccountsOverview />}
           {activeTab === 'budget' && <BudgetCategories />}
           {activeTab === 'transactions' && <TransactionCalendar />}
+          {activeTab === 'goals' && <GoalsOverview />}
           {activeTab === 'stats' && <StatsOverview />}
         </main>
 
         {/* Mobile Bottom Tabs */}
         <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card border-t border-border">
-          <div className="grid grid-cols-3 h-16">
+          <div className="grid grid-cols-4 h-16">
             {financialItems.map((item) => (
               <button
                 key={item.value}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BarChart3, CreditCard, Calendar, TrendingUp } from "lucide-react";
+import { BarChart3, CreditCard, Calendar, TrendingUp, Target } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 const financialItems = [{
   title: "Accounts",
@@ -9,6 +9,10 @@ const financialItems = [{
   title: "Transactions",
   value: "transactions",
   icon: Calendar
+}, {
+  title: "Goals",
+  value: "goals",
+  icon: Target
 }, {
   title: "Stats",
   value: "stats",

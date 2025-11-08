@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Edit, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DreamCompletionDialog } from "./dream-completion-dialog";
 import { DreamDetailDialog } from "./dream-detail-dialog";
 import { useDreams } from "@/contexts/DreamsContext";
@@ -52,7 +52,15 @@ const getTypeLabel = (type: string) => {
 export const DreamCard = ({ dream, onEdit }: DreamCardProps) => {
   const [showCompletion, setShowCompletion] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
+  const [metadata, setMetadata] = useState<any>(null);
   const { deleteDream } = useDreams();
+
+  useEffect(() => {
+    const stored = localStorage.getItem(`dream_${dream.id}_meta`);
+    if (stored) {
+      setMetadata(JSON.parse(stored));
+    }
+  }, [dream.id]);
 
   const handleComplete = () => {
     if (dream.status === 'completed') return;
@@ -86,7 +94,18 @@ export const DreamCard = ({ dream, onEdit }: DreamCardProps) => {
               <span className="text-muted-foreground">Progress</span>
               <span className="font-medium">{dream.progress_percentage}%</span>
             </div>
+            {metadata && (
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Current: {metadata.unit}{metadata.current.toFixed(metadata.unit === 'kg' ? 1 : 0)}</span>
+                <span>Target: {metadata.unit}{metadata.target.toFixed(metadata.unit === 'kg' ? 1 : 0)}</span>
+              </div>
+            )}
             <Progress value={dream.progress_percentage} />
+            {metadata && metadata.remaining > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {metadata.remaining.toFixed(metadata.unit === 'kg' ? 1 : 0)} {metadata.unit} remaining
+              </p>
+            )}
           </div>
 
           {dream.estimated_cost && (

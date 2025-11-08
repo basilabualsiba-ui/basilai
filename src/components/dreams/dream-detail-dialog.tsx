@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { useDreams } from "@/contexts/DreamsContext";
 import { Calendar, DollarSign, MapPin, Target, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 
 interface DreamDetailDialogProps {
   dreamId: string;
@@ -13,7 +14,17 @@ interface DreamDetailDialogProps {
 
 export const DreamDetailDialog = ({ dreamId, open, onOpenChange }: DreamDetailDialogProps) => {
   const { dreams } = useDreams();
+  const [metadata, setMetadata] = useState<any>(null);
   const dream = dreams.find(d => d.id === dreamId);
+
+  useEffect(() => {
+    if (dream) {
+      const stored = localStorage.getItem(`dream_${dream.id}_meta`);
+      if (stored) {
+        setMetadata(JSON.parse(stored));
+      }
+    }
+  }, [dream?.id]);
 
   if (!dream) return null;
 
@@ -70,7 +81,28 @@ export const DreamDetailDialog = ({ dreamId, open, onOpenChange }: DreamDetailDi
               </div>
               <span className="text-sm font-bold">{dream.progress_percentage}%</span>
             </div>
+            {metadata && (
+              <div className="grid grid-cols-2 gap-2 text-sm mb-2">
+                <div className="space-y-1">
+                  <p className="text-muted-foreground">Current</p>
+                  <p className="font-semibold text-primary">
+                    {metadata.unit}{metadata.current.toFixed(metadata.unit === 'kg' ? 1 : 0)}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-muted-foreground">Target</p>
+                  <p className="font-semibold">
+                    {metadata.unit}{metadata.target.toFixed(metadata.unit === 'kg' ? 1 : 0)}
+                  </p>
+                </div>
+              </div>
+            )}
             <Progress value={dream.progress_percentage} />
+            {metadata && metadata.remaining > 0 && (
+              <p className="text-sm font-medium text-center mt-2">
+                {metadata.remaining.toFixed(metadata.unit === 'kg' ? 1 : 0)} {metadata.unit} remaining to reach your goal
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

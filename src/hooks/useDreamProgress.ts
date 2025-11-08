@@ -19,6 +19,7 @@ export const useDreamProgress = () => {
       for (const dream of dreams.filter(d => d.status === 'in_progress')) {
         let calculatedProgress = dream.progress_percentage;
         let shouldUpdate = false;
+        let metadata: any = {};
 
         // Weight-related dreams (e.g., "Reach 75 kg")
         const weightMatch = dream.title.match(/(\d+)\s*kg/) || 
@@ -31,18 +32,23 @@ export const useDreamProgress = () => {
             .from('user_body_stats')
             .select('weight')
             .order('recorded_at', { ascending: false })
-            .limit(2);
+            .limit(1);
 
-          if (bodyStats && bodyStats.length >= 2) {
-            const currentWeight = bodyStats[0].weight;
-            const startWeight = bodyStats[bodyStats.length - 1].weight;
+          if (bodyStats && bodyStats.length > 0) {
+            const currentWeight = Number(bodyStats[0].weight);
+            const remaining = Math.abs(targetWeight - currentWeight);
             
-            const totalChange = Math.abs(Number(targetWeight) - Number(startWeight));
-            const currentChange = Math.abs(Number(currentWeight) - Number(startWeight));
-            calculatedProgress = Math.min(
-              Math.round((currentChange / totalChange) * 100),
+            calculatedProgress = Math.max(0, Math.min(
+              Math.round((1 - (remaining / targetWeight)) * 100),
               100
-            );
+            ));
+            
+            metadata = {
+              current: currentWeight,
+              target: targetWeight,
+              remaining: remaining,
+              unit: 'kg'
+            };
             shouldUpdate = true;
           }
         }
@@ -56,53 +62,70 @@ export const useDreamProgress = () => {
         if (netWorthMatch) {
           const targetNetWorth = parseFloat(netWorthMatch[1]);
           
-          // Calculate current net worth from accounts
           const { data: accounts } = await supabase
             .from('accounts')
             .select('amount');
 
           if (accounts && accounts.length > 0) {
             const currentNetWorth = accounts.reduce((sum, acc) => sum + Number(acc.amount), 0);
+            const remaining = Math.max(0, targetNetWorth - currentNetWorth);
             
-            // Get initial net worth (could be 0 or first recorded value)
-            const startNetWorth = 0; // Assuming starting from zero
-            const totalChange = Math.abs(targetNetWorth - startNetWorth);
-            const currentChange = Math.abs(currentNetWorth - startNetWorth);
-            
-            calculatedProgress = Math.min(
-              Math.round((currentChange / totalChange) * 100),
+            calculatedProgress = Math.max(0, Math.min(
+              Math.round((currentNetWorth / targetNetWorth) * 100),
               100
-            );
+            ));
+            
+            metadata = {
+              current: currentNetWorth,
+              target: targetNetWorth,
+              remaining: remaining,
+              unit: '$'
+            };
             shouldUpdate = true;
           }
         }
         
-        // Gym/Fitness-related dreams
-        const gymKeywords = ['workout', 'gym', 'fitness', 'exercise', 'training', 'muscle', 'strength'];
-        const isGymRelated = dream.type === 'personal' || 
-          gymKeywords.some(keyword => 
-            dream.title.toLowerCase().includes(keyword) || 
-            dream.description?.toLowerCase().includes(keyword)
-          );
+        // Budget/Savings dreams with estimated_cost
+        if (dream.estimated_cost && !netWorthMatch) {
+          const { data: category } = await supabase
+            .from('categories')
+            .select('id')
+            .eq('name', 'Dream Savings')
+            .single();
 
-        if (isGymRelated && !weightMatch) {
-          const completedWorkouts = workoutSessions.filter(
-            (session) => session.completed_at !== null
-          ).length;
+          if (category) {
+            const { data: transactions } = await supabase
+              .from('transactions')
+              .select('amount, type')
+              .eq('category_id', category.id);
 
-          const targetWorkouts = 50;
-          calculatedProgress = Math.min(
-            Math.round((completedWorkouts / targetWorkouts) * 100),
-            100
-          );
-          shouldUpdate = true;
+            const totalSaved = transactions?.reduce((sum, t) => {
+              return sum + (t.type === 'income' ? Number(t.amount) : -Number(t.amount));
+            }, 0) || 0;
+
+            const remaining = Math.max(0, Number(dream.estimated_cost) - totalSaved);
+            calculatedProgress = Math.max(0, Math.min(
+              Math.round((totalSaved / Number(dream.estimated_cost)) * 100),
+              100
+            ));
+            
+            metadata = {
+              current: totalSaved,
+              target: Number(dream.estimated_cost),
+              remaining: remaining,
+              unit: '$'
+            };
+            shouldUpdate = true;
+          }
         }
 
-        // Update if there's a significant change (>5%)
-        if (shouldUpdate && Math.abs(calculatedProgress - dream.progress_percentage) > 5) {
+        // Update if progress changed
+        if (shouldUpdate && calculatedProgress !== dream.progress_percentage) {
           await updateDream(dream.id, {
             progress_percentage: calculatedProgress,
           });
+          // Store metadata in local storage for quick access
+          localStorage.setItem(`dream_${dream.id}_meta`, JSON.stringify(metadata));
         }
       }
     };
