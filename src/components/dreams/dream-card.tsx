@@ -2,11 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Edit, Trash2 } from "lucide-react";
+import { CheckCircle2, Edit, Trash2, TrendingUp, TrendingDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { DreamCompletionDialog } from "./dream-completion-dialog";
 import { DreamDetailDialog } from "./dream-detail-dialog";
 import { useDreams } from "@/contexts/DreamsContext";
+import { DreamMetadata } from "@/hooks/useDreamProgress";
 
 interface Dream {
   id: string;
@@ -52,7 +53,7 @@ const getTypeLabel = (type: string) => {
 export const DreamCard = ({ dream, onEdit }: DreamCardProps) => {
   const [showCompletion, setShowCompletion] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
-  const [metadata, setMetadata] = useState<any>(null);
+  const [metadata, setMetadata] = useState<DreamMetadata | null>(null);
   const { deleteDream } = useDreams();
 
   useEffect(() => {
@@ -60,7 +61,7 @@ export const DreamCard = ({ dream, onEdit }: DreamCardProps) => {
     if (stored) {
       setMetadata(JSON.parse(stored));
     }
-  }, [dream.id]);
+  }, [dream.id, dream.progress_percentage]);
 
   const handleComplete = () => {
     if (dream.status === 'completed') return;
@@ -73,12 +74,23 @@ export const DreamCard = ({ dream, onEdit }: DreamCardProps) => {
     }
   };
 
+  const formatValue = (value: number, unit: string) => {
+    if (unit === 'kg') return `${value.toFixed(1)} kg`;
+    return `${unit}${value.toFixed(0)}`;
+  };
+
   return (
     <>
       <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setShowDetail(true)}>
         <CardHeader>
           <div className="flex items-end justify-between mb-2">
             <Badge variant="outline">{getTypeLabel(dream.type)}</Badge>
+            {metadata?.type === 'weight' && metadata.direction && (
+              <Badge variant={metadata.direction === 'gain' ? 'default' : 'secondary'} className="flex items-center gap-1">
+                {metadata.direction === 'gain' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                {metadata.direction === 'gain' ? 'Gain' : 'Loss'}
+              </Badge>
+            )}
           </div>
           <CardTitle className="text-xl">{dream.title}</CardTitle>
         </CardHeader>
@@ -96,14 +108,14 @@ export const DreamCard = ({ dream, onEdit }: DreamCardProps) => {
             </div>
             {metadata && (
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Current: {metadata.unit}{metadata.current.toFixed(metadata.unit === 'kg' ? 1 : 0)}</span>
-                <span>Target: {metadata.unit}{metadata.target.toFixed(metadata.unit === 'kg' ? 1 : 0)}</span>
+                <span>Now: {formatValue(metadata.current, metadata.unit)}</span>
+                <span>Goal: {formatValue(metadata.target, metadata.unit)}</span>
               </div>
             )}
             <Progress value={dream.progress_percentage} />
             {metadata && metadata.remaining > 0 && (
-              <p className="text-xs text-muted-foreground">
-                {metadata.remaining.toFixed(metadata.unit === 'kg' ? 1 : 0)} {metadata.unit} remaining
+              <p className="text-xs text-center font-medium text-primary">
+                {metadata.direction === 'gain' ? '+' : '-'}{formatValue(metadata.remaining, metadata.unit)} to go
               </p>
             )}
           </div>
