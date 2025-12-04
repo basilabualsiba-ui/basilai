@@ -2,9 +2,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useDreams } from "@/contexts/DreamsContext";
-import { Calendar, DollarSign, MapPin, Target, TrendingUp } from "lucide-react";
+import { Calendar, DollarSign, MapPin, Target, TrendingUp, TrendingDown, Activity } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useEffect, useState } from "react";
+import { DreamMetadata } from "@/hooks/useDreamProgress";
 
 interface DreamDetailDialogProps {
   dreamId: string;
@@ -14,7 +15,7 @@ interface DreamDetailDialogProps {
 
 export const DreamDetailDialog = ({ dreamId, open, onOpenChange }: DreamDetailDialogProps) => {
   const { dreams } = useDreams();
-  const [metadata, setMetadata] = useState<any>(null);
+  const [metadata, setMetadata] = useState<DreamMetadata | null>(null);
   const dream = dreams.find(d => d.id === dreamId);
 
   useEffect(() => {
@@ -24,7 +25,7 @@ export const DreamDetailDialog = ({ dreamId, open, onOpenChange }: DreamDetailDi
         setMetadata(JSON.parse(stored));
       }
     }
-  }, [dream?.id]);
+  }, [dream?.id, dream?.progress_percentage]);
 
   if (!dream) return null;
 
@@ -35,6 +36,11 @@ export const DreamDetailDialog = ({ dreamId, open, onOpenChange }: DreamDetailDi
 
   const completedSimilar = similarDreams.filter(d => d.status === 'completed');
   const inProgressSimilar = similarDreams.filter(d => d.status === 'in_progress');
+
+  const formatValue = (value: number, unit: string) => {
+    if (unit === 'kg') return `${value.toFixed(1)} kg`;
+    return `${unit}${value.toFixed(0)}`;
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -52,11 +58,17 @@ export const DreamDetailDialog = ({ dreamId, open, onOpenChange }: DreamDetailDi
             />
           )}
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Badge variant="outline">{dream.type}</Badge>
             <Badge variant={dream.status === 'completed' ? 'default' : 'secondary'}>
               {dream.status.replace('_', ' ')}
             </Badge>
+            {metadata?.type === 'weight' && metadata.direction && (
+              <Badge variant={metadata.direction === 'gain' ? 'default' : 'destructive'} className="flex items-center gap-1">
+                {metadata.direction === 'gain' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                Weight {metadata.direction === 'gain' ? 'Gain' : 'Loss'} Goal
+              </Badge>
+            )}
           </div>
 
           {dream.description && (
@@ -73,34 +85,55 @@ export const DreamDetailDialog = ({ dreamId, open, onOpenChange }: DreamDetailDi
             </div>
           )}
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <Activity className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Progress</span>
               </div>
               <span className="text-sm font-bold">{dream.progress_percentage}%</span>
             </div>
+            
             {metadata && (
-              <div className="grid grid-cols-2 gap-2 text-sm mb-2">
-                <div className="space-y-1">
-                  <p className="text-muted-foreground">Current</p>
-                  <p className="font-semibold text-primary">
-                    {metadata.unit}{metadata.current.toFixed(metadata.unit === 'kg' ? 1 : 0)}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-muted-foreground">Target</p>
-                  <p className="font-semibold">
-                    {metadata.unit}{metadata.target.toFixed(metadata.unit === 'kg' ? 1 : 0)}
-                  </p>
-                </div>
-              </div>
+              <Card className="bg-muted/50">
+                <CardContent className="pt-4 pb-3">
+                  <div className={`grid ${metadata.starting ? 'grid-cols-3' : 'grid-cols-2'} gap-4 text-center`}>
+                    {metadata.starting && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Started At</p>
+                        <p className="font-semibold text-muted-foreground">
+                          {formatValue(metadata.starting, metadata.unit)}
+                        </p>
+                      </div>
+                    )}
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Current</p>
+                      <p className="font-semibold text-primary text-lg">
+                        {formatValue(metadata.current, metadata.unit)}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">Target</p>
+                      <p className="font-semibold text-lg">
+                        {formatValue(metadata.target, metadata.unit)}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             )}
-            <Progress value={dream.progress_percentage} />
+            
+            <Progress value={dream.progress_percentage} className="h-3" />
+            
             {metadata && metadata.remaining > 0 && (
-              <p className="text-sm font-medium text-center mt-2">
-                {metadata.remaining.toFixed(metadata.unit === 'kg' ? 1 : 0)} {metadata.unit} remaining to reach your goal
+              <p className="text-sm font-medium text-center text-primary">
+                {metadata.direction === 'gain' ? '📈 Need to gain ' : '📉 Need to lose '}
+                {formatValue(metadata.remaining, metadata.unit)} to reach your goal
+              </p>
+            )}
+            {metadata && metadata.remaining <= 0 && (
+              <p className="text-sm font-medium text-center text-green-600">
+                🎉 Goal reached! Congratulations!
               </p>
             )}
           </div>
