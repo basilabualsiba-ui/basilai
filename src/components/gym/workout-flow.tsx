@@ -6,6 +6,7 @@ import { ExerciseDetail } from './exercise-detail';
 import { WorkoutSummary } from './workout-summary';
 import { LiveActivityStatus } from './live-activity-status';
 import { WorkoutMusicPlayer } from './workout-music-player';
+import { SaveBlankWorkoutDialog } from './save-blank-workout-dialog';
 import { format } from 'date-fns';
 import { useLiveActivity } from '@/hooks/useLiveActivity';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,6 +47,8 @@ export function WorkoutFlow({ onBack, selectedDate, isToday = true }: WorkoutFlo
   const [selectedExercise, setSelectedExercise] = useState<{ exercise: any; workoutConfig?: any } | null>(null);
   const [completedExercises, setCompletedExercises] = useState<Set<string>>(new Set());
   const [currentExercises, setCurrentExercises] = useState<any[]>([]);
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [isBlankWorkout, setIsBlankWorkout] = useState(false);
 
 const todayWorkout = selectedDate
   ? getWorkoutForDate(format(selectedDate, 'yyyy-MM-dd'))
@@ -124,6 +127,7 @@ const todayWorkout = selectedDate
       
       await startWorkoutActivity('Blank Workout', []);
       
+      setIsBlankWorkout(true);
       setCurrentSession(sessionId);
       setCurrentScreen('timer');
     } catch (error) {
@@ -267,15 +271,34 @@ const handleStartWorkout = async () => {
       // End Live Activity
       await endWorkoutActivity();
       
-      setCurrentScreen('summary');
+      // Check if this is a blank workout with exercises - show save dialog
+      const session = workoutSessions.find(s => s.id === currentSession);
+      const wasBlankWorkout = isBlankWorkout || (!session?.plan_id || session.plan_id === '');
+      
+      if (wasBlankWorkout && currentExercises.length > 0) {
+        setShowSaveDialog(true);
+      } else {
+        setCurrentScreen('summary');
+      }
     } catch (error) {
       console.error('Failed to complete workout:', error);
     }
   };
 
+  const handleSaveDialogComplete = () => {
+    setShowSaveDialog(false);
+    setCurrentScreen('summary');
+  };
+
+  const handleSaveDialogSkip = () => {
+    setShowSaveDialog(false);
+    setCurrentScreen('summary');
+  };
+
   const handleSummaryFinish = () => {
     setCurrentSession(null);
     setCompletedExercises(new Set());
+    setIsBlankWorkout(false);
     setCurrentScreen('overview');
     onBack();
   };
@@ -288,6 +311,7 @@ const handleStartWorkout = async () => {
     
     setCurrentSession(null);
     setCompletedExercises(new Set());
+    setIsBlankWorkout(false);
     setCurrentExercises(todayWorkout.exercises || []);
     setCurrentScreen('overview');
   };
@@ -305,6 +329,7 @@ const handleStartWorkout = async () => {
       
       setCurrentSession(null);
       setCompletedExercises(new Set());
+      setIsBlankWorkout(false);
       setCurrentExercises(todayWorkout.exercises || []);
       setCurrentScreen('overview');
     } catch (error) {
@@ -363,6 +388,13 @@ const handleStartWorkout = async () => {
               onExercisesChange={handleExercisesChange}
             />
           </div>
+          <SaveBlankWorkoutDialog
+            open={showSaveDialog}
+            onOpenChange={setShowSaveDialog}
+            exercises={currentExercises}
+            onSave={handleSaveDialogComplete}
+            onSkip={handleSaveDialogSkip}
+          />
         </div>
       ) : null;
     
