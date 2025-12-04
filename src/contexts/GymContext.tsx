@@ -741,6 +741,21 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
 
     console.log('getTodayWorkout - LOCAL today:', todayDate, 'dayOfWeek:', dayOfWeek);
 
+    // First check for any active session for today (including blank workouts)
+    const anyTodaySession = workoutSessions.find(session => 
+      session.scheduled_date === todayDate &&
+      session.started_at && 
+      !session.completed_at
+    );
+
+    // If there's a blank workout session (no plan_id), return its exercises
+    if (anyTodaySession && (!anyTodaySession.plan_id || anyTodaySession.plan_id === '')) {
+      const sessionExercises = (anyTodaySession.exercise_ids || [])
+        .map(exerciseId => exercises.find(ex => ex.id === exerciseId))
+        .filter(Boolean) as Exercise[];
+      return { session: anyTodaySession, exercises: sessionExercises };
+    }
+
     // Find all plans active for today's date
     const activePlans = workoutPlans.filter(plan => 
       plan.is_active && 
@@ -758,6 +773,13 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
     console.log('getTodayWorkout - selectedPlan:', selectedPlan);
 
     if (!selectedPlan) {
+      // Return blank session if exists
+      if (anyTodaySession) {
+        const sessionExercises = (anyTodaySession.exercise_ids || [])
+          .map(exerciseId => exercises.find(ex => ex.id === exerciseId))
+          .filter(Boolean) as Exercise[];
+        return { session: anyTodaySession, exercises: sessionExercises };
+      }
       return { session: null, exercises: [] };
     }
 
@@ -830,6 +852,21 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
     const dateString = `${year}-${month}-${day}`;
     const dayOfWeek = targetDate.getDay() === 0 ? 7 : targetDate.getDay();
 
+    // First check for any active session for this date (including blank workouts)
+    const anyDateSession = workoutSessions.find(session => 
+      session.scheduled_date === dateString &&
+      session.started_at && 
+      !session.completed_at
+    );
+
+    // If there's a blank workout session (no plan_id), return its exercises
+    if (anyDateSession && (!anyDateSession.plan_id || anyDateSession.plan_id === '')) {
+      const sessionExercises = (anyDateSession.exercise_ids || [])
+        .map(exerciseId => exercises.find(ex => ex.id === exerciseId))
+        .filter(Boolean) as Exercise[];
+      return { session: anyDateSession, exercises: sessionExercises, times: { start: null, end: null } };
+    }
+
     // Find all plans active for this date
     const activePlans = workoutPlans.filter(plan => 
       plan.is_active && 
@@ -844,6 +881,13 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     if (!selectedPlan) {
+      // Return blank session if exists
+      if (anyDateSession) {
+        const sessionExercises = (anyDateSession.exercise_ids || [])
+          .map(exerciseId => exercises.find(ex => ex.id === exerciseId))
+          .filter(Boolean) as Exercise[];
+        return { session: anyDateSession, exercises: sessionExercises, times: { start: null, end: null } };
+      }
       return { session: null, exercises: [] };
     }
 
