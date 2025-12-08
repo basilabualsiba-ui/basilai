@@ -5,7 +5,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ArrowLeft, Dumbbell, Calendar, Target, TrendingUp, Users, Play, BarChart3 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
-// Gym components (will be created next)
+// Gym components
 import { ExercisesList } from '@/components/gym/exercises-list';
 import { WorkoutsList } from '@/components/gym/workouts-list';
 import { WorkoutPlanner } from '@/components/gym/workout-planner';
@@ -13,6 +13,8 @@ import { WorkoutTracker } from '@/components/gym/workout-tracker';
 import { GymSidebar } from '@/components/gym/gym-sidebar';
 import { MuscleGroups } from '@/components/gym/muscle-groups';
 import { WorkoutFlow } from '@/components/gym/workout-flow';
+import { GymActivityStats } from '@/components/gym/gym-activity-stats';
+
 const gymItems = [{
   title: "Exercises",
   value: "exercises",
@@ -25,6 +27,10 @@ const gymItems = [{
   title: "Planner",
   value: "planner",
   icon: Calendar
+}, {
+  title: "Stats",
+  value: "activity-stats",
+  icon: BarChart3
 }];
 const Gym = () => {
   const navigate = useNavigate();
@@ -83,12 +89,13 @@ const Gym = () => {
             {activeTab === 'tracker' && <WorkoutTracker />}
             {activeTab === 'muscle-groups' && <MuscleGroups />}
             {activeTab === 'workout' && <WorkoutFlow onBack={() => setActiveTab('exercises')} />}
+            {activeTab === 'activity-stats' && <GymActivityStats />}
           </div>
         </main>
 
         {/* Mobile Bottom Tabs */}
         <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card border-t border-border">
-          <div className="grid grid-cols-3 h-16">
+          <div className="grid grid-cols-4 h-16">
             {gymItems.map(item => <button key={item.value} onClick={() => setActiveTab(item.value)} className={`flex flex-col items-center justify-center gap-1 transition-colors ${activeTab === item.value ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground'}`}>
                 <item.icon className="h-5 w-5" />
                 <span className="text-xs font-medium">{item.title}</span>
