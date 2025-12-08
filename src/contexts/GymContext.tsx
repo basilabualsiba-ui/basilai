@@ -852,14 +852,31 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
     const dateString = `${year}-${month}-${day}`;
     const dayOfWeek = targetDate.getDay() === 0 ? 7 : targetDate.getDay();
 
-    // First check for any active session for this date (including blank workouts)
+    // First check for any session for this date (active or completed, including blank workouts)
     const anyDateSession = workoutSessions.find(session => 
       session.scheduled_date === dateString &&
-      session.started_at && 
-      !session.completed_at
+      session.started_at
     );
 
-    // If there's a blank workout session (no plan_id), return its exercises
+    // If there's a completed session, prioritize returning its exercises
+    if (anyDateSession && anyDateSession.completed_at) {
+      const sessionExercises = (anyDateSession.exercise_ids || [])
+        .map(exerciseId => exercises.find(ex => ex.id === exerciseId))
+        .filter(Boolean) as Exercise[];
+      
+      // Get times from plan day if available
+      const planDay = workoutPlanDays.find(wpd => 
+        wpd.plan_id === anyDateSession.plan_id && wpd.day_of_week === dayOfWeek
+      );
+      
+      return { 
+        session: anyDateSession, 
+        exercises: sessionExercises, 
+        times: { start: planDay?.start_time || null, end: planDay?.end_time || null } 
+      };
+    }
+
+    // If there's an active blank workout session (no plan_id), return its exercises
     if (anyDateSession && (!anyDateSession.plan_id || anyDateSession.plan_id === '')) {
       const sessionExercises = (anyDateSession.exercise_ids || [])
         .map(exerciseId => exercises.find(ex => ex.id === exerciseId))
@@ -881,7 +898,7 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     if (!selectedPlan) {
-      // Return blank session if exists
+      // Return active session if exists
       if (anyDateSession) {
         const sessionExercises = (anyDateSession.exercise_ids || [])
           .map(exerciseId => exercises.find(ex => ex.id === exerciseId))
