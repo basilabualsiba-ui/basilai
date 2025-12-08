@@ -55,7 +55,8 @@ export function GymActivityStats() {
       case 'day':
         return { from: today, to: today };
       case 'week':
-        return { from: startOfWeek(today, { weekStartsOn: 1 }), to: endOfWeek(today, { weekStartsOn: 1 }) };
+        // Use last 7 days instead of calendar week to catch more data
+        return { from: subDays(today, 7), to: today };
       case 'month':
         return { from: startOfMonth(today), to: endOfMonth(today) };
       case 'custom':
@@ -78,10 +79,23 @@ export function GymActivityStats() {
     const totalMinutes = sessionsThisWeek.reduce((sum, s) => sum + (s.total_duration_minutes || 0), 0);
     const totalExercises = sessionsThisWeek.reduce((sum, s) => sum + (s.exercise_ids?.length || 0), 0);
     
-    // Get unique muscles trained
+    // Get unique muscles trained - derive from exercise_ids since muscle_groups may be empty
     const musclesTrained = new Set<string>();
     sessionsThisWeek.forEach(session => {
-      session.muscle_groups?.forEach(muscle => musclesTrained.add(muscle));
+      // First try muscle_groups from session
+      if (session.muscle_groups && session.muscle_groups.length > 0) {
+        session.muscle_groups.forEach(muscle => musclesTrained.add(muscle));
+      }
+      // Also derive from exercise_ids
+      if (session.exercise_ids && session.exercise_ids.length > 0) {
+        session.exercise_ids.forEach(exerciseId => {
+          const exercise = exercises.find(ex => ex.id === exerciseId);
+          if (exercise) {
+            musclesTrained.add(exercise.muscle_group);
+            exercise.side_muscle_groups?.forEach(sideMuscle => musclesTrained.add(sideMuscle));
+          }
+        });
+      }
     });
 
     return {
@@ -91,7 +105,7 @@ export function GymActivityStats() {
       musclesTrained: musclesTrained.size,
       averageDuration: totalWorkouts > 0 ? Math.round(totalMinutes / totalWorkouts) : 0
     };
-  }, [workoutSessions]);
+  }, [workoutSessions, exercises]);
 
   // Calculate muscle recovery status
   const muscleRecovery = useMemo((): MuscleRecoveryData[] => {
