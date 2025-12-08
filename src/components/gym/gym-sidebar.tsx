@@ -1,4 +1,4 @@
-import { Dumbbell, Calendar, Target, TrendingUp, Users, Play } from "lucide-react";
+import { Dumbbell, Calendar, Target, TrendingUp, Users, Play, BarChart3 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -14,7 +14,8 @@ import {
 const gymItems = [
   { title: "Exercises", value: "exercises", icon: Dumbbell },
   { title: "Workouts", value: "workouts", icon: Target },
-  { title: "Workout Planner", value: "planner", icon: Calendar }
+  { title: "Workout Planner", value: "planner", icon: Calendar },
+  { title: "Activity Stats", value: "activity-stats", icon: BarChart3 }
 ];
 
 interface GymSidebarProps {
