@@ -22,8 +22,11 @@ import { cn } from '@/lib/utils';
 
 interface MuscleVolumeData {
   muscle: string;
-  volume: number;
-  sets: number;
+  mainVolume: number;
+  sideVolume: number;
+  totalVolume: number;
+  mainSets: number;
+  sideSets: number;
   color: string;
 }
 
@@ -34,6 +37,7 @@ interface MuscleRecoveryData {
   status: 'recovered' | 'recovering' | 'fatigued';
   color: string;
   muscleColor: string;
+  trainedAs: 'main' | 'side' | 'both' | 'never';
 }
 
 type TimePeriod = 'day' | 'week' | 'month' | 'custom';
@@ -79,20 +83,17 @@ export function GymActivityStats() {
     const totalMinutes = sessionsThisWeek.reduce((sum, s) => sum + (s.total_duration_minutes || 0), 0);
     const totalExercises = sessionsThisWeek.reduce((sum, s) => sum + (s.exercise_ids?.length || 0), 0);
     
-    // Get unique muscles trained - derive from exercise_ids since muscle_groups may be empty
-    const musclesTrained = new Set<string>();
+    // Get unique muscles trained - separate main and side
+    const mainMusclesTrained = new Set<string>();
+    const sideMusclesTrained = new Set<string>();
+    
     sessionsThisWeek.forEach(session => {
-      // First try muscle_groups from session
-      if (session.muscle_groups && session.muscle_groups.length > 0) {
-        session.muscle_groups.forEach(muscle => musclesTrained.add(muscle));
-      }
-      // Also derive from exercise_ids
       if (session.exercise_ids && session.exercise_ids.length > 0) {
         session.exercise_ids.forEach(exerciseId => {
           const exercise = exercises.find(ex => ex.id === exerciseId);
           if (exercise) {
-            musclesTrained.add(exercise.muscle_group);
-            exercise.side_muscle_groups?.forEach(sideMuscle => musclesTrained.add(sideMuscle));
+            mainMusclesTrained.add(exercise.muscle_group);
+            exercise.side_muscle_groups?.forEach(sideMuscle => sideMusclesTrained.add(sideMuscle));
           }
         });
       }
@@ -102,7 +103,8 @@ export function GymActivityStats() {
       totalWorkouts,
       totalMinutes,
       totalExercises,
-      musclesTrained: musclesTrained.size,
+      mainMusclesTrained: mainMusclesTrained.size,
+      sideMusclesTrained: sideMusclesTrained.size,
       averageDuration: totalWorkouts > 0 ? Math.round(totalMinutes / totalWorkouts) : 0
     };
   }, [workoutSessions, exercises]);
@@ -110,9 +112,9 @@ export function GymActivityStats() {
   // Calculate muscle recovery status
   const muscleRecovery = useMemo((): MuscleRecoveryData[] => {
     const now = new Date();
-    const muscleLastTrained: Record<string, Date> = {};
+    const muscleLastTrained: Record<string, { date: Date; trainedAs: 'main' | 'side' | 'both' }> = {};
 
-    // Find the last time each muscle was trained
+    // Find the last time each muscle was trained and how it was trained
     workoutSessions
       .filter(session => session.completed_at)
       .sort((a, b) => new Date(b.scheduled_date).getTime() - new Date(a.scheduled_date).getTime())
@@ -122,32 +124,49 @@ export function GymActivityStats() {
           .filter(Boolean);
 
         sessionExercises.forEach(exercise => {
-          if (exercise && !muscleLastTrained[exercise.muscle_group]) {
-            muscleLastTrained[exercise.muscle_group] = new Date(session.scheduled_date);
-          }
-          // Also track side muscles
-          exercise?.side_muscle_groups?.forEach(sideMuscle => {
-            if (!muscleLastTrained[sideMuscle]) {
-              muscleLastTrained[sideMuscle] = new Date(session.scheduled_date);
+          if (exercise) {
+            // Track main muscle
+            if (!muscleLastTrained[exercise.muscle_group]) {
+              muscleLastTrained[exercise.muscle_group] = { 
+                date: new Date(session.scheduled_date), 
+                trainedAs: 'main' 
+              };
             }
-          });
+            // Track side muscles
+            exercise.side_muscle_groups?.forEach(sideMuscle => {
+              if (!muscleLastTrained[sideMuscle]) {
+                muscleLastTrained[sideMuscle] = { 
+                  date: new Date(session.scheduled_date), 
+                  trainedAs: 'side' 
+                };
+              } else if (muscleLastTrained[sideMuscle].trainedAs === 'main') {
+                muscleLastTrained[sideMuscle].trainedAs = 'both';
+              }
+            });
+          }
         });
       });
 
     return muscleGroups.map(mg => {
-      const lastTrained = muscleLastTrained[mg.name] || null;
+      const trainingData = muscleLastTrained[mg.name];
+      const lastTrained = trainingData?.date || null;
       const hoursSince = lastTrained ? differenceInHours(now, lastTrained) : Infinity;
+      const trainedAs: 'main' | 'side' | 'both' | 'never' = trainingData?.trainedAs || 'never';
       
       let status: 'recovered' | 'recovering' | 'fatigued';
       let color: string;
       
+      // Side muscles recover faster (different thresholds)
+      const fatigueThreshold = trainedAs === 'side' ? 18 : 24;
+      const recoverThreshold = trainedAs === 'side' ? 36 : 48;
+      
       if (hoursSince === Infinity) {
         status = 'recovered';
         color = 'hsl(var(--muted-foreground))';
-      } else if (hoursSince < 24) {
+      } else if (hoursSince < fatigueThreshold) {
         status = 'fatigued';
         color = 'hsl(0 84% 60%)'; // red
-      } else if (hoursSince < 48) {
+      } else if (hoursSince < recoverThreshold) {
         status = 'recovering';
         color = 'hsl(48 96% 53%)'; // yellow
       } else {
@@ -161,7 +180,8 @@ export function GymActivityStats() {
         hoursSince,
         status,
         color,
-        muscleColor: mg.color
+        muscleColor: mg.color,
+        trainedAs
       };
     }).sort((a, b) => a.hoursSince - b.hoursSince);
   }, [workoutSessions, exercises, muscleGroups]);
@@ -197,8 +217,8 @@ export function GymActivityStats() {
 
         if (error) throw error;
 
-        // Calculate volume per muscle group
-        const muscleVolumeMap: Record<string, { volume: number; sets: number }> = {};
+        // Calculate volume per muscle group - separate main and side
+        const muscleVolumeMap: Record<string, { mainVolume: number; sideVolume: number; mainSets: number; sideSets: number }> = {};
 
         (sets || []).forEach(set => {
           const exercise = exercises.find(ex => ex.id === set.exercise_id);
@@ -208,10 +228,10 @@ export function GymActivityStats() {
           
           // Main muscle gets 75% of volume
           if (!muscleVolumeMap[exercise.muscle_group]) {
-            muscleVolumeMap[exercise.muscle_group] = { volume: 0, sets: 0 };
+            muscleVolumeMap[exercise.muscle_group] = { mainVolume: 0, sideVolume: 0, mainSets: 0, sideSets: 0 };
           }
-          muscleVolumeMap[exercise.muscle_group].volume += volume * 0.75;
-          muscleVolumeMap[exercise.muscle_group].sets += 1;
+          muscleVolumeMap[exercise.muscle_group].mainVolume += volume * 0.75;
+          muscleVolumeMap[exercise.muscle_group].mainSets += 1;
 
           // Side muscles get 25% split
           const sideMuscles = exercise.side_muscle_groups || [];
@@ -219,9 +239,10 @@ export function GymActivityStats() {
             const sideVolume = (volume * 0.25) / sideMuscles.length;
             sideMuscles.forEach(sideMuscle => {
               if (!muscleVolumeMap[sideMuscle]) {
-                muscleVolumeMap[sideMuscle] = { volume: 0, sets: 0 };
+                muscleVolumeMap[sideMuscle] = { mainVolume: 0, sideVolume: 0, mainSets: 0, sideSets: 0 };
               }
-              muscleVolumeMap[sideMuscle].volume += sideVolume;
+              muscleVolumeMap[sideMuscle].sideVolume += sideVolume;
+              muscleVolumeMap[sideMuscle].sideSets += 1;
             });
           }
         });
@@ -229,11 +250,14 @@ export function GymActivityStats() {
         const volumeData: MuscleVolumeData[] = Object.entries(muscleVolumeMap)
           .map(([muscle, data]) => ({
             muscle,
-            volume: Math.round(data.volume),
-            sets: data.sets,
+            mainVolume: Math.round(data.mainVolume),
+            sideVolume: Math.round(data.sideVolume),
+            totalVolume: Math.round(data.mainVolume + data.sideVolume),
+            mainSets: data.mainSets,
+            sideSets: data.sideSets,
             color: muscleGroups.find(mg => mg.name === muscle)?.color || '#ff7f00'
           }))
-          .sort((a, b) => b.volume - a.volume);
+          .sort((a, b) => b.totalVolume - a.totalVolume);
 
         setMuscleVolumes(volumeData);
       } catch (error) {
@@ -246,7 +270,7 @@ export function GymActivityStats() {
     fetchMuscleVolumes();
   }, [dateRange, workoutSessions, exercises, muscleGroups]);
 
-  const maxVolume = Math.max(...muscleVolumes.map(m => m.volume), 1);
+  const maxVolume = Math.max(...muscleVolumes.map(m => m.totalVolume), 1);
 
   const formatHours = (hours: number) => {
     if (hours === Infinity) return 'Never trained';
@@ -311,7 +335,12 @@ export function GymActivityStats() {
                 <TrendingUp className="h-4 w-4 text-purple-500" />
                 <span className="text-xs text-muted-foreground">Muscles Hit</span>
               </div>
-              <p className="text-2xl font-bold text-foreground">{weeklyStats.musclesTrained}</p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-bold text-foreground">{weeklyStats.mainMusclesTrained + weeklyStats.sideMusclesTrained}</p>
+                <span className="text-xs text-muted-foreground">
+                  ({weeklyStats.mainMusclesTrained} main, {weeklyStats.sideMusclesTrained} side)
+                </span>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -337,7 +366,14 @@ export function GymActivityStats() {
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: muscle.color }}
                   />
-                  <span className="font-medium text-foreground text-sm">{muscle.muscle}</span>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-foreground text-sm">{muscle.muscle}</span>
+                    {muscle.trainedAs !== 'never' && (
+                      <span className="text-[10px] text-muted-foreground">
+                        as {muscle.trainedAs === 'both' ? 'main & side' : muscle.trainedAs}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">
@@ -350,14 +386,14 @@ export function GymActivityStats() {
           </div>
           
           {/* Recovery Legend */}
-          <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border">
+          <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-border">
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-              <span className="text-xs text-muted-foreground">&lt;24h (Fatigued)</span>
+              <span className="text-xs text-muted-foreground">Fatigued (main &lt;24h, side &lt;18h)</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
-              <span className="text-xs text-muted-foreground">24-48h (Recovering)</span>
+              <span className="text-xs text-muted-foreground">Recovering (main 24-48h, side 18-36h)</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
@@ -442,19 +478,40 @@ export function GymActivityStats() {
                 <div key={muscle.muscle} className="space-y-1.5">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium text-foreground">{muscle.muscle}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground text-xs">{muscle.sets} sets</span>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1">
+                        {muscle.mainSets > 0 && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-primary/20 text-primary">
+                            Main: {muscle.mainVolume.toLocaleString()}kg
+                          </span>
+                        )}
+                        {muscle.sideSets > 0 && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                            Side: {muscle.sideVolume.toLocaleString()}kg
+                          </span>
+                        )}
+                      </div>
                       <span className="font-semibold" style={{ color: muscle.color }}>
-                        {muscle.volume.toLocaleString()} kg
+                        {muscle.totalVolume.toLocaleString()} kg
                       </span>
                     </div>
                   </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-2 bg-muted rounded-full overflow-hidden flex">
+                    {/* Main volume bar */}
                     <div 
-                      className="h-full rounded-full transition-all duration-500"
+                      className="h-full transition-all duration-500"
                       style={{ 
-                        width: `${(muscle.volume / maxVolume) * 100}%`,
+                        width: `${(muscle.mainVolume / maxVolume) * 100}%`,
                         backgroundColor: muscle.color
+                      }}
+                    />
+                    {/* Side volume bar - slightly transparent */}
+                    <div 
+                      className="h-full transition-all duration-500"
+                      style={{ 
+                        width: `${(muscle.sideVolume / maxVolume) * 100}%`,
+                        backgroundColor: muscle.color,
+                        opacity: 0.4
                       }}
                     />
                   </div>
@@ -466,7 +523,7 @@ export function GymActivityStats() {
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-foreground">Total Volume</span>
                   <span className="font-bold text-primary text-lg">
-                    {muscleVolumes.reduce((sum, m) => sum + m.volume, 0).toLocaleString()} kg
+                    {muscleVolumes.reduce((sum, m) => sum + m.totalVolume, 0).toLocaleString()} kg
                   </span>
                 </div>
               </div>
