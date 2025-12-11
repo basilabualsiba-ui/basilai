@@ -3,7 +3,8 @@ import { useGym } from '@/contexts/GymContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { X, Clock, Settings, CheckCircle, Dumbbell, Pause, Play, Plus, Minus, RotateCcw, TrendingUp, RefreshCw, ChevronUp, ChevronDown } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { X, Clock, Settings, CheckCircle, Dumbbell, Pause, Play, Plus, Minus, RotateCcw, TrendingUp, RefreshCw, ChevronUp, ChevronDown, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { WorkoutExerciseManager } from './workout-exercise-manager';
 import { SwapExerciseDialog } from './swap-exercise-dialog';
@@ -30,7 +31,7 @@ export function WorkoutTimer({
   currentExercises,
   onExercisesChange
 }: WorkoutTimerProps) {
-  const { getTodayWorkout, workoutSessions, exerciseSets, muscleGroups, exercises } = useGym();
+  const { getTodayWorkout, workoutSessions, exerciseSets, muscleGroups, exercises, updateSessionTrainer } = useGym();
   const [timer, setTimer] = useState(0);
   const [isRunning, setIsRunning] = useState(true);
   const [isExerciseManagerOpen, setIsExerciseManagerOpen] = useState(false);
@@ -268,10 +269,22 @@ export function WorkoutTimer({
     onExercisesChange(updatedExercises);
   };
 
+  const handleTrainerToggle = async (checked: boolean) => {
+    await updateSessionTrainer(sessionId, checked);
+  };
+
   return (
     <div className="min-h-screen bg-background p-4">
       {/* Header */}
-      <div className="flex items-center justify-end mb-6">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Trainer</span>
+          <Switch
+            checked={session?.with_trainer || false}
+            onCheckedChange={handleTrainerToggle}
+          />
+        </div>
         <div className="flex gap-2">
           <Button 
             variant="ghost" 

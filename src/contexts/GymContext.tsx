@@ -68,6 +68,7 @@ interface WorkoutSession {
   notes?: string;
   muscle_groups?: string[];
   exercise_ids?: string[];
+  with_trainer?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -121,6 +122,7 @@ interface GymContextType {
   // Workout session functions
   startWorkoutSession: (planId: string, scheduledDate: string, muscleGroups: string[], exerciseIds?: string[]) => Promise<string>;
   updateSessionExercises: (sessionId: string, exerciseIds: string[]) => Promise<void>;
+  updateSessionTrainer: (sessionId: string, withTrainer: boolean) => Promise<void>;
   completeWorkoutSession: (id: string, notes?: string) => Promise<void>;
   resetWorkoutSession: (id: string) => Promise<void>;
   
@@ -597,6 +599,22 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (error) {
       console.error('Failed to update session exercises:', error);
+      return;
+    }
+
+    setWorkoutSessions(prev => prev.map(s => s.id === sessionId ? data : s));
+  };
+
+  const updateSessionTrainer = async (sessionId: string, withTrainer: boolean) => {
+    const { data, error } = await supabase
+      .from('workout_sessions')
+      .update({ with_trainer: withTrainer })
+      .eq('id', sessionId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Failed to update session trainer:', error);
       return;
     }
 
@@ -1093,6 +1111,7 @@ export const GymProvider = ({ children }: { children: React.ReactNode }) => {
     deleteWorkoutPlan,
     startWorkoutSession,
     updateSessionExercises,
+    updateSessionTrainer,
     completeWorkoutSession,
     resetWorkoutSession,
     addExerciseSet,

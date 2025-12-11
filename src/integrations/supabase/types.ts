@@ -1197,6 +1197,7 @@ export type Database = {
           started_at: string | null
           total_duration_minutes: number | null
           updated_at: string
+          with_trainer: boolean | null
         }
         Insert: {
           completed_at?: string | null
@@ -1210,6 +1211,7 @@ export type Database = {
           started_at?: string | null
           total_duration_minutes?: number | null
           updated_at?: string
+          with_trainer?: boolean | null
         }
         Update: {
           completed_at?: string | null
@@ -1223,6 +1225,7 @@ export type Database = {
           started_at?: string | null
           total_duration_minutes?: number | null
           updated_at?: string
+          with_trainer?: boolean | null
         }
         Relationships: [
           {
