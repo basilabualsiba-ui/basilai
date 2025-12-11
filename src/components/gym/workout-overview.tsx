@@ -3,7 +3,8 @@ import { useGym } from '@/contexts/GymContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Dumbbell, Play, Target, CheckCircle2, TrendingUp, Plus, List } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { ArrowLeft, Dumbbell, Play, Target, CheckCircle2, TrendingUp, Plus, List, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { ExerciseInfoDialog } from './exercise-info-dialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,7 +34,8 @@ export function WorkoutOverview({
     getTodayWorkout,
     getWorkoutForDate,
     muscleGroups,
-    workouts
+    workouts,
+    updateSessionTrainer
   } = useGym();
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -325,13 +327,32 @@ export function WorkoutOverview({
 
       {/* Start Workout Button */}
       <div className="fixed bottom-20 md:bottom-4 left-0 right-0 p-4 bg-gradient-to-t from-background via-background/80 to-transparent z-50">
-        {isCompleted ? <div className="w-full h-14 bg-green-500/10 border border-green-500/20 rounded-lg flex items-center justify-center shadow-lg">
-            <CheckCircle2 className="h-5 w-5 mr-2 text-green-500" />
-            <span className="text-green-500 font-semibold text-lg">Workout Completed</span>
-          </div> : <Button onClick={onStartWorkout} className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg shadow-lg">
+        {isCompleted ? (
+          <div className="space-y-2">
+            {/* Trainer Toggle for completed workout */}
+            <div className="flex items-center justify-center gap-3 p-3 bg-card rounded-lg border border-border">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-foreground">With Trainer</span>
+              <Switch
+                checked={todayWorkout.session?.with_trainer || false}
+                onCheckedChange={(checked) => {
+                  if (todayWorkout.session) {
+                    updateSessionTrainer(todayWorkout.session.id, checked);
+                  }
+                }}
+              />
+            </div>
+            <div className="w-full h-14 bg-green-500/10 border border-green-500/20 rounded-lg flex items-center justify-center shadow-lg">
+              <CheckCircle2 className="h-5 w-5 mr-2 text-green-500" />
+              <span className="text-green-500 font-semibold text-lg">Workout Completed</span>
+            </div>
+          </div>
+        ) : (
+          <Button onClick={onStartWorkout} className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg shadow-lg">
             <Play className="h-5 w-5 mr-2" />
             {isToday ? 'Start Workout' : 'Log Workout'}
-          </Button>}
+          </Button>
+        )}
       </div>
 
       {/* Exercise Info Dialog */}

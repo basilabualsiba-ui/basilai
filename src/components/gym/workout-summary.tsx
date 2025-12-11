@@ -2,7 +2,8 @@ import { useGym } from '@/contexts/GymContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Clock, Dumbbell, Target, TrendingUp, Share2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Trophy, Clock, Dumbbell, Target, TrendingUp, Share2, Users } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface WorkoutSummaryProps {
@@ -11,7 +12,7 @@ interface WorkoutSummaryProps {
 }
 
 export function WorkoutSummary({ sessionId, onFinish }: WorkoutSummaryProps) {
-  const { workoutSessions, exerciseSets, getTodayWorkout } = useGym();
+  const { workoutSessions, exerciseSets, getTodayWorkout, updateSessionTrainer } = useGym();
   
   const session = workoutSessions.find(s => s.id === sessionId);
   const todayWorkout = getTodayWorkout();
@@ -44,6 +45,10 @@ export function WorkoutSummary({ sessionId, onFinish }: WorkoutSummaryProps) {
     return `${mins}m`;
   };
 
+  const handleTrainerToggle = async (checked: boolean) => {
+    await updateSessionTrainer(sessionId, checked);
+  };
+
   return (
     <div className="min-h-screen bg-background p-4">
       {/* Success Header */}
@@ -55,6 +60,16 @@ export function WorkoutSummary({ sessionId, onFinish }: WorkoutSummaryProps) {
         <p className="text-muted-foreground">
           {format(new Date(), 'EEEE, MMMM d, yyyy')}
         </p>
+        
+        {/* Trainer Toggle */}
+        <div className="flex items-center justify-center gap-3 mt-4 p-3 bg-card rounded-lg border border-border inline-flex">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-foreground">With Trainer</span>
+          <Switch
+            checked={session?.with_trainer || false}
+            onCheckedChange={handleTrainerToggle}
+          />
+        </div>
       </div>
 
       {/* Main Stats */}

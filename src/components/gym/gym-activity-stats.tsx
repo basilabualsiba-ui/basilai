@@ -13,7 +13,8 @@ import {
   Clock,
   Dumbbell,
   CalendarIcon,
-  ChevronRight
+  ChevronRight,
+  Users
 } from 'lucide-react';
 import { useGym } from '@/contexts/GymContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -83,6 +84,10 @@ export function GymActivityStats() {
     const totalMinutes = sessionsThisWeek.reduce((sum, s) => sum + (s.total_duration_minutes || 0), 0);
     const totalExercises = sessionsThisWeek.reduce((sum, s) => sum + (s.exercise_ids?.length || 0), 0);
     
+    // Count trainer sessions
+    const withTrainer = sessionsThisWeek.filter(s => s.with_trainer).length;
+    const withoutTrainer = totalWorkouts - withTrainer;
+    
     // Get unique muscles trained - separate main and side
     const mainMusclesTrained = new Set<string>();
     const sideMusclesTrained = new Set<string>();
@@ -105,7 +110,9 @@ export function GymActivityStats() {
       totalExercises,
       mainMusclesTrained: mainMusclesTrained.size,
       sideMusclesTrained: sideMusclesTrained.size,
-      averageDuration: totalWorkouts > 0 ? Math.round(totalMinutes / totalWorkouts) : 0
+      averageDuration: totalWorkouts > 0 ? Math.round(totalMinutes / totalWorkouts) : 0,
+      withTrainer,
+      withoutTrainer
     };
   }, [workoutSessions, exercises]);
 
@@ -274,7 +281,8 @@ export function GymActivityStats() {
 
   const formatHours = (hours: number) => {
     if (hours === Infinity) return 'Never trained';
-    if (hours < 24) return `${hours}h ago`;
+    if (hours < 1) return 'Just now';
+    if (hours < 24) return `${Math.round(hours)}h ago`;
     const days = Math.floor(hours / 24);
     return `${days}d ago`;
   };
@@ -298,7 +306,7 @@ export function GymActivityStats() {
           <Activity className="h-5 w-5 text-primary" />
           Last 7 Days Activity
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
             <CardContent className="p-4">
               <div className="flex items-center gap-2 mb-1">
@@ -339,6 +347,21 @@ export function GymActivityStats() {
                 <p className="text-2xl font-bold text-foreground">{weeklyStats.mainMusclesTrained + weeklyStats.sideMusclesTrained}</p>
                 <span className="text-xs text-muted-foreground">
                   ({weeklyStats.mainMusclesTrained} main, {weeklyStats.sideMusclesTrained} side)
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Users className="h-4 w-4 text-blue-500" />
+                <span className="text-xs text-muted-foreground">With Trainer</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-bold text-foreground">{weeklyStats.withTrainer}</p>
+                <span className="text-xs text-muted-foreground">
+                  / {weeklyStats.totalWorkouts}
                 </span>
               </div>
             </CardContent>
