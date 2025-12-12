@@ -71,6 +71,12 @@ export function GymActivityStats() {
 
   // Trainer package settings
   const TRAINER_PACKAGE_SIZE = 12;
+  const TRAINER_START_DATE = new Date('2024-12-04');
+  
+  // Payment dates - first payment was on Dec 4, 2024
+  const paymentDates = useMemo(() => {
+    return [new Date('2024-12-04')]; // Add more dates as payments are made
+  }, []);
 
   // Calculate trainer package stats
   const trainerStats = useMemo(() => {
@@ -78,23 +84,51 @@ export function GymActivityStats() {
       .filter(s => s.completed_at)
       .sort((a, b) => new Date(a.scheduled_date).getTime() - new Date(b.scheduled_date).getTime());
     
-    const trainerSessions = completedSessions.filter(s => s.with_trainer);
+    // Only count trainer sessions from the start date onwards
+    const trainerSessions = completedSessions.filter(s => 
+      s.with_trainer && new Date(s.scheduled_date) >= TRAINER_START_DATE
+    );
     const totalTrainerSessions = trainerSessions.length;
     const currentPackageUsed = totalTrainerSessions % TRAINER_PACKAGE_SIZE;
     const packagesCompleted = Math.floor(totalTrainerSessions / TRAINER_PACKAGE_SIZE);
     const sessionsRemaining = TRAINER_PACKAGE_SIZE - currentPackageUsed;
     
+    // Calculate paid vs unpaid packages
+    const packagesPaid = paymentDates.length;
+    const needsPayment = packagesCompleted >= packagesPaid && currentPackageUsed > 0;
+    const nextPaymentAt = packagesPaid * TRAINER_PACKAGE_SIZE;
+    const sessionsUntilPayment = nextPaymentAt - totalTrainerSessions;
+    
     // Get recent sessions (last 20) for history display
     const recentSessions = completedSessions.slice(-20).reverse();
+    
+    // Mark which sessions are paid (within paid packages)
+    const sessionsWithPaymentStatus = recentSessions.map(session => {
+      if (!session.with_trainer) return { ...session, paymentStatus: 'solo' as const };
+      const sessionDate = new Date(session.scheduled_date);
+      if (sessionDate < TRAINER_START_DATE) return { ...session, paymentStatus: 'before_tracking' as const };
+      
+      // Find the session's position in trainer sessions
+      const trainerIndex = trainerSessions.findIndex(ts => ts.id === session.id);
+      if (trainerIndex === -1) return { ...session, paymentStatus: 'solo' as const };
+      
+      const packageNumber = Math.floor(trainerIndex / TRAINER_PACKAGE_SIZE);
+      const isPaid = packageNumber < packagesPaid;
+      return { ...session, paymentStatus: isPaid ? 'paid' as const : 'unpaid' as const };
+    });
     
     return {
       totalTrainerSessions,
       currentPackageUsed: currentPackageUsed === 0 && totalTrainerSessions > 0 ? TRAINER_PACKAGE_SIZE : currentPackageUsed,
       packagesCompleted: currentPackageUsed === 0 && totalTrainerSessions > 0 ? packagesCompleted : packagesCompleted,
       sessionsRemaining: currentPackageUsed === 0 && totalTrainerSessions > 0 ? 0 : sessionsRemaining,
-      recentSessions
+      recentSessions: sessionsWithPaymentStatus,
+      packagesPaid,
+      needsPayment,
+      sessionsUntilPayment: sessionsUntilPayment > 0 ? sessionsUntilPayment : 0,
+      lastPaymentDate: paymentDates[paymentDates.length - 1]
     };
-  }, [workoutSessions]);
+  }, [workoutSessions, paymentDates]);
 
   // Calculate last week's activity
   const weeklyStats = useMemo(() => {
@@ -379,20 +413,6 @@ export function GymActivityStats() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <Users className="h-4 w-4 text-blue-500" />
-                <span className="text-xs text-muted-foreground">With Trainer</span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <p className="text-2xl font-bold text-foreground">{weeklyStats.withTrainer}</p>
-                <span className="text-xs text-muted-foreground">
-                  / {weeklyStats.totalWorkouts}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
 
@@ -405,6 +425,29 @@ export function GymActivityStats() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Payment Status Alert */}
+          {trainerStats.needsPayment ? (
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-sm font-medium text-red-500">Payment Required</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Package {trainerStats.packagesCompleted + 1} needs payment
+              </p>
+            </div>
+          ) : (
+            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="text-sm font-medium text-green-600">Paid</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Last payment: {format(trainerStats.lastPaymentDate, 'MMM d, yyyy')}
+              </p>
+            </div>
+          )}
+
           {/* Current Package Progress */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -419,15 +462,21 @@ export function GymActivityStats() {
             />
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{trainerStats.sessionsRemaining} sessions remaining</span>
-              <span>{trainerStats.packagesCompleted} packages completed</span>
+              {trainerStats.sessionsUntilPayment > 0 && (
+                <span className="text-green-600">{trainerStats.sessionsUntilPayment} until next payment</span>
+              )}
             </div>
           </div>
 
           {/* Stats Summary */}
-          <div className="grid grid-cols-2 gap-3 pt-2">
+          <div className="grid grid-cols-3 gap-3 pt-2">
             <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
               <div className="text-2xl font-bold text-blue-500">{trainerStats.totalTrainerSessions}</div>
-              <div className="text-xs text-muted-foreground">Total Trainer Sessions</div>
+              <div className="text-xs text-muted-foreground">Trainer Sessions</div>
+            </div>
+            <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+              <div className="text-2xl font-bold text-green-600">{trainerStats.packagesPaid}</div>
+              <div className="text-xs text-muted-foreground">Packages Paid</div>
             </div>
             <div className="p-3 rounded-lg bg-muted">
               <div className="text-2xl font-bold text-foreground">
@@ -441,7 +490,7 @@ export function GymActivityStats() {
           <div className="pt-2">
             <h4 className="text-sm font-medium text-foreground mb-2">Recent Workouts</h4>
             <div className="space-y-2 max-h-48 overflow-y-auto">
-              {trainerStats.recentSessions.map((session, index) => (
+              {trainerStats.recentSessions.map((session) => (
                 <div 
                   key={session.id}
                   className="flex items-center justify-between p-2 rounded-lg border border-border bg-card text-sm"
@@ -449,6 +498,8 @@ export function GymActivityStats() {
                   <div className="flex items-center gap-2">
                     <div className={cn(
                       "w-2 h-2 rounded-full",
+                      session.paymentStatus === 'paid' ? "bg-green-500" :
+                      session.paymentStatus === 'unpaid' ? "bg-red-500" :
                       session.with_trainer ? "bg-blue-500" : "bg-muted-foreground"
                     )} />
                     <span className="text-foreground">
@@ -460,15 +511,30 @@ export function GymActivityStats() {
                       </span>
                     )}
                   </div>
-                  <Badge 
-                    variant={session.with_trainer ? "default" : "secondary"}
-                    className={cn(
-                      "text-xs",
-                      session.with_trainer ? "bg-blue-500 hover:bg-blue-600" : ""
+                  <div className="flex items-center gap-1.5">
+                    {session.with_trainer && session.paymentStatus !== 'solo' && (
+                      <Badge 
+                        variant="outline"
+                        className={cn(
+                          "text-[10px] px-1.5",
+                          session.paymentStatus === 'paid' ? "border-green-500/50 text-green-600" :
+                          session.paymentStatus === 'unpaid' ? "border-red-500/50 text-red-500" : ""
+                        )}
+                      >
+                        {session.paymentStatus === 'paid' ? 'Paid' : 
+                         session.paymentStatus === 'unpaid' ? 'Unpaid' : ''}
+                      </Badge>
                     )}
-                  >
-                    {session.with_trainer ? "With Trainer" : "Solo"}
-                  </Badge>
+                    <Badge 
+                      variant={session.with_trainer ? "default" : "secondary"}
+                      className={cn(
+                        "text-xs",
+                        session.with_trainer ? "bg-blue-500 hover:bg-blue-600" : ""
+                      )}
+                    >
+                      {session.with_trainer ? "Trainer" : "Solo"}
+                    </Badge>
+                  </div>
                 </div>
               ))}
               {trainerStats.recentSessions.length === 0 && (
@@ -480,7 +546,15 @@ export function GymActivityStats() {
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-4 pt-2 border-t border-border">
+          <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-border">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+              <span className="text-xs text-muted-foreground">Paid</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+              <span className="text-xs text-muted-foreground">Unpaid</span>
+            </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
               <span className="text-xs text-muted-foreground">With Trainer</span>
