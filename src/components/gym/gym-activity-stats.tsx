@@ -69,6 +69,33 @@ export function GymActivityStats() {
     }
   }, [timePeriod, customDateRange]);
 
+  // Trainer package settings
+  const TRAINER_PACKAGE_SIZE = 12;
+
+  // Calculate trainer package stats
+  const trainerStats = useMemo(() => {
+    const completedSessions = workoutSessions
+      .filter(s => s.completed_at)
+      .sort((a, b) => new Date(a.scheduled_date).getTime() - new Date(b.scheduled_date).getTime());
+    
+    const trainerSessions = completedSessions.filter(s => s.with_trainer);
+    const totalTrainerSessions = trainerSessions.length;
+    const currentPackageUsed = totalTrainerSessions % TRAINER_PACKAGE_SIZE;
+    const packagesCompleted = Math.floor(totalTrainerSessions / TRAINER_PACKAGE_SIZE);
+    const sessionsRemaining = TRAINER_PACKAGE_SIZE - currentPackageUsed;
+    
+    // Get recent sessions (last 20) for history display
+    const recentSessions = completedSessions.slice(-20).reverse();
+    
+    return {
+      totalTrainerSessions,
+      currentPackageUsed: currentPackageUsed === 0 && totalTrainerSessions > 0 ? TRAINER_PACKAGE_SIZE : currentPackageUsed,
+      packagesCompleted: currentPackageUsed === 0 && totalTrainerSessions > 0 ? packagesCompleted : packagesCompleted,
+      sessionsRemaining: currentPackageUsed === 0 && totalTrainerSessions > 0 ? 0 : sessionsRemaining,
+      recentSessions
+    };
+  }, [workoutSessions]);
+
   // Calculate last week's activity
   const weeklyStats = useMemo(() => {
     const now = new Date();
@@ -368,6 +395,104 @@ export function GymActivityStats() {
           </Card>
         </div>
       </div>
+
+      {/* Trainer Package Tracker */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Users className="h-5 w-5 text-blue-500" />
+            Trainer Package Tracker
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Current Package Progress */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Current Package</span>
+              <span className="text-sm font-medium">
+                {trainerStats.currentPackageUsed} / {TRAINER_PACKAGE_SIZE} sessions
+              </span>
+            </div>
+            <Progress 
+              value={(trainerStats.currentPackageUsed / TRAINER_PACKAGE_SIZE) * 100} 
+              className="h-3"
+            />
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{trainerStats.sessionsRemaining} sessions remaining</span>
+              <span>{trainerStats.packagesCompleted} packages completed</span>
+            </div>
+          </div>
+
+          {/* Stats Summary */}
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <div className="text-2xl font-bold text-blue-500">{trainerStats.totalTrainerSessions}</div>
+              <div className="text-xs text-muted-foreground">Total Trainer Sessions</div>
+            </div>
+            <div className="p-3 rounded-lg bg-muted">
+              <div className="text-2xl font-bold text-foreground">
+                {workoutSessions.filter(s => s.completed_at && !s.with_trainer).length}
+              </div>
+              <div className="text-xs text-muted-foreground">Solo Sessions</div>
+            </div>
+          </div>
+
+          {/* Recent Sessions List */}
+          <div className="pt-2">
+            <h4 className="text-sm font-medium text-foreground mb-2">Recent Workouts</h4>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {trainerStats.recentSessions.map((session, index) => (
+                <div 
+                  key={session.id}
+                  className="flex items-center justify-between p-2 rounded-lg border border-border bg-card text-sm"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className={cn(
+                      "w-2 h-2 rounded-full",
+                      session.with_trainer ? "bg-blue-500" : "bg-muted-foreground"
+                    )} />
+                    <span className="text-foreground">
+                      {format(new Date(session.scheduled_date), 'MMM d, yyyy')}
+                    </span>
+                    {session.muscle_groups && session.muscle_groups.length > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        • {session.muscle_groups.slice(0, 2).join(', ')}
+                      </span>
+                    )}
+                  </div>
+                  <Badge 
+                    variant={session.with_trainer ? "default" : "secondary"}
+                    className={cn(
+                      "text-xs",
+                      session.with_trainer ? "bg-blue-500 hover:bg-blue-600" : ""
+                    )}
+                  >
+                    {session.with_trainer ? "With Trainer" : "Solo"}
+                  </Badge>
+                </div>
+              ))}
+              {trainerStats.recentSessions.length === 0 && (
+                <div className="text-center py-4 text-muted-foreground text-sm">
+                  No completed workouts yet
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div className="flex items-center gap-4 pt-2 border-t border-border">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+              <span className="text-xs text-muted-foreground">With Trainer</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground" />
+              <span className="text-xs text-muted-foreground">Solo</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
 
       {/* Muscle Recovery Status */}
       <Card>
