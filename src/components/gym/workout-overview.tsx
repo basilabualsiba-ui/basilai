@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useGym } from '@/contexts/GymContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -242,7 +242,36 @@ export function WorkoutOverview({
       photo_url: muscleGroup?.photo_url || null
     };
   };
+  // Get workout name if available
+  const workoutName = useMemo(() => {
+    if (todayWorkout?.session?.notes) {
+      // Check if notes contain a workout name pattern
+      const match = todayWorkout.session.notes.match(/Workout: (.+)/);
+      if (match) return match[1];
+    }
+    // Try to find workout by session's muscle groups
+    const sessionMuscles = todayWorkout?.session?.muscle_groups;
+    if (sessionMuscles && sessionMuscles.length > 0 && workouts.length > 0) {
+      const matchingWorkout = workouts.find(w => 
+        w.muscle_groups?.length === sessionMuscles.length &&
+        w.muscle_groups?.every((m: string) => sessionMuscles.includes(m))
+      );
+      if (matchingWorkout) return matchingWorkout.name;
+    }
+    return null;
+  }, [todayWorkout, workouts]);
+
   return <div className="min-h-screen bg-background p-4">
+      {/* Workout Name Header */}
+      {workoutName && (
+        <div className="mb-4">
+          <h1 className="text-xl font-bold text-foreground">{workoutName}</h1>
+          <p className="text-sm text-muted-foreground">
+            {selectedDate ? format(selectedDate, 'EEEE, MMMM d, yyyy') : 'Today'}
+          </p>
+        </div>
+      )}
+
       {/* Target Muscles Section */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">

@@ -43,6 +43,11 @@ interface MuscleRecoveryData {
 
 type TimePeriod = 'day' | 'week' | 'month' | 'custom';
 
+// Trainer payment tracking - subcategory ID for "اشتراك اشرف" under "Gym"
+const TRAINER_PAYMENT_SUBCATEGORY_ID = 'f6b8d483-436a-4cad-9e52-8919292087d0';
+const TRAINER_PACKAGE_SIZE = 12;
+const TRAINER_START_DATE = new Date('2024-12-04');
+
 export function GymActivityStats() {
   const { workoutSessions, exercises, muscleGroups, exerciseSets } = useGym();
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('week');
@@ -52,6 +57,23 @@ export function GymActivityStats() {
   });
   const [muscleVolumes, setMuscleVolumes] = useState<MuscleVolumeData[]>([]);
   const [isLoadingVolume, setIsLoadingVolume] = useState(false);
+  const [trainerPayments, setTrainerPayments] = useState<Array<{ date: string; amount: number }>>([]);
+
+  // Fetch trainer payments from wallet
+  useEffect(() => {
+    const fetchTrainerPayments = async () => {
+      const { data: transactions } = await supabase
+        .from('transactions')
+        .select('date, amount')
+        .eq('subcategory_id', TRAINER_PAYMENT_SUBCATEGORY_ID)
+        .order('date', { ascending: true });
+      
+      if (transactions) {
+        setTrainerPayments(transactions.map(t => ({ date: t.date, amount: Number(t.amount) })));
+      }
+    };
+    fetchTrainerPayments();
+  }, []);
 
   // Calculate date range based on time period
   const dateRange = useMemo(() => {
@@ -60,7 +82,6 @@ export function GymActivityStats() {
       case 'day':
         return { from: today, to: today };
       case 'week':
-        // Use last 7 days instead of calendar week to catch more data
         return { from: subDays(today, 7), to: today };
       case 'month':
         return { from: startOfMonth(today), to: endOfMonth(today) };
@@ -69,16 +90,7 @@ export function GymActivityStats() {
     }
   }, [timePeriod, customDateRange]);
 
-  // Trainer package settings
-  const TRAINER_PACKAGE_SIZE = 12;
-  const TRAINER_START_DATE = new Date('2024-12-04');
-  
-  // Payment dates - first payment was on Dec 4, 2024
-  const paymentDates = useMemo(() => {
-    return [new Date('2024-12-04')]; // Add more dates as payments are made
-  }, []);
-
-  // Calculate trainer package stats
+  // Calculate trainer package stats from wallet payments
   const trainerStats = useMemo(() => {
     const completedSessions = workoutSessions
       .filter(s => s.completed_at)
@@ -93,20 +105,21 @@ export function GymActivityStats() {
     const packagesCompleted = Math.floor(totalTrainerSessions / TRAINER_PACKAGE_SIZE);
     const sessionsRemaining = TRAINER_PACKAGE_SIZE - currentPackageUsed;
     
-    // Calculate paid vs unpaid packages
-    const packagesPaid = paymentDates.length;
+    // Calculate paid packages from wallet transactions
+    const packagesPaid = trainerPayments.length;
     const needsPayment = packagesCompleted >= packagesPaid && currentPackageUsed > 0;
     const nextPaymentAt = packagesPaid * TRAINER_PACKAGE_SIZE;
     const sessionsUntilPayment = nextPaymentAt - totalTrainerSessions;
     
-    // Get recent sessions (last 20) for history display
-    const recentSessions = completedSessions.slice(-20).reverse();
+    // Get recent sessions for history display - only from start date
+    const recentSessions = completedSessions
+      .filter(s => new Date(s.scheduled_date) >= TRAINER_START_DATE)
+      .slice(-20)
+      .reverse();
     
     // Mark which sessions are paid (within paid packages)
     const sessionsWithPaymentStatus = recentSessions.map(session => {
       if (!session.with_trainer) return { ...session, paymentStatus: 'solo' as const };
-      const sessionDate = new Date(session.scheduled_date);
-      if (sessionDate < TRAINER_START_DATE) return { ...session, paymentStatus: 'before_tracking' as const };
       
       // Find the session's position in trainer sessions
       const trainerIndex = trainerSessions.findIndex(ts => ts.id === session.id);
@@ -117,6 +130,10 @@ export function GymActivityStats() {
       return { ...session, paymentStatus: isPaid ? 'paid' as const : 'unpaid' as const };
     });
     
+    const lastPaymentDate = trainerPayments.length > 0 
+      ? new Date(trainerPayments[trainerPayments.length - 1].date)
+      : TRAINER_START_DATE;
+    
     return {
       totalTrainerSessions,
       currentPackageUsed: currentPackageUsed === 0 && totalTrainerSessions > 0 ? TRAINER_PACKAGE_SIZE : currentPackageUsed,
@@ -126,9 +143,10 @@ export function GymActivityStats() {
       packagesPaid,
       needsPayment,
       sessionsUntilPayment: sessionsUntilPayment > 0 ? sessionsUntilPayment : 0,
-      lastPaymentDate: paymentDates[paymentDates.length - 1]
+      lastPaymentDate,
+      totalPaid: trainerPayments.reduce((sum, p) => sum + p.amount, 0)
     };
-  }, [workoutSessions, paymentDates]);
+  }, [workoutSessions, trainerPayments]);
 
   // Calculate last week's activity
   const weeklyStats = useMemo(() => {
