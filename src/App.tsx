@@ -19,7 +19,7 @@ import { useDreamProgress } from "./hooks/useDreamProgress";
 import Index from "./pages/Index";
 import Financial from "./pages/Financial";
 import Gym from "./pages/Gym";
-import Food from "./pages/Food";
+import Supplements from "./pages/Supplements";
 import WeightStats from "./pages/WeightStats";
 import GymStatsPage from "./pages/GymStats";
 import WorkoutDay from "./pages/WorkoutDay";
@@ -46,7 +46,7 @@ function AppContent() {
           <Route path="/gym" element={<Gym />} />
           <Route path="/gym-stats" element={<GymStatsPage />} />
           <Route path="/workout-day" element={<WorkoutDay />} />
-          <Route path="/food" element={<Food />} />
+          <Route path="/supplements" element={<Supplements />} />
           <Route path="/weight-stats" element={<WeightStats />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/islamic" element={<Islamic />} />

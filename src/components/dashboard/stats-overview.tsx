@@ -10,7 +10,7 @@ import {
   Dumbbell,
   Calendar,
   Timer,
-  Apple,
+  Pill,
   Clock,
   CheckCircle2
 } from "lucide-react";
@@ -18,7 +18,6 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useGym } from "@/contexts/GymContext";
-import { useFood } from "@/contexts/FoodContext";
 import { useSchedule } from "@/contexts/ScheduleContext";
 import { useState, useEffect } from "react";
 
@@ -26,8 +25,19 @@ export const StatsOverview = () => {
   const navigate = useNavigate();
   const [isUpdating, setIsUpdating] = useState(false);
   const { exercises, workoutSessions, workoutPlans } = useGym();
-  const { foodItems, meals, mealPlans, getMealPlanMeals, getMealConsumptions, markMealAsConsumed, unmarkMealAsConsumed, isMealConsumed } = useFood();
   const { getTodaySchedule, toggleActivityCompletion, getScheduleForDate } = useSchedule();
+  
+  // Fetch supplements data
+  const { data: supplements } = useQuery({
+    queryKey: ['supplements-dashboard'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('supplements').select('*');
+      if (error) throw error;
+      return data;
+    }
+  });
+  
+  const lowStockCount = supplements?.filter(s => s.remaining_doses <= s.warning_threshold).length || 0;
 
   // Fetch accounts data
   const { data: accounts } = useQuery({
@@ -110,8 +120,6 @@ export const StatsOverview = () => {
     return sessionDate >= weekAgo && s.completed_at;
   }).length;
 
-  const activeMealPlans = mealPlans.filter(plan => (plan as any).is_active).length;
-
   const stats = [
     {
       title: "Cash",
@@ -130,19 +138,12 @@ export const StatsOverview = () => {
       onClick: () => navigate("/gym")
     },
     {
-      title: "Foods",
-      description: "In your database",
-      icon: Apple,
-      value: foodItems.length.toString(),
-      trend: `${meals.length} meals created`,
-      onClick: () => {
-        const todayMeals = getTodaySchedule().filter(item => item.type === 'meal' && !item.isCompleted);
-        if (todayMeals.length > 0) {
-          navigate("/food");
-        } else {
-          navigate("/food");
-        }
-      }
+      title: "Supplements",
+      description: "Tracking your intake",
+      icon: Pill,
+      value: (supplements?.length || 0).toString(),
+      trend: lowStockCount > 0 ? `${lowStockCount} low stock` : 'All stocked',
+      onClick: () => navigate("/supplements")
     }
   ];
 
@@ -288,23 +289,6 @@ export const StatsOverview = () => {
     
     if (activity.activityType === 'exercise') {
       navigate(`/workout-day?date=${today}`);
-    } else if (activity.type === 'meal') {
-      setIsUpdating(true);
-      try {
-        const mealPlanMealId = activity.id.replace('meal-', '');
-        if (activity.isCompleted) {
-          await unmarkMealAsConsumed(mealPlanMealId);
-        } else {
-          await markMealAsConsumed(mealPlanMealId);
-        }
-        // Reload the activity after update
-        const updatedActivity = await getNextActivity();
-        setNextActivity(updatedActivity);
-      } catch (error) {
-        console.error('Error updating meal:', error);
-      } finally {
-        setIsUpdating(false);
-      }
     } else if (activity.type === 'activity') {
       setIsUpdating(true);
       try {
