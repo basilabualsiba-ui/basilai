@@ -60,13 +60,15 @@ export function GymActivityStats() {
   const [isLoadingVolume, setIsLoadingVolume] = useState(false);
   const [trainerPayments, setTrainerPayments] = useState<Array<{ date: string; amount: number }>>([]);
 
-  // Fetch trainer payments from wallet
+  // Fetch trainer payments from wallet - only payments on or after TRAINER_PAYMENT_START_DATE
   useEffect(() => {
     const fetchTrainerPayments = async () => {
+      const paymentStartDateStr = TRAINER_PAYMENT_START_DATE.toISOString().split('T')[0];
       const { data: transactions } = await supabase
         .from('transactions')
         .select('date, amount')
         .eq('subcategory_id', TRAINER_PAYMENT_SUBCATEGORY_ID)
+        .gte('date', paymentStartDateStr)
         .order('date', { ascending: true });
       
       if (transactions) {
