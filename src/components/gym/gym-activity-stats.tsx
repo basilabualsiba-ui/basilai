@@ -99,26 +99,29 @@ export function GymActivityStats() {
       .filter(s => s.completed_at)
       .sort((a, b) => new Date(a.scheduled_date).getTime() - new Date(b.scheduled_date).getTime());
     
-    // Only count trainer sessions from the start date onwards
-    const trainerSessions = completedSessions.filter(s => 
-      s.with_trainer && new Date(s.scheduled_date) >= TRAINER_SESSION_START_DATE
+    // Only count trainer sessions from the session start date onwards (Dec 4)
+    const sessionsAfterStartDate = completedSessions.filter(s => 
+      new Date(s.scheduled_date) >= TRAINER_SESSION_START_DATE
     );
+    
+    const trainerSessions = sessionsAfterStartDate.filter(s => s.with_trainer);
+    const soloSessions = sessionsAfterStartDate.filter(s => !s.with_trainer);
+    
     const totalTrainerSessions = trainerSessions.length;
+    const totalSoloSessions = soloSessions.length;
     const currentPackageUsed = totalTrainerSessions % TRAINER_PACKAGE_SIZE;
     const packagesCompleted = Math.floor(totalTrainerSessions / TRAINER_PACKAGE_SIZE);
-    const sessionsRemaining = TRAINER_PACKAGE_SIZE - currentPackageUsed;
+    const sessionsRemaining = currentPackageUsed === 0 && totalTrainerSessions > 0 
+      ? 0 
+      : TRAINER_PACKAGE_SIZE - currentPackageUsed;
     
-    // Calculate paid packages from wallet transactions
+    // Calculate paid packages from wallet transactions (payments on or after Nov 29)
     const packagesPaid = trainerPayments.length;
-    const needsPayment = packagesCompleted >= packagesPaid && currentPackageUsed > 0;
-    const nextPaymentAt = packagesPaid * TRAINER_PACKAGE_SIZE;
-    const sessionsUntilPayment = nextPaymentAt - totalTrainerSessions;
+    const needsPayment = totalTrainerSessions >= packagesPaid * TRAINER_PACKAGE_SIZE && totalTrainerSessions > 0;
+    const sessionsUntilPayment = (packagesPaid * TRAINER_PACKAGE_SIZE) - totalTrainerSessions;
     
-    // Get recent sessions for history display - only from session start date
-    const recentSessions = completedSessions
-      .filter(s => new Date(s.scheduled_date) >= TRAINER_SESSION_START_DATE)
-      .slice(-20)
-      .reverse();
+    // Get recent sessions for history display - only from session start date (Dec 4)
+    const recentSessions = sessionsAfterStartDate.slice(-20).reverse();
     
     // Mark which sessions are paid (within paid packages)
     const sessionsWithPaymentStatus = recentSessions.map(session => {
@@ -139,9 +142,10 @@ export function GymActivityStats() {
     
     return {
       totalTrainerSessions,
+      totalSoloSessions,
       currentPackageUsed: currentPackageUsed === 0 && totalTrainerSessions > 0 ? TRAINER_PACKAGE_SIZE : currentPackageUsed,
-      packagesCompleted: currentPackageUsed === 0 && totalTrainerSessions > 0 ? packagesCompleted : packagesCompleted,
-      sessionsRemaining: currentPackageUsed === 0 && totalTrainerSessions > 0 ? 0 : sessionsRemaining,
+      packagesCompleted,
+      sessionsRemaining,
       recentSessions: sessionsWithPaymentStatus,
       packagesPaid,
       needsPayment,
@@ -501,7 +505,7 @@ export function GymActivityStats() {
             </div>
             <div className="p-3 rounded-lg bg-muted">
               <div className="text-2xl font-bold text-foreground">
-                {workoutSessions.filter(s => s.completed_at && !s.with_trainer).length}
+                {trainerStats.totalSoloSessions}
               </div>
               <div className="text-xs text-muted-foreground">Solo Sessions</div>
             </div>
