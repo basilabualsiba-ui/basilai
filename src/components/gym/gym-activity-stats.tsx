@@ -46,7 +46,8 @@ type TimePeriod = 'day' | 'week' | 'month' | 'custom';
 // Trainer payment tracking - subcategory ID for "اشتراك اشرف" under "Gym"
 const TRAINER_PAYMENT_SUBCATEGORY_ID = 'f6b8d483-436a-4cad-9e52-8919292087d0';
 const TRAINER_PACKAGE_SIZE = 12;
-const TRAINER_START_DATE = new Date('2024-12-04');
+const TRAINER_SESSION_START_DATE = new Date('2024-12-04'); // Start showing sessions from this date
+const TRAINER_PAYMENT_START_DATE = new Date('2024-11-29'); // First payment date for package tracking
 
 export function GymActivityStats() {
   const { workoutSessions, exercises, muscleGroups, exerciseSets } = useGym();
@@ -98,7 +99,7 @@ export function GymActivityStats() {
     
     // Only count trainer sessions from the start date onwards
     const trainerSessions = completedSessions.filter(s => 
-      s.with_trainer && new Date(s.scheduled_date) >= TRAINER_START_DATE
+      s.with_trainer && new Date(s.scheduled_date) >= TRAINER_SESSION_START_DATE
     );
     const totalTrainerSessions = trainerSessions.length;
     const currentPackageUsed = totalTrainerSessions % TRAINER_PACKAGE_SIZE;
@@ -111,9 +112,9 @@ export function GymActivityStats() {
     const nextPaymentAt = packagesPaid * TRAINER_PACKAGE_SIZE;
     const sessionsUntilPayment = nextPaymentAt - totalTrainerSessions;
     
-    // Get recent sessions for history display - only from start date
+    // Get recent sessions for history display - only from session start date
     const recentSessions = completedSessions
-      .filter(s => new Date(s.scheduled_date) >= TRAINER_START_DATE)
+      .filter(s => new Date(s.scheduled_date) >= TRAINER_SESSION_START_DATE)
       .slice(-20)
       .reverse();
     
@@ -132,7 +133,7 @@ export function GymActivityStats() {
     
     const lastPaymentDate = trainerPayments.length > 0 
       ? new Date(trainerPayments[trainerPayments.length - 1].date)
-      : TRAINER_START_DATE;
+      : TRAINER_PAYMENT_START_DATE;
     
     return {
       totalTrainerSessions,
