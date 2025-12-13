@@ -46,8 +46,8 @@ type TimePeriod = 'day' | 'week' | 'month' | 'custom';
 // Trainer payment tracking - subcategory ID for "اشتراك اشرف" under "Gym"
 const TRAINER_PAYMENT_SUBCATEGORY_ID = 'f6b8d483-436a-4cad-9e52-8919292087d0';
 const TRAINER_PACKAGE_SIZE = 12;
-const TRAINER_SESSION_START_DATE = new Date('2024-12-04'); // Start showing sessions from this date
-const TRAINER_PAYMENT_START_DATE = new Date('2024-11-29'); // First payment date for package tracking
+const TRAINER_SESSION_START_DATE = new Date('2025-12-04'); // Start showing sessions from this date
+const TRAINER_PAYMENT_START_DATE = new Date('2025-11-29'); // First payment date for package tracking
 
 export function GymActivityStats() {
   const { workoutSessions, exercises, muscleGroups, exerciseSets } = useGym();
