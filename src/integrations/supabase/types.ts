@@ -923,6 +923,83 @@ export type Database = {
           },
         ]
       }
+      supplement_logs: {
+        Row: {
+          created_at: string
+          doses_taken: number
+          id: string
+          logged_date: string
+          logged_time: string | null
+          notes: string | null
+          supplement_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doses_taken?: number
+          id?: string
+          logged_date?: string
+          logged_time?: string | null
+          notes?: string | null
+          supplement_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doses_taken?: number
+          id?: string
+          logged_date?: string
+          logged_time?: string | null
+          notes?: string | null
+          supplement_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplement_logs_supplement_id_fkey"
+            columns: ["supplement_id"]
+            isOneToOne: false
+            referencedRelation: "supplements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplements: {
+        Row: {
+          created_at: string
+          description: string | null
+          dose_unit: string
+          id: string
+          name: string
+          remaining_doses: number
+          total_doses: number
+          updated_at: string
+          warning_threshold: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          dose_unit?: string
+          id?: string
+          name: string
+          remaining_doses?: number
+          total_doses?: number
+          updated_at?: string
+          warning_threshold?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          dose_unit?: string
+          id?: string
+          name?: string
+          remaining_doses?: number
+          total_doses?: number
+          updated_at?: string
+          warning_threshold?: number
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           account_id: string
