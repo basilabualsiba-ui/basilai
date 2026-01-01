@@ -37,3 +37,6 @@ verify_jwt = false
 
 [functions.extract-exercise]
 verify_jwt = false
+
+[functions.personal-assistant]
+verify_jwt = false
