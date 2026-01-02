@@ -18,10 +18,31 @@ const systemPrompt = `You are Basil's personal AI assistant. You have access to 
 IMPORTANT RULES:
 1. You ONLY know information from the database - never make up data
 2. Be concise and helpful
-3. When performing actions, confirm what you did
+3. When performing actions, ALWAYS confirm with the user before executing
 4. Use the tools provided to query and modify data
 5. For financial amounts, the currency is typically ILS (Israeli Shekel)
 6. Be friendly and personal - you know Basil
+
+LEARNING & ADAPTATION:
+- If you don't know how to do something, ASK the user to teach you
+- When the user corrects you or shows you a better way, acknowledge and remember their preference
+- If a request is unclear, ask specific questions to clarify before acting
+
+FINANCIAL QUERIES - You can help with:
+- "How much did I spend on [category] this month/week/yesterday?"
+- "What's my total spending for [time period]?"
+- "Which category am I spending the most on?"
+- "Where should I spend less?"
+- "Compare my spending between categories"
+- "Show me my transactions from [date]"
+
+ADDING TRANSACTIONS WORKFLOW:
+When the user asks to add an expense/income, follow this process:
+1. Extract what you understand from their message (amount, type, category, account)
+2. If ANYTHING is unclear or missing, ask the user to provide it
+3. Before executing, ALWAYS confirm: "Let me confirm: You want to add [expense/income] of [amount] to [account] under [category]? Should I proceed?"
+4. Only execute after user confirms with "yes" or similar
+5. If user says no or corrects you, ask what to change
 
 Available data in the database:
 - accounts: Financial accounts (name, amount, currency, type)
@@ -40,7 +61,12 @@ Available data in the database:
 - daily_activities: Scheduled activities
 - user_body_stats: Weight tracking (weight, height, recorded_at)
 
-When asked about data, use query_database tool. When asked to add/update/delete, use the appropriate tool.`;
+WHEN YOU CAN'T DO SOMETHING:
+- Be honest and say "I don't know how to do that yet"
+- Ask the user: "Could you teach me how you'd like me to handle this?"
+- Remember their instructions for future reference
+
+When asked about data, use query_database tool. When asked to add/update/delete, use the appropriate tool after confirming.`;
 
 const tools = [
   {
@@ -76,8 +102,29 @@ const tools = [
   {
     type: "function",
     function: {
+      name: "get_spending_analysis",
+      description: "Analyze spending by category, date range, or overall. Use this for questions like 'how much did I spend on food', 'where am I spending the most', 'spending yesterday'",
+      parameters: {
+        type: "object",
+        properties: {
+          category_name: { type: "string", description: "Category name to filter (optional, e.g., 'Food', 'Transport')" },
+          date_from: { type: "string", description: "Start date in YYYY-MM-DD format (optional)" },
+          date_to: { type: "string", description: "End date in YYYY-MM-DD format (optional)" },
+          analysis_type: { 
+            type: "string", 
+            enum: ["by_category", "by_date", "total", "compare"],
+            description: "Type of analysis: by_category (group by category), by_date (group by date), total (sum), compare (category comparison)"
+          }
+        },
+        required: ["analysis_type"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "add_transaction",
-      description: "Add a new transaction (expense or income)",
+      description: "Add a new transaction (expense or income). ONLY call this after user confirms the details.",
       parameters: {
         type: "object",
         properties: {
@@ -170,6 +217,17 @@ const tools = [
         }
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_accounts_and_categories",
+      description: "Get list of available accounts and categories for adding transactions",
+      parameters: {
+        type: "object",
+        properties: {}
+      }
+    }
   }
 ];
 
@@ -198,6 +256,122 @@ async function executeToolCall(name: string, args: any): Promise<string> {
         const { data, error } = await query;
         if (error) return JSON.stringify({ error: error.message });
         return JSON.stringify(data);
+      }
+      
+      case "get_spending_analysis": {
+        const today = new Date();
+        let dateFrom = args.date_from;
+        let dateTo = args.date_to || today.toISOString().split('T')[0];
+        
+        // Default to current month if no date specified
+        if (!dateFrom) {
+          dateFrom = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+        }
+
+        // Get all expense transactions with category info
+        let query = supabase
+          .from('transactions')
+          .select('*, categories(name, icon)')
+          .eq('type', 'expense')
+          .gte('date', dateFrom)
+          .lte('date', dateTo);
+        
+        if (args.category_name) {
+          // First get category ID
+          const { data: cat } = await supabase
+            .from('categories')
+            .select('id')
+            .ilike('name', `%${args.category_name}%`)
+            .single();
+          
+          if (cat) {
+            query = query.eq('category_id', cat.id);
+          }
+        }
+        
+        const { data: transactions, error } = await query;
+        if (error) return JSON.stringify({ error: error.message });
+        
+        if (args.analysis_type === 'by_category') {
+          // Group by category
+          const byCategory: { [key: string]: number } = {};
+          transactions?.forEach(t => {
+            const catName = t.categories?.name || 'Uncategorized';
+            byCategory[catName] = (byCategory[catName] || 0) + Number(t.amount);
+          });
+          
+          const sorted = Object.entries(byCategory)
+            .sort(([,a], [,b]) => b - a)
+            .map(([category, amount]) => ({ category, amount: amount.toFixed(2) }));
+          
+          return JSON.stringify({
+            period: `${dateFrom} to ${dateTo}`,
+            total_spent: transactions?.reduce((sum, t) => sum + Number(t.amount), 0).toFixed(2),
+            by_category: sorted,
+            highest_category: sorted[0]?.category || 'None',
+            suggestion: sorted.length > 0 ? `You're spending the most on ${sorted[0].category} (₪${sorted[0].amount}). Consider reviewing these expenses.` : 'No expenses in this period.'
+          });
+        } else if (args.analysis_type === 'by_date') {
+          // Group by date
+          const byDate: { [key: string]: number } = {};
+          transactions?.forEach(t => {
+            const date = t.date;
+            byDate[date] = (byDate[date] || 0) + Number(t.amount);
+          });
+          
+          return JSON.stringify({
+            period: `${dateFrom} to ${dateTo}`,
+            total_spent: transactions?.reduce((sum, t) => sum + Number(t.amount), 0).toFixed(2),
+            by_date: Object.entries(byDate).map(([date, amount]) => ({ date, amount: amount.toFixed(2) }))
+          });
+        } else if (args.analysis_type === 'compare') {
+          // Compare all categories
+          const byCategory: { [key: string]: number } = {};
+          transactions?.forEach(t => {
+            const catName = t.categories?.name || 'Uncategorized';
+            byCategory[catName] = (byCategory[catName] || 0) + Number(t.amount);
+          });
+          
+          const total = transactions?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+          const comparison = Object.entries(byCategory)
+            .sort(([,a], [,b]) => b - a)
+            .map(([category, amount]) => ({
+              category,
+              amount: amount.toFixed(2),
+              percentage: ((amount / total) * 100).toFixed(1) + '%'
+            }));
+          
+          return JSON.stringify({
+            period: `${dateFrom} to ${dateTo}`,
+            total_spent: total.toFixed(2),
+            comparison,
+            insight: comparison.length > 1 
+              ? `Top spending: ${comparison[0].category} (${comparison[0].percentage}). Lowest: ${comparison[comparison.length-1].category} (${comparison[comparison.length-1].percentage})`
+              : 'Not enough data to compare'
+          });
+        } else {
+          // Total
+          const total = transactions?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+          return JSON.stringify({
+            period: `${dateFrom} to ${dateTo}`,
+            total_spent: total.toFixed(2),
+            transaction_count: transactions?.length || 0,
+            currency: 'ILS'
+          });
+        }
+      }
+      
+      case "get_accounts_and_categories": {
+        const [accounts, categories] = await Promise.all([
+          supabase.from('accounts').select('id, name, type, amount, currency'),
+          supabase.from('categories').select('id, name, type, icon')
+        ]);
+        
+        return JSON.stringify({
+          accounts: accounts.data || [],
+          categories: categories.data || [],
+          instructions: "Use these IDs when adding transactions. Ask the user which account and category to use if not specified."
+        });
       }
       
       case "add_transaction": {
@@ -233,7 +407,7 @@ async function executeToolCall(name: string, args: any): Promise<string> {
             });
         });
         
-        return JSON.stringify({ success: true, transaction: data });
+        return JSON.stringify({ success: true, transaction: data, message: `Successfully added ${args.type} of ₪${args.amount}` });
       }
       
       case "log_supplement": {
