@@ -17,7 +17,7 @@ export function FinanceCard() {
 
   // Get today's transactions
   const today = new Date().toISOString().split('T')[0];
-  const todayTransactions = transactions.filter(t => t.date === today);
+  const todayTransactions = transactions.filter(t => String(t.date).split('T')[0] === today);
   const todayExpenses = todayTransactions
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + t.amount, 0);
