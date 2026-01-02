@@ -15,13 +15,18 @@ export function FinanceCard() {
     return sum + (acc.amount * rate);
   }, 0);
 
-  // Get today's transactions
-  const today = new Date().toISOString().split('T')[0];
-  const todayTransactions = transactions.filter(t => String(t.date).split('T')[0] === today);
-  const todayExpenses = todayTransactions
+  // Get current month transactions
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const monthTransactions = transactions.filter(t => {
+    const transactionDate = String(t.date).split('T')[0];
+    return transactionDate >= monthStart;
+  });
+  
+  const monthlyExpenses = monthTransactions
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + t.amount, 0);
-  const todayIncome = todayTransactions
+  const monthlyIncome = monthTransactions
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
 
@@ -54,8 +59,8 @@ export function FinanceCard() {
             <TrendingUp className="h-4 w-4 text-success" />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Today's Income</p>
-            <p className="text-sm font-semibold text-success">+{formatAmount(todayIncome)}</p>
+            <p className="text-xs text-muted-foreground">Monthly Income</p>
+            <p className="text-sm font-semibold text-success">+{formatAmount(monthlyIncome)}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -63,8 +68,8 @@ export function FinanceCard() {
             <TrendingDown className="h-4 w-4 text-destructive" />
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Today's Expenses</p>
-            <p className="text-sm font-semibold text-destructive">-{formatAmount(todayExpenses)}</p>
+            <p className="text-xs text-muted-foreground">Monthly Expenses</p>
+            <p className="text-sm font-semibold text-destructive">-{formatAmount(monthlyExpenses)}</p>
           </div>
         </div>
       </div>
