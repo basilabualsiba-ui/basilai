@@ -1,36 +1,54 @@
+import { useState } from "react";
 import { BentoCard } from "./bento-grid";
-import { Target, ArrowRight, Sparkles } from "lucide-react";
+import { Target, ArrowRight, Sparkles, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDreams } from "@/contexts/DreamsContext";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { AddDreamDialog } from "@/components/dreams/add-dream-dialog";
 
 export function DreamsCardNew() {
   const navigate = useNavigate();
   const { dreams } = useDreams();
+  const [showAddDream, setShowAddDream] = useState(false);
 
   const activeDreams = dreams.filter(d => d.status === 'in_progress');
   const completedDreams = dreams.filter(d => d.status === 'completed');
   
-  // Average progress of active dreams
   const avgProgress = activeDreams.length > 0
     ? Math.round(activeDreams.reduce((sum, d) => sum + (d.progress_percentage || 0), 0) / activeDreams.length)
     : 0;
 
-  // Top priority dream
   const topDream = activeDreams
     .sort((a, b) => {
       const priorityOrder = { high: 0, medium: 1, low: 2 };
       return priorityOrder[a.priority as keyof typeof priorityOrder] - priorityOrder[b.priority as keyof typeof priorityOrder];
     })[0];
 
+  const handleAddClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowAddDream(true);
+  };
+
   return (
-    <BentoCard variant="accent" onClick={() => navigate('/dreams')}>
-      <div className="flex items-start justify-between mb-3">
-        <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
-          <Target className="h-5 w-5 text-accent" />
+    <>
+      <BentoCard variant="accent" onClick={() => navigate('/dreams')}>
+        <div className="flex items-start justify-between mb-3">
+          <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
+            <Target className="h-5 w-5 text-accent" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-accent"
+              onClick={handleAddClick}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+          </div>
         </div>
-        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-      </div>
 
       <h3 className="font-semibold text-foreground mb-1">Dreams</h3>
       
@@ -60,5 +78,11 @@ export function DreamsCardNew() {
         )}
       </div>
     </BentoCard>
+
+      <AddDreamDialog 
+        open={showAddDream} 
+        onOpenChange={setShowAddDream} 
+      />
+    </>
   );
 }

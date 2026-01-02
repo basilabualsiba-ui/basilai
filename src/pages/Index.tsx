@@ -13,7 +13,6 @@ import { TodayAgendaCard } from "@/components/dashboard/today-agenda-card";
 import { GymCard } from "@/components/dashboard/gym-card";
 import { SupplementsCard } from "@/components/dashboard/supplements-card";
 import { DreamsCardNew } from "@/components/dashboard/dreams-card-new";
-import { QuickActionsCard } from "@/components/dashboard/quick-actions-card";
 import { WeightStatsCard } from "@/components/dashboard/weight-stats-card";
 
 // Chat Component
@@ -83,7 +82,6 @@ const Index = () => {
             <BentoGrid>
               <FinanceCard />
               <TodayAgendaCard />
-              <QuickActionsCard />
               <GymCard />
               <SupplementsCard />
               <WeightStatsCard />

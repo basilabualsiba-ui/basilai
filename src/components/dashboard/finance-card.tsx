@@ -1,13 +1,17 @@
+import { useState } from "react";
 import { BentoCard } from "./bento-grid";
-import { Wallet, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, ArrowRight, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFinancial } from "@/contexts/FinancialContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { Button } from "@/components/ui/button";
+import { AddTransactionDialog } from "@/components/financial/add-transaction-dialog";
 
 export function FinanceCard() {
   const navigate = useNavigate();
   const { accounts, transactions } = useFinancial();
   const { getRate, getCurrencySymbol } = useCurrency();
+  const [showAddExpense, setShowAddExpense] = useState(false);
 
   // Calculate totals
   const totalBalance = accounts.reduce((sum, acc) => {
@@ -32,47 +36,79 @@ export function FinanceCard() {
 
   const formatAmount = (amount: number) => `${getCurrencySymbol('ILS')}${amount.toFixed(0)}`;
 
-  return (
-    <BentoCard 
-      variant="primary" 
-      className="sm:col-span-2 lg:col-span-2"
-      onClick={() => navigate('/financial')}
-    >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-            <Wallet className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Balance</p>
-            <p className="text-2xl font-bold text-foreground">
-              {formatAmount(totalBalance)}
-            </p>
-          </div>
-        </div>
-        <ArrowRight className="h-5 w-5 text-muted-foreground" />
-      </div>
+  const handleCardClick = () => {
+    navigate('/financial');
+  };
 
-      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/50">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-success/20 flex items-center justify-center">
-            <TrendingUp className="h-4 w-4 text-success" />
+  const handleAddClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowAddExpense(true);
+  };
+
+  return (
+    <>
+      <BentoCard 
+        variant="primary" 
+        className="sm:col-span-2 lg:col-span-2"
+        onClick={handleCardClick}
+      >
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Wallet className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total Balance</p>
+              <p className="text-2xl font-bold text-foreground">
+                {formatAmount(totalBalance)}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Monthly Income</p>
-            <p className="text-sm font-semibold text-success">+{formatAmount(monthlyIncome)}</p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-primary"
+              onClick={handleAddClick}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+            <ArrowRight className="h-5 w-5 text-muted-foreground" />
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-destructive/20 flex items-center justify-center">
-            <TrendingDown className="h-4 w-4 text-destructive" />
+
+        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/50">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-success/20 flex items-center justify-center">
+              <TrendingUp className="h-4 w-4 text-success" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Monthly Income</p>
+              <p className="text-sm font-semibold text-success">+{formatAmount(monthlyIncome)}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Monthly Expenses</p>
-            <p className="text-sm font-semibold text-destructive">-{formatAmount(monthlyExpenses)}</p>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-destructive/20 flex items-center justify-center">
+              <TrendingDown className="h-4 w-4 text-destructive" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Monthly Expenses</p>
+              <p className="text-sm font-semibold text-destructive">-{formatAmount(monthlyExpenses)}</p>
+            </div>
           </div>
         </div>
-      </div>
-    </BentoCard>
+      </BentoCard>
+
+      <AddTransactionDialog
+        trigger={<span style={{ display: 'none' }} />}
+        defaultType="expense"
+      />
+      {showAddExpense && (
+        <AddTransactionDialog
+          trigger={<span style={{ display: 'none' }} />}
+          defaultType="expense"
+        />
+      )}
+    </>
   );
 }
