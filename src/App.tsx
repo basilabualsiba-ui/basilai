@@ -15,6 +15,7 @@ import { FinancialProvider } from "./contexts/FinancialContext";
 import { CurrencyProvider } from "./contexts/CurrencyContext";
 import { PrivacyProvider } from "./contexts/PrivacyContext";
 import { DreamsProvider } from "./contexts/DreamsContext";
+import { SupplementProvider } from "./contexts/SupplementContext";
 import { useDreamProgress } from "./hooks/useDreamProgress";
 import Index from "./pages/Index";
 import Financial from "./pages/Financial";
@@ -69,7 +70,9 @@ const App = () => (
               <PrayerNotificationProvider>
                 <ScheduleProvider>
                   <DreamsProvider>
-                    <AppContent />
+                    <SupplementProvider>
+                      <AppContent />
+                    </SupplementProvider>
                   </DreamsProvider>
                 </ScheduleProvider>
               </PrayerNotificationProvider>
