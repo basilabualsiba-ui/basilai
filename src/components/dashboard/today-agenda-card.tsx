@@ -29,6 +29,19 @@ export function TodayAgendaCard() {
   // All items for expanded view
   const allItems = todaySchedule;
 
+  // Calculate time until next event
+  const getTimeUntil = (time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const eventTime = new Date();
+    eventTime.setHours(hours, minutes, 0, 0);
+    const diff = eventTime.getTime() - now.getTime();
+    if (diff < 0) return null;
+    const diffMinutes = Math.floor(diff / 60000);
+    if (diffMinutes < 60) return `in ${diffMinutes}m`;
+    const diffHours = Math.floor(diffMinutes / 60);
+    return `in ${diffHours}h ${diffMinutes % 60}m`;
+  };
+
   const getItemColor = (type: string, activityType?: string) => {
     if (type === 'prayer') return 'bg-accent/20 text-accent';
     if (type === 'meal') return 'bg-warning/20 text-warning';
@@ -88,7 +101,7 @@ export function TodayAgendaCard() {
           <div className="space-y-2">
             {/* Next Prayer */}
             {nextPrayer && (
-              <div className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 border border-border/50">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 border border-border/50 transition-all hover:border-accent/30">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg bg-accent/20 flex items-center justify-center">
                     <Moon className="h-4 w-4 text-accent" />
@@ -100,12 +113,17 @@ export function TodayAgendaCard() {
                     </p>
                   </div>
                 </div>
+                {nextPrayer.time && (
+                  <span className="text-xs text-accent font-medium">
+                    {getTimeUntil(nextPrayer.time)}
+                  </span>
+                )}
               </div>
             )}
 
             {/* Next Activity */}
             {nextUpcomingItem && (
-              <div className="flex items-center justify-between p-3 rounded-xl bg-secondary/30 border border-border/30">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-secondary/30 border border-border/30 transition-all hover:border-primary/30">
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     "w-9 h-9 rounded-lg flex items-center justify-center",
@@ -120,7 +138,14 @@ export function TodayAgendaCard() {
                     </p>
                   </div>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-center gap-2">
+                  {nextUpcomingItem.startTime && (
+                    <span className="text-xs text-primary font-medium">
+                      {getTimeUntil(nextUpcomingItem.startTime)}
+                    </span>
+                  )}
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </div>
               </div>
             )}
 
@@ -146,7 +171,7 @@ export function TodayAgendaCard() {
             <div className="space-y-2">
               {/* Next Prayer at top */}
               {nextPrayer && (
-                <div className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 border border-border/50">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 border border-border/50 animate-fade-in">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-accent/20 flex items-center justify-center">
                       <Moon className="h-4 w-4 text-accent" />
@@ -162,26 +187,28 @@ export function TodayAgendaCard() {
               )}
 
               {/* All schedule items */}
-              {allItems.map((item) => (
+              {allItems.map((item, index) => (
                 <div 
                   key={item.id}
                   className={cn(
                     "flex items-center justify-between p-3 rounded-xl border transition-all",
                     item.isCompleted 
                       ? "bg-secondary/20 border-border/20" 
-                      : "bg-secondary/30 border-border/30"
+                      : "bg-secondary/30 border-border/30 hover:border-primary/30"
                   )}
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <div className="flex items-center gap-3 flex-1">
                     <div className={cn(
-                      "w-9 h-9 rounded-lg flex items-center justify-center",
-                      getItemColor(item.type, item.activityType)
+                      "w-9 h-9 rounded-lg flex items-center justify-center transition-transform",
+                      getItemColor(item.type, item.activityType),
+                      !item.isCompleted && "hover:scale-110"
                     )}>
                       {item.emoji || <Clock className="h-4 w-4" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={cn(
-                        "text-sm font-medium",
+                        "text-sm font-medium transition-all",
                         item.isCompleted ? "line-through text-muted-foreground" : "text-foreground"
                       )}>
                         {item.title}
@@ -200,10 +227,10 @@ export function TodayAgendaCard() {
                       onClick={() => handleToggleComplete(item)}
                     >
                       <div className={cn(
-                        "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                        "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
                         item.isCompleted 
-                          ? "bg-success border-success" 
-                          : "border-muted-foreground"
+                          ? "bg-success border-success scale-110" 
+                          : "border-muted-foreground hover:border-primary"
                       )}>
                         {item.isCompleted && (
                           <Check className="h-3 w-3 text-success-foreground" />
