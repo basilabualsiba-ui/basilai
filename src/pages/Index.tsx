@@ -52,11 +52,11 @@ const Index = () => {
               </Button>
 
               {/* User Profile */}
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/50 border border-border/50">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/50 border border-border/50 transition-all hover:border-primary/30">
                 {!isMobile && (
                   <span className="text-sm font-medium text-foreground">Basil</span>
                 )}
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-primary">
                   <User className="h-4 w-4 text-primary-foreground" />
                 </div>
               </div>
@@ -75,7 +75,7 @@ const Index = () => {
       <main className="container mx-auto px-4 py-6">
         <div className={cn(
           "transition-all duration-500 ease-in-out",
-          showChat ? "opacity-0 hidden" : "opacity-100"
+          showChat ? "opacity-0 hidden" : "opacity-100 animate-fade-in"
         )}>
           {/* Dashboard View */}
           <div className="space-y-4">
@@ -92,7 +92,7 @@ const Index = () => {
 
         <div className={cn(
           "transition-all duration-500 ease-in-out",
-          showChat ? "opacity-100" : "opacity-0 hidden"
+          showChat ? "opacity-100 animate-fade-in" : "opacity-0 hidden"
         )}>
           {/* Chat View */}
           <div className="h-[calc(100vh-120px)] rounded-2xl border border-border overflow-hidden bg-card/50 backdrop-blur-sm">

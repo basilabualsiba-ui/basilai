@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { BentoCard } from "./bento-grid";
 import { Scale, TrendingUp, TrendingDown, Minus, ArrowRight, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -9,6 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Sparkline } from "@/components/ui/sparkline";
+import { AnimatedNumber } from "@/components/ui/animated-number";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface BodyStat {
   id: string;
@@ -76,10 +79,21 @@ export function WeightStatsCard() {
   const weekAgoWeight = stats.find((s, i) => i >= 3)?.weight || currentWeight;
   const weeklyChange = currentWeight - weekAgoWeight;
 
+  // Weight trend for sparkline (reversed to show oldest first)
+  const weightTrend = useMemo(() => {
+    return [...stats].reverse().map(s => s.weight);
+  }, [stats]);
+
   const getTrendIcon = (change: number) => {
     if (change > 0) return <TrendingUp className="h-4 w-4 text-warning" />;
     if (change < 0) return <TrendingDown className="h-4 w-4 text-success" />;
     return <Minus className="h-4 w-4 text-muted-foreground" />;
+  };
+
+  const getTrendColor = (change: number): "success" | "warning" | "primary" => {
+    if (change < 0) return "success";
+    if (change > 0) return "warning";
+    return "primary";
   };
 
   const formatChange = (change: number) => {
@@ -99,7 +113,7 @@ export function WeightStatsCard() {
 
   return (
     <>
-      <BentoCard onClick={handleCardClick}>
+      <BentoCard onClick={handleCardClick} loading={isLoading}>
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
@@ -108,7 +122,13 @@ export function WeightStatsCard() {
             <div>
               <p className="text-sm text-muted-foreground">Current Weight</p>
               <p className="text-xl font-bold text-foreground">
-                {isLoading ? "..." : currentWeight > 0 ? `${currentWeight} kg` : "No data"}
+                {currentWeight > 0 ? (
+                  <>
+                    <AnimatedNumber value={currentWeight} formatValue={(v) => v.toFixed(1)} /> kg
+                  </>
+                ) : (
+                  "No data"
+                )}
               </p>
             </div>
           </div>
@@ -124,6 +144,17 @@ export function WeightStatsCard() {
             <ArrowRight className="h-4 w-4 text-muted-foreground" />
           </div>
         </div>
+
+        {/* Weight Trend Sparkline */}
+        {weightTrend.length > 1 && (
+          <div className="mb-3">
+            <Sparkline 
+              data={weightTrend} 
+              color={getTrendColor(weeklyChange)} 
+              height={28} 
+            />
+          </div>
+        )}
 
         {currentWeight > 0 && (
           <div className="grid grid-cols-2 gap-3 pt-3 border-t border-border/50">
@@ -161,6 +192,7 @@ export function WeightStatsCard() {
                 value={newWeight}
                 onChange={(e) => setNewWeight(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddWeight()}
+                className="focus-glow"
               />
             </div>
           </div>

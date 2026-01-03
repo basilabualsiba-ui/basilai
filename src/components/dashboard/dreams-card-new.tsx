@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { BentoCard } from "./bento-grid";
-import { Target, ArrowRight, Sparkles, Plus } from "lucide-react";
+import { Target, ArrowRight, Sparkles, Plus, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDreams } from "@/contexts/DreamsContext";
-import { Progress } from "@/components/ui/progress";
+import { GradientProgress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { AddDreamDialog } from "@/components/dreams/add-dream-dialog";
+import { cn } from "@/lib/utils";
 
 export function DreamsCardNew() {
   const navigate = useNavigate();
@@ -50,34 +51,37 @@ export function DreamsCardNew() {
           </div>
         </div>
 
-      <h3 className="font-semibold text-foreground mb-1">Dreams</h3>
-      
-      <div className="space-y-3 mt-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">Active</span>
-          <span className="text-sm font-bold text-foreground">{activeDreams.length} goals</span>
-        </div>
-
-        {topDream && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-3 w-3 text-primary" />
-              <span className="text-xs text-foreground truncate">{topDream.title}</span>
-            </div>
-            <Progress value={topDream.progress_percentage || 0} className="h-1.5" />
-            <span className="text-xs text-muted-foreground">
-              {topDream.progress_percentage || 0}% complete
-            </span>
+        <h3 className="font-semibold text-foreground mb-1">Dreams</h3>
+        
+        <div className="space-y-3 mt-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Active</span>
+            <span className="text-sm font-bold text-foreground">{activeDreams.length} goals</span>
           </div>
-        )}
 
-        {completedDreams.length > 0 && (
-          <p className="text-xs text-success pt-2 border-t border-border/50">
-            {completedDreams.length} dreams achieved
-          </p>
-        )}
-      </div>
-    </BentoCard>
+          {topDream && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-3 w-3 text-primary animate-pulse-soft" />
+                <span className="text-xs text-foreground truncate">{topDream.title}</span>
+              </div>
+              <GradientProgress value={topDream.progress_percentage || 0} size="sm" />
+              <span className="text-xs text-muted-foreground">
+                {topDream.progress_percentage || 0}% complete
+              </span>
+            </div>
+          )}
+
+          {completedDreams.length > 0 && (
+            <div className={cn(
+              "flex items-center gap-2 text-xs text-success pt-2 border-t border-border/50"
+            )}>
+              <Trophy className="h-3 w-3" />
+              <span>{completedDreams.length} dreams achieved</span>
+            </div>
+          )}
+        </div>
+      </BentoCard>
 
       <AddDreamDialog 
         open={showAddDream} 
