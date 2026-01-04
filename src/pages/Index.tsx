@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Logo } from "@/components/ui/logo";
 import { SettingsDialog } from "@/components/ui/settings-dialog";
 import { Button } from "@/components/ui/button";
-import { Settings, User, MessageCircle, LayoutDashboard } from "lucide-react";
+import { Settings, User, MessageCircle, LayoutDashboard, Sparkles } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useSound } from "@/hooks/useSound";
 import { cn } from "@/lib/utils";
 
 // Dashboard Components
@@ -21,22 +22,34 @@ import { ChatInterface } from "@/components/assistant/chat-interface";
 const Index = () => {
   const [showChat, setShowChat] = useState(false);
   const isMobile = useIsMobile();
+  const { click, swoosh } = useSound();
+
+  const handleToggleView = () => {
+    swoosh();
+    setShowChat(!showChat);
+  };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border/50 bg-card/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3">
+      {/* Enhanced Header */}
+      <header className="border-b border-border/30 bg-gradient-to-r from-card/95 via-card/90 to-card/95 backdrop-blur-xl sticky top-0 z-50">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/3 via-transparent to-accent/3 pointer-events-none" />
+        <div className="container mx-auto px-4 py-3 relative">
           <div className="flex items-center justify-between">
             <Logo size="md" />
             
             <div className="flex items-center gap-2">
-              {/* Toggle Button */}
+              {/* Toggle Button with Animation */}
               <Button
                 variant={showChat ? "default" : "outline"}
                 size="sm"
-                onClick={() => setShowChat(!showChat)}
-                className="gap-2"
+                onClick={handleToggleView}
+                className={cn(
+                  "gap-2 rounded-xl transition-all duration-300",
+                  showChat 
+                    ? "bg-gradient-to-r from-primary to-accent hover:opacity-90 shadow-lg shadow-primary/25" 
+                    : "border-border/50 hover:border-primary/30 hover:bg-primary/5"
+                )}
               >
                 {showChat ? (
                   <>
@@ -51,18 +64,26 @@ const Index = () => {
                 )}
               </Button>
 
-              {/* User Profile */}
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/50 border border-border/50 transition-all hover:border-primary/30">
+              {/* Enhanced User Profile */}
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-secondary/80 to-secondary/50 border border-border/30 transition-all duration-300 hover:border-primary/30 hover:shadow-sm">
                 {!isMobile && (
                   <span className="text-sm font-medium text-foreground">Basil</span>
                 )}
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-primary">
-                  <User className="h-4 w-4 text-primary-foreground" />
+                <div className="relative">
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary via-primary to-accent flex items-center justify-center shadow-lg shadow-primary/25">
+                    <User className="h-4 w-4 text-primary-foreground" />
+                  </div>
+                  <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background" />
                 </div>
               </div>
 
               <SettingsDialog>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-9 w-9 rounded-xl hover:bg-primary/10 transition-all duration-300"
+                  onClick={() => click()}
+                >
                   <Settings className="h-4 w-4" />
                 </Button>
               </SettingsDialog>
@@ -95,7 +116,7 @@ const Index = () => {
           showChat ? "opacity-100 animate-fade-in" : "opacity-0 hidden"
         )}>
           {/* Chat View */}
-          <div className="h-[calc(100vh-120px)] rounded-2xl border border-border overflow-hidden bg-card/50 backdrop-blur-sm">
+          <div className="h-[calc(100vh-120px)] rounded-2xl border border-border/30 overflow-hidden bg-gradient-to-b from-card/80 to-card/50 backdrop-blur-sm shadow-xl">
             <ChatInterface />
           </div>
         </div>

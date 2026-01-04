@@ -13,7 +13,7 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-const systemPrompt = `You are Basil's personal AI assistant. You have access to his personal database and can help manage his life.
+const systemPrompt = `You are BASIL's AI - Basil's personal AI assistant. You have access to his personal database and can help manage his life.
 
 IMPORTANT RULES:
 1. You ONLY know information from the database - never make up data
@@ -23,10 +23,13 @@ IMPORTANT RULES:
 5. For financial amounts, the currency is typically ILS (Israeli Shekel)
 6. Be friendly and personal - you know Basil
 
-LEARNING & ADAPTATION:
-- If you don't know how to do something, ASK the user to teach you
-- When the user corrects you or shows you a better way, acknowledge and remember their preference
-- If a request is unclear, ask specific questions to clarify before acting
+LEARNING & MEMORY:
+- You have access to a user_preferences table where you store learned behaviors
+- ALWAYS check preferences first before taking actions using get_preferences tool
+- When the user teaches you something new (like "coffee means 25 ILS expense"), save it using save_preference
+- When corrected, update the preference to reflect the new behavior
+- Shortcuts are things like: "coffee" = add 25 expense, "gym" = log workout, etc.
+- Defaults are things like: preferred account, default category for certain expenses, etc.
 
 FINANCIAL QUERIES - You can help with:
 - "How much did I spend on [category] this month/week/yesterday?"
@@ -38,11 +41,18 @@ FINANCIAL QUERIES - You can help with:
 
 ADDING TRANSACTIONS WORKFLOW:
 When the user asks to add an expense/income, follow this process:
-1. Extract what you understand from their message (amount, type, category, account)
-2. If ANYTHING is unclear or missing, ask the user to provide it
-3. Before executing, ALWAYS confirm: "Let me confirm: You want to add [expense/income] of [amount] to [account] under [category]? Should I proceed?"
-4. Only execute after user confirms with "yes" or similar
-5. If user says no or corrects you, ask what to change
+1. FIRST check preferences for any shortcuts or defaults that match
+2. Extract what you understand from their message (amount, type, category, account)
+3. If ANYTHING is unclear or missing and no preference exists, ask the user to provide it
+4. Before executing, ALWAYS confirm: "Let me confirm: You want to add [expense/income] of [amount] to [account] under [category]? Should I proceed?"
+5. Only execute after user confirms with "yes" or similar
+6. If user says no or corrects you, ask what to change AND save the correction as a new preference
+
+LEARNING SHORTCUTS:
+When the user says something like:
+- "When I say coffee, add 25 expense to cash" → Save as shortcut: key="coffee", value={amount:25, type:"expense", account:"cash"}
+- "Default my food expenses to credit card" → Save as default: key="food_account", value={account_id:"..."}
+- After corrections, ask: "Should I remember this for next time?" and save if yes
 
 Available data in the database:
 - accounts: Financial accounts (name, amount, currency, type)
@@ -60,11 +70,7 @@ Available data in the database:
 - prayer_completions: Completed prayers
 - daily_activities: Scheduled activities
 - user_body_stats: Weight tracking (weight, height, recorded_at)
-
-WHEN YOU CAN'T DO SOMETHING:
-- Be honest and say "I don't know how to do that yet"
-- Ask the user: "Could you teach me how you'd like me to handle this?"
-- Remember their instructions for future reference
+- user_preferences: Your learned behaviors and shortcuts
 
 When asked about data, use query_database tool. When asked to add/update/delete, use the appropriate tool after confirming.`;
 
@@ -226,6 +232,51 @@ const tools = [
       parameters: {
         type: "object",
         properties: {}
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_preferences",
+      description: "Get all saved user preferences, shortcuts, and defaults. ALWAYS call this at the start to check for any relevant shortcuts or defaults before taking actions.",
+      parameters: {
+        type: "object",
+        properties: {
+          key: { type: "string", description: "Optional: specific preference key to look up (e.g., 'coffee', 'default_account')" },
+          preference_type: { type: "string", enum: ["shortcut", "default", "learned_behavior", "correction"], description: "Optional: filter by type" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "save_preference",
+      description: "Save a new preference, shortcut, default, or learned behavior. Use this when the user teaches you something new or after they correct you.",
+      parameters: {
+        type: "object",
+        properties: {
+          preference_type: { type: "string", enum: ["shortcut", "default", "learned_behavior", "correction"], description: "Type of preference" },
+          key: { type: "string", description: "The key/trigger for this preference (e.g., 'coffee', 'default_food_account')" },
+          value: { type: "object", description: "The value to store (e.g., {amount: 25, type: 'expense', account_name: 'Cash'})" },
+          description: { type: "string", description: "Human readable description of what this preference does" }
+        },
+        required: ["preference_type", "key", "value", "description"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_preference",
+      description: "Delete a saved preference when the user wants to remove a shortcut or learned behavior",
+      parameters: {
+        type: "object",
+        properties: {
+          key: { type: "string", description: "The key of the preference to delete" }
+        },
+        required: ["key"]
       }
     }
   }
@@ -492,6 +543,97 @@ async function executeToolCall(name: string, args: any): Promise<string> {
           supplements: supplements.data || [],
           workouts: workouts.data || [],
           prayers_completed: prayers.data?.map(p => p.prayer_name) || []
+        });
+      }
+      
+      case "get_preferences": {
+        let query = supabase.from('user_preferences').select('*');
+        
+        if (args.key) {
+          query = query.ilike('key', `%${args.key}%`);
+        }
+        if (args.preference_type) {
+          query = query.eq('preference_type', args.preference_type);
+        }
+        
+        const { data, error } = await query.order('usage_count', { ascending: false });
+        if (error) return JSON.stringify({ error: error.message });
+        
+        if (!data || data.length === 0) {
+          return JSON.stringify({ 
+            preferences: [], 
+            message: "No preferences saved yet. The user can teach me shortcuts and defaults!" 
+          });
+        }
+        
+        return JSON.stringify({ 
+          preferences: data,
+          message: `Found ${data.length} saved preference(s). Use these to assist the user more efficiently.`
+        });
+      }
+      
+      case "save_preference": {
+        // Check if preference already exists
+        const { data: existing } = await supabase
+          .from('user_preferences')
+          .select('id, usage_count')
+          .eq('key', args.key)
+          .single();
+        
+        if (existing) {
+          // Update existing preference
+          const { data, error } = await supabase
+            .from('user_preferences')
+            .update({
+              value: args.value,
+              description: args.description,
+              preference_type: args.preference_type,
+              usage_count: existing.usage_count + 1,
+              last_used_at: new Date().toISOString()
+            })
+            .eq('id', existing.id)
+            .select();
+          
+          if (error) return JSON.stringify({ error: error.message });
+          return JSON.stringify({ 
+            success: true, 
+            updated: true,
+            preference: data,
+            message: `Updated preference "${args.key}". I'll remember this!`
+          });
+        }
+        
+        // Create new preference
+        const { data, error } = await supabase
+          .from('user_preferences')
+          .insert({
+            preference_type: args.preference_type,
+            key: args.key,
+            value: args.value,
+            description: args.description
+          })
+          .select();
+        
+        if (error) return JSON.stringify({ error: error.message });
+        return JSON.stringify({ 
+          success: true, 
+          created: true,
+          preference: data,
+          message: `Saved new ${args.preference_type}: "${args.key}". I'll remember this for next time!`
+        });
+      }
+      
+      case "delete_preference": {
+        const { error } = await supabase
+          .from('user_preferences')
+          .delete()
+          .eq('key', args.key);
+        
+        if (error) return JSON.stringify({ error: error.message });
+        return JSON.stringify({ 
+          success: true, 
+          deleted: args.key,
+          message: `Deleted preference "${args.key}". I won't use this shortcut anymore.`
         });
       }
       
