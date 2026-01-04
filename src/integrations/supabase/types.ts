@@ -1097,6 +1097,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_preferences: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          last_used_at: string
+          preference_type: string
+          updated_at: string
+          usage_count: number
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          last_used_at?: string
+          preference_type: string
+          updated_at?: string
+          usage_count?: number
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          last_used_at?: string
+          preference_type?: string
+          updated_at?: string
+          usage_count?: number
+          value?: Json
+        }
+        Relationships: []
+      }
       workout_exercises: {
         Row: {
           created_at: string

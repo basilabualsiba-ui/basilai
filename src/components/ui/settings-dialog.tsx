@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Bell, TestTube, Clock, Calendar, Settings, Smartphone, Info, MapPin, Crosshair } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Bell, TestTube, Clock, Calendar, Settings, Smartphone, Info, MapPin, Crosshair, Volume2, VolumeX } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useFirstTimePermissions } from '@/hooks/useFirstTimePermissions';
 import { useToast } from '@/hooks/use-toast';
+import { useSound } from '@/hooks/useSound';
 import { Geolocation } from '@capacitor/geolocation';
 import { usePrayerNotifications } from '@/contexts/PrayerContext';
 
@@ -19,6 +21,7 @@ interface SettingsDialogProps {
 export const SettingsDialog = ({ children }: SettingsDialogProps) => {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+  const { isEnabled, setEnabled, getVolume, setVolume, click, success } = useSound();
   const {
     isInitialized,
     permissionGranted,
@@ -34,6 +37,14 @@ export const SettingsDialog = ({ children }: SettingsDialogProps) => {
   } = useFirstTimePermissions();
   
   const { updateNotificationSettings } = usePrayerNotifications();
+  
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundVolume, setSoundVolume] = useState(50);
+  
+  useEffect(() => {
+    setSoundEnabled(isEnabled());
+    setSoundVolume(getVolume() * 100);
+  }, []);
   
   const [settings, setSettings] = useState({
     workoutReminders: true,
@@ -414,6 +425,73 @@ export const SettingsDialog = ({ children }: SettingsDialogProps) => {
                   </div>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Sound Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+                Sound Settings
+              </CardTitle>
+              <CardDescription>
+                Control app sound effects and feedback
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Sound Toggle */}
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">🔊</span>
+                  <div>
+                    <Label className="font-medium">Sound Effects</Label>
+                    <div className="text-sm text-muted-foreground">Play sounds for clicks and actions</div>
+                  </div>
+                </div>
+                <Switch 
+                  checked={soundEnabled} 
+                  onCheckedChange={(checked) => {
+                    setSoundEnabled(checked);
+                    setEnabled(checked);
+                    if (checked) {
+                      setTimeout(() => success(), 100);
+                    }
+                  }} 
+                />
+              </div>
+              
+              {/* Volume Slider */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="font-medium">Volume</Label>
+                  <span className="text-sm text-muted-foreground">{Math.round(soundVolume)}%</span>
+                </div>
+                <Slider
+                  value={[soundVolume]}
+                  onValueChange={(value) => {
+                    setSoundVolume(value[0]);
+                    setVolume(value[0] / 100);
+                  }}
+                  onValueCommit={() => click()}
+                  max={100}
+                  step={10}
+                  disabled={!soundEnabled}
+                  className="w-full"
+                />
+              </div>
+              
+              {/* Test Sound */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => success()}
+                disabled={!soundEnabled}
+                className="w-full"
+              >
+                <Volume2 className="w-4 h-4 mr-2" />
+                Test Sound
+              </Button>
             </CardContent>
           </Card>
 
