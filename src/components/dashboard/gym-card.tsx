@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import { BentoCard } from "./bento-grid";
-import { Dumbbell, ArrowRight, Play, Flame } from "lucide-react";
+import { Dumbbell, Play, Flame } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CircularProgress } from "@/components/ui/circular-progress";
 import { useGym } from "@/contexts/GymContext";
+import { format } from "date-fns";
 
 export function GymCard() {
   const navigate = useNavigate();
@@ -56,8 +57,7 @@ export function GymCard() {
     }).length;
   }, [workoutSessions]);
 
-  const weeklyGoal = 4; // Target workouts per week
-  const weeklyProgress = Math.min((thisWeekWorkouts / weeklyGoal) * 100, 100);
+  const weeklyGoal = 4;
 
   const handleCardClick = () => {
     navigate('/gym');
@@ -65,26 +65,24 @@ export function GymCard() {
 
   const handleStartWorkout = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate('/gym?action=start');
+    const today = format(new Date(), 'yyyy-MM-dd');
+    navigate(`/workout-day?date=${today}`);
   };
 
   return (
-    <BentoCard onClick={handleCardClick}>
+    <BentoCard onClick={handleCardClick} className="group">
       <div className="flex items-start justify-between mb-3">
-        <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center group-hover:animate-wiggle">
-          <Dumbbell className="h-5 w-5 text-accent" />
+        <div className="w-10 h-10 rounded-xl bg-gym/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+          <Dumbbell className="h-5 w-5 text-gym" />
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-accent"
-            onClick={handleStartWorkout}
-          >
-            <Play className="h-4 w-4" />
-          </Button>
-          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground hover:text-gym hover:bg-gym/10"
+          onClick={handleStartWorkout}
+        >
+          <Play className="h-4 w-4" />
+        </Button>
       </div>
 
       <h3 className="font-semibold text-foreground mb-1">Gym</h3>
@@ -98,7 +96,7 @@ export function GymCard() {
             max={weeklyGoal} 
             size={36} 
             strokeWidth={3}
-            color="accent"
+            color="gym"
           >
             <span className="text-[10px] font-bold text-foreground">{thisWeekWorkouts}</span>
           </CircularProgress>

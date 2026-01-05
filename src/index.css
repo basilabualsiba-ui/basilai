@@ -46,6 +46,25 @@
     --warning: 38 92% 50%;
     --warning-foreground: 220 25% 8%;
 
+    /* Module-specific colors */
+    --gym: 0 72% 51%;
+    --gym-foreground: 0 0% 100%;
+    
+    --wallet: 142 76% 36%;
+    --wallet-foreground: 0 0% 100%;
+    
+    --supplements: 271 81% 56%;
+    --supplements-foreground: 0 0% 100%;
+    
+    --dreams: 330 81% 60%;
+    --dreams-foreground: 0 0% 100%;
+    
+    --weight: 217 91% 60%;
+    --weight-foreground: 0 0% 100%;
+    
+    --agenda: 35 100% 55%;
+    --agenda-foreground: 220 25% 8%;
+
     /* Borders and inputs */
     --border: 220 15% 20%;
     --input: 220 15% 18%;
@@ -114,6 +133,25 @@
 
     --warning: 38 92% 50%;
     --warning-foreground: 220 25% 8%;
+
+    /* Module-specific colors (dark mode) */
+    --gym: 0 72% 51%;
+    --gym-foreground: 0 0% 100%;
+    
+    --wallet: 142 76% 36%;
+    --wallet-foreground: 0 0% 100%;
+    
+    --supplements: 271 81% 56%;
+    --supplements-foreground: 0 0% 100%;
+    
+    --dreams: 330 81% 60%;
+    --dreams-foreground: 0 0% 100%;
+    
+    --weight: 217 91% 60%;
+    --weight-foreground: 0 0% 100%;
+    
+    --agenda: 35 100% 55%;
+    --agenda-foreground: 220 25% 8%;
 
     --border: 220 15% 20%;
     --input: 220 15% 18%;

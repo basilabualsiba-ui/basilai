@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { BentoCard } from "./bento-grid";
-import { Scale, TrendingUp, TrendingDown, Minus, ArrowRight, Plus } from "lucide-react";
+import { Scale, TrendingUp, TrendingDown, Minus, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Sparkline } from "@/components/ui/sparkline";
 import { AnimatedNumber } from "@/components/ui/animated-number";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface BodyStat {
   id: string;
@@ -113,11 +112,11 @@ export function WeightStatsCard() {
 
   return (
     <>
-      <BentoCard onClick={handleCardClick} loading={isLoading}>
+      <BentoCard onClick={handleCardClick} loading={isLoading} className="group">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
-              <Scale className="h-5 w-5 text-accent" />
+            <div className="w-10 h-10 rounded-xl bg-weight/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Scale className="h-5 w-5 text-weight" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Current Weight</p>
@@ -132,17 +131,14 @@ export function WeightStatsCard() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-accent"
-              onClick={handleAddClick}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-weight hover:bg-weight/10"
+            onClick={handleAddClick}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
 
         {/* Weight Trend Sparkline */}
@@ -177,9 +173,12 @@ export function WeightStatsCard() {
       </BentoCard>
 
       <Dialog open={showAddWeight} onOpenChange={setShowAddWeight}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm border-weight/30">
           <DialogHeader>
-            <DialogTitle>Add Weight</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Scale className="h-5 w-5 text-weight" />
+              Add Weight
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
@@ -198,7 +197,7 @@ export function WeightStatsCard() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddWeight(false)}>Cancel</Button>
-            <Button onClick={handleAddWeight}>Save</Button>
+            <Button onClick={handleAddWeight} className="bg-weight hover:bg-weight/90">Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

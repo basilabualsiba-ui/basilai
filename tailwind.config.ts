@@ -44,6 +44,30 @@ export default {
 					DEFAULT: 'hsl(var(--warning))',
 					foreground: 'hsl(var(--warning-foreground))'
 				},
+				gym: {
+					DEFAULT: 'hsl(var(--gym))',
+					foreground: 'hsl(var(--gym-foreground))'
+				},
+				wallet: {
+					DEFAULT: 'hsl(var(--wallet))',
+					foreground: 'hsl(var(--wallet-foreground))'
+				},
+				supplements: {
+					DEFAULT: 'hsl(var(--supplements))',
+					foreground: 'hsl(var(--supplements-foreground))'
+				},
+				dreams: {
+					DEFAULT: 'hsl(var(--dreams))',
+					foreground: 'hsl(var(--dreams-foreground))'
+				},
+				weight: {
+					DEFAULT: 'hsl(var(--weight))',
+					foreground: 'hsl(var(--weight-foreground))'
+				},
+				agenda: {
+					DEFAULT: 'hsl(var(--agenda))',
+					foreground: 'hsl(var(--agenda-foreground))'
+				},
 				muted: {
 					DEFAULT: 'hsl(var(--muted))',
 					foreground: 'hsl(var(--muted-foreground))'

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { BentoCard } from "./bento-grid";
-import { Clock, Moon, ChevronRight, ChevronDown, ChevronUp, Plus, Check } from "lucide-react";
+import { Clock, Moon, ChevronDown, ChevronUp, Plus, Check } from "lucide-react";
 import { usePrayerNotifications } from "@/contexts/PrayerContext";
 import { useSchedule, ScheduleItem } from "@/contexts/ScheduleContext";
 import { Button } from "@/components/ui/button";
@@ -45,8 +45,8 @@ export function TodayAgendaCard() {
   const getItemColor = (type: string, activityType?: string) => {
     if (type === 'prayer') return 'bg-accent/20 text-accent';
     if (type === 'meal') return 'bg-warning/20 text-warning';
-    if (activityType === 'exercise') return 'bg-success/20 text-success';
-    return 'bg-primary/20 text-primary';
+    if (activityType === 'exercise') return 'bg-gym/20 text-gym';
+    return 'bg-agenda/20 text-agenda';
   };
 
   const handleToggleComplete = async (item: ScheduleItem) => {
@@ -66,17 +66,19 @@ export function TodayAgendaCard() {
 
   return (
     <>
-      <BentoCard className="lg:col-span-2">
+      <BentoCard className="lg:col-span-2 group">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-primary" />
+            <div className="w-10 h-10 rounded-xl bg-agenda/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Clock className="h-5 w-5 text-agenda" />
+            </div>
             <h3 className="font-semibold text-foreground">Today's Agenda</h3>
           </div>
           <div className="flex items-center gap-1">
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8"
+              className="h-8 w-8 hover:text-agenda hover:bg-agenda/10"
               onClick={handleAddClick}
             >
               <Plus className="h-4 w-4" />
@@ -97,19 +99,19 @@ export function TodayAgendaCard() {
         </div>
 
         {!isExpanded ? (
-          // Minimized view - show only next item
+          // Minimized view - show next prayer and next task separately
           <div className="space-y-2">
             {/* Next Prayer */}
             {nextPrayer && (
-              <div className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 border border-border/50 transition-all hover:border-accent/30">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-accent/10 border border-accent/20 transition-all hover:border-accent/40">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg bg-accent/20 flex items-center justify-center">
                     <Moon className="h-4 w-4 text-accent" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-foreground">Next Prayer</p>
+                    <p className="text-sm font-medium text-foreground">Next Prayer: {nextPrayer.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {nextPrayer.name} at {nextPrayer.time}
+                      at {nextPrayer.time}
                     </p>
                   </div>
                 </div>
@@ -123,7 +125,7 @@ export function TodayAgendaCard() {
 
             {/* Next Activity */}
             {nextUpcomingItem && (
-              <div className="flex items-center justify-between p-3 rounded-xl bg-secondary/30 border border-border/30 transition-all hover:border-primary/30">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-agenda/10 border border-agenda/20 transition-all hover:border-agenda/40">
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     "w-9 h-9 rounded-lg flex items-center justify-center",
@@ -138,14 +140,11 @@ export function TodayAgendaCard() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {nextUpcomingItem.startTime && (
-                    <span className="text-xs text-primary font-medium">
-                      {getTimeUntil(nextUpcomingItem.startTime)}
-                    </span>
-                  )}
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </div>
+                {nextUpcomingItem.startTime && (
+                  <span className="text-xs text-agenda font-medium">
+                    {getTimeUntil(nextUpcomingItem.startTime)}
+                  </span>
+                )}
               </div>
             )}
 
@@ -159,7 +158,7 @@ export function TodayAgendaCard() {
             {allItems.length > 1 && (
               <button 
                 onClick={() => setIsExpanded(true)}
-                className="w-full text-center text-xs text-muted-foreground hover:text-primary transition-colors py-2"
+                className="w-full text-center text-xs text-muted-foreground hover:text-agenda transition-colors py-2"
               >
                 +{allItems.length - 1} more items today
               </button>
@@ -171,15 +170,15 @@ export function TodayAgendaCard() {
             <div className="space-y-2">
               {/* Next Prayer at top */}
               {nextPrayer && (
-                <div className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 border border-border/50 animate-fade-in">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-accent/10 border border-accent/20 animate-fade-in">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-accent/20 flex items-center justify-center">
                       <Moon className="h-4 w-4 text-accent" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-foreground">Next Prayer</p>
+                      <p className="text-sm font-medium text-foreground">Next Prayer: {nextPrayer.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {nextPrayer.name} at {nextPrayer.time}
+                        at {nextPrayer.time}
                       </p>
                     </div>
                   </div>
@@ -194,7 +193,7 @@ export function TodayAgendaCard() {
                     "flex items-center justify-between p-3 rounded-xl border transition-all",
                     item.isCompleted 
                       ? "bg-secondary/20 border-border/20" 
-                      : "bg-secondary/30 border-border/30 hover:border-primary/30"
+                      : "bg-secondary/30 border-border/30 hover:border-agenda/30"
                   )}
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
@@ -230,7 +229,7 @@ export function TodayAgendaCard() {
                         "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
                         item.isCompleted 
                           ? "bg-success border-success scale-110" 
-                          : "border-muted-foreground hover:border-primary"
+                          : "border-muted-foreground hover:border-agenda"
                       )}>
                         {item.isCompleted && (
                           <Check className="h-3 w-3 text-success-foreground" />
@@ -249,6 +248,7 @@ export function TodayAgendaCard() {
                     variant="link" 
                     size="sm"
                     onClick={handleAddClick}
+                    className="text-agenda"
                   >
                     Add an event
                   </Button>

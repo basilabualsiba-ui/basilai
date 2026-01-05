@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { BentoCard } from "./bento-grid";
-import { Target, ArrowRight, Sparkles, Plus, Trophy } from "lucide-react";
+import { Target, Sparkles, Plus, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDreams } from "@/contexts/DreamsContext";
 import { GradientProgress } from "@/components/ui/progress";
@@ -15,10 +15,6 @@ export function DreamsCardNew() {
 
   const activeDreams = dreams.filter(d => d.status === 'in_progress');
   const completedDreams = dreams.filter(d => d.status === 'completed');
-  
-  const avgProgress = activeDreams.length > 0
-    ? Math.round(activeDreams.reduce((sum, d) => sum + (d.progress_percentage || 0), 0) / activeDreams.length)
-    : 0;
 
   const topDream = activeDreams
     .sort((a, b) => {
@@ -33,22 +29,19 @@ export function DreamsCardNew() {
 
   return (
     <>
-      <BentoCard variant="accent" onClick={() => navigate('/dreams')}>
+      <BentoCard onClick={() => navigate('/dreams')} className="group">
         <div className="flex items-start justify-between mb-3">
-          <div className="w-10 h-10 rounded-xl bg-accent/20 flex items-center justify-center">
-            <Target className="h-5 w-5 text-accent" />
+          <div className="w-10 h-10 rounded-xl bg-dreams/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Target className="h-5 w-5 text-dreams" />
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-accent"
-              onClick={handleAddClick}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-dreams hover:bg-dreams/10"
+            onClick={handleAddClick}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
 
         <h3 className="font-semibold text-foreground mb-1">Dreams</h3>
@@ -62,10 +55,10 @@ export function DreamsCardNew() {
           {topDream && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-3 w-3 text-primary animate-pulse-soft" />
+                <Sparkles className="h-3 w-3 text-dreams animate-pulse-soft" />
                 <span className="text-xs text-foreground truncate">{topDream.title}</span>
               </div>
-              <GradientProgress value={topDream.progress_percentage || 0} size="sm" />
+              <GradientProgress value={topDream.progress_percentage || 0} size="sm" className="bg-dreams/20" />
               <span className="text-xs text-muted-foreground">
                 {topDream.progress_percentage || 0}% complete
               </span>
@@ -74,7 +67,7 @@ export function DreamsCardNew() {
 
           {completedDreams.length > 0 && (
             <div className={cn(
-              "flex items-center gap-2 text-xs text-success pt-2 border-t border-border/50"
+              "flex items-center gap-2 text-xs text-dreams pt-2 border-t border-border/50"
             )}>
               <Trophy className="h-3 w-3" />
               <span>{completedDreams.length} dreams achieved</span>

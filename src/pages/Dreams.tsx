@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Home, Search, Sparkles, Star, Target, Plus, ArrowLeft } from "lucide-react";
+import { Search, Sparkles, Star, Target, Plus, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDreams } from "@/contexts/DreamsContext";
 import { AddDreamDialog } from "@/components/dreams/add-dream-dialog";
@@ -16,6 +16,7 @@ const Dreams = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [showAddDialog, setShowAddDialog] = useState(false);
   const { click } = useSound();
 
   const filteredDreams = dreams.filter((dream) => {
@@ -30,11 +31,11 @@ const Dreams = () => {
   const inProgressCount = dreams.filter(d => d.status === 'in_progress').length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-pink-500/5">
-      {/* Header with Gradient */}
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-dreams/5">
+      {/* Header with Gradient - Dreams Pink Theme */}
       <header className="border-b border-border/20 bg-gradient-to-r from-background/95 via-background/90 to-background/95 backdrop-blur-2xl sticky top-0 z-50">
-        <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 via-transparent to-violet-500/5 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-pink-500/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-dreams/5 via-transparent to-dreams/5 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-dreams/30 to-transparent" />
         <div className="container mx-auto px-4 py-3 relative">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -42,16 +43,16 @@ const Dreams = () => {
                 variant="ghost" 
                 size="icon" 
                 onClick={() => { click(); navigate("/"); }}
-                className="hover:bg-pink-500/10 hover:text-pink-500 transition-all duration-300 rounded-xl h-9 w-9"
+                className="hover:bg-dreams/10 hover:text-dreams transition-all duration-300 rounded-xl h-9 w-9"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div className="flex items-center gap-3">
                 <div className="relative group">
-                  <div className="p-2.5 rounded-2xl bg-gradient-to-br from-pink-500 via-rose-500 to-violet-500 shadow-lg shadow-pink-500/30 transition-transform duration-300 group-hover:scale-105">
-                    <Star className="h-5 w-5 text-white" />
+                  <div className="p-2.5 rounded-2xl bg-gradient-to-br from-dreams via-pink-600 to-rose-500 shadow-lg shadow-dreams/30 transition-transform duration-300 group-hover:scale-105">
+                    <Target className="h-5 w-5 text-white" />
                   </div>
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-pink-500 to-violet-500 opacity-50 blur-xl -z-10 group-hover:opacity-70 transition-opacity" />
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-dreams to-rose-500 opacity-50 blur-xl -z-10 group-hover:opacity-70 transition-opacity" />
                 </div>
                 <div>
                   <h1 className="text-lg font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
@@ -61,20 +62,17 @@ const Dreams = () => {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <AddDreamDialog />
-            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 animate-fade-in">
+      <main className="container mx-auto px-4 py-6 pb-24 animate-fade-in">
         {/* Stats Bar */}
         <div className="flex items-center gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
-          <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-pink-500/10 to-rose-500/10 border border-pink-500/20 shrink-0 shadow-sm">
-            <div className="p-1 rounded-lg bg-pink-500/20">
-              <Target className="h-3.5 w-3.5 text-pink-500" />
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-dreams/10 to-rose-500/10 border border-dreams/20 shrink-0 shadow-sm">
+            <div className="p-1 rounded-lg bg-dreams/20">
+              <Target className="h-3.5 w-3.5 text-dreams" />
             </div>
             <span className="text-sm font-semibold">{dreams.length} Dreams</span>
           </div>
@@ -100,7 +98,7 @@ const Dreams = () => {
               placeholder="Search dreams..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 rounded-xl border-border/40 bg-card/50 backdrop-blur-sm focus:border-pink-500/50 focus:ring-pink-500/20 h-11"
+              className="pl-10 rounded-xl border-border/40 bg-card/50 backdrop-blur-sm focus:border-dreams/50 focus:ring-dreams/20 h-11"
             />
           </div>
           <Select value={filterType} onValueChange={(v) => { click(); setFilterType(v); }}>
@@ -144,15 +142,23 @@ const Dreams = () => {
         ) : filteredDreams.length === 0 ? (
           <div className="text-center py-20">
             <div className="relative inline-block mb-6">
-              <div className="p-8 rounded-3xl bg-gradient-to-br from-pink-500/10 to-violet-500/10 border border-pink-500/20 shadow-xl">
-                <Star className="h-16 w-16 text-pink-500" />
+              <div className="p-8 rounded-3xl bg-gradient-to-br from-dreams/10 to-rose-500/10 border border-dreams/20 shadow-xl">
+                <Target className="h-16 w-16 text-dreams" />
               </div>
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-pink-500 to-violet-500 opacity-20 blur-2xl -z-10" />
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-dreams to-rose-500 opacity-20 blur-2xl -z-10" />
             </div>
             <p className="text-muted-foreground mb-6 text-lg max-w-md mx-auto">
               {dreams.length === 0 ? "No dreams yet. Start by adding your first dream!" : "No dreams match your filters."}
             </p>
-            {dreams.length === 0 && <AddDreamDialog />}
+            {dreams.length === 0 && (
+              <Button 
+                onClick={() => setShowAddDialog(true)}
+                className="bg-dreams hover:bg-dreams/90"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Your First Dream
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -168,6 +174,20 @@ const Dreams = () => {
           </div>
         )}
       </main>
+
+      {/* FAB for adding dreams */}
+      <Button
+        onClick={() => { click(); setShowAddDialog(true); }}
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-gradient-to-br from-dreams to-rose-500 hover:from-dreams/90 hover:to-rose-500/90 shadow-lg shadow-dreams/30 z-50"
+        size="icon"
+      >
+        <Plus className="h-6 w-6 text-white" />
+      </Button>
+
+      <AddDreamDialog 
+        open={showAddDialog} 
+        onOpenChange={setShowAddDialog} 
+      />
     </div>
   );
 };

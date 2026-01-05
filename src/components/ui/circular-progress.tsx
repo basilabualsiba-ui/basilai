@@ -5,26 +5,38 @@ interface CircularProgressProps {
   max?: number;
   size?: number;
   strokeWidth?: number;
-  color?: "primary" | "success" | "destructive" | "warning" | "accent";
+  color?: "primary" | "success" | "destructive" | "warning" | "accent" | "gym" | "wallet" | "supplements" | "dreams" | "weight" | "agenda";
   showValue?: boolean;
   className?: string;
   children?: React.ReactNode;
 }
 
-const colorMap = {
+const colorMap: Record<string, string> = {
   primary: "stroke-primary",
   success: "stroke-success",
   destructive: "stroke-destructive",
   warning: "stroke-warning",
   accent: "stroke-accent",
+  gym: "stroke-gym",
+  wallet: "stroke-wallet",
+  supplements: "stroke-supplements",
+  dreams: "stroke-dreams",
+  weight: "stroke-weight",
+  agenda: "stroke-agenda",
 };
 
-const bgColorMap = {
+const bgColorMap: Record<string, string> = {
   primary: "stroke-primary/20",
   success: "stroke-success/20",
   destructive: "stroke-destructive/20",
   warning: "stroke-warning/20",
   accent: "stroke-accent/20",
+  gym: "stroke-gym/20",
+  wallet: "stroke-wallet/20",
+  supplements: "stroke-supplements/20",
+  dreams: "stroke-dreams/20",
+  weight: "stroke-weight/20",
+  agenda: "stroke-agenda/20",
 };
 
 export function CircularProgress({
