@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSupplement, Supplement } from '@/contexts/SupplementContext';
+import { RefreshCw } from 'lucide-react';
 
 interface RefillSupplementDialogProps {
   supplement: Supplement;
@@ -28,9 +29,14 @@ export function RefillSupplementDialog({ supplement, open, onOpenChange }: Refil
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-sm border-supplements/30 bg-gradient-to-br from-background via-background to-supplements/5">
         <DialogHeader>
-          <DialogTitle>Refill {supplement.name}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-supplements/20">
+              <RefreshCw className="h-4 w-4 text-supplements" />
+            </div>
+            Refill {supplement.name}
+          </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -45,13 +51,14 @@ export function RefillSupplementDialog({ supplement, open, onOpenChange }: Refil
               value={doses}
               onChange={(e) => setDoses(e.target.value)}
               placeholder={`How many ${supplement.dose_unit}s to add?`}
+              className="focus:border-supplements focus:ring-supplements/30"
             />
           </div>
         </div>
         
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={!doses || isSubmitting}>
+          <Button onClick={handleSubmit} disabled={!doses || isSubmitting} className="bg-supplements hover:bg-supplements/90 text-white">
             Refill
           </Button>
         </DialogFooter>

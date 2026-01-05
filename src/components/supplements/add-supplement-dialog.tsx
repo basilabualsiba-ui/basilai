@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSupplement } from '@/contexts/SupplementContext';
+import { Plus } from 'lucide-react';
 
 interface AddSupplementDialogProps {
   open: boolean;
@@ -59,9 +60,14 @@ export function AddSupplementDialog({ open, onOpenChange }: AddSupplementDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md border-supplements/30 bg-gradient-to-br from-background via-background to-supplements/5">
         <DialogHeader>
-          <DialogTitle>Add Supplement</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-supplements/20">
+              <Plus className="h-4 w-4 text-supplements" />
+            </div>
+            Add Supplement
+          </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -71,6 +77,7 @@ export function AddSupplementDialog({ open, onOpenChange }: AddSupplementDialogP
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="e.g., Whey Protein"
+              className="focus:border-supplements focus:ring-supplements/30"
             />
           </div>
           
@@ -80,6 +87,7 @@ export function AddSupplementDialog({ open, onOpenChange }: AddSupplementDialogP
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="e.g., Chocolate flavor"
+              className="focus:border-supplements focus:ring-supplements/30"
             />
           </div>
           
@@ -105,6 +113,7 @@ export function AddSupplementDialog({ open, onOpenChange }: AddSupplementDialogP
                 value={form.total_doses}
                 onChange={(e) => setForm({ ...form, total_doses: e.target.value })}
                 placeholder="e.g., 30"
+                className="focus:border-supplements focus:ring-supplements/30"
               />
             </div>
           </div>
@@ -116,13 +125,14 @@ export function AddSupplementDialog({ open, onOpenChange }: AddSupplementDialogP
               value={form.warning_threshold}
               onChange={(e) => setForm({ ...form, warning_threshold: e.target.value })}
               placeholder="e.g., 5"
+              className="focus:border-supplements focus:ring-supplements/30"
             />
           </div>
         </div>
         
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={!form.name || !form.total_doses || isSubmitting}>
+          <Button onClick={handleSubmit} disabled={!form.name || !form.total_doses || isSubmitting} className="bg-supplements hover:bg-supplements/90 text-white">
             Add Supplement
           </Button>
         </DialogFooter>

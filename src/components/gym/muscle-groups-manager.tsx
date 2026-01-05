@@ -193,14 +193,19 @@ export function MuscleGroupsManager() {
           if (!open) resetForm();
         }}>
           <DialogTrigger asChild>
-            <Button className="flex items-center gap-2 mt-4">
+            <Button className="flex items-center gap-2 mt-4 bg-gym hover:bg-gym/90 text-white">
               <Plus className="h-4 w-4" />
               Add Muscle Group
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="border-gym/30 bg-gradient-to-br from-background via-background to-gym/5">
             <DialogHeader>
-              <DialogTitle>Add New Muscle Group</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-gym/20">
+                  <Plus className="h-4 w-4 text-gym" />
+                </div>
+                Add New Muscle Group
+              </DialogTitle>
               <DialogDescription>
                 Create a new muscle group category for organizing exercises
               </DialogDescription>
@@ -213,6 +218,7 @@ export function MuscleGroupsManager() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g., Chest, Back, Legs"
+                  className="focus:border-gym focus:ring-gym/30"
                 />
               </div>
               
@@ -246,7 +252,7 @@ export function MuscleGroupsManager() {
                 <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit">Add Muscle Group</Button>
+                <Button type="submit" className="bg-gym hover:bg-gym/90 text-white">Add Muscle Group</Button>
               </div>
             </form>
           </DialogContent>
@@ -293,7 +299,7 @@ export function MuscleGroupsManager() {
                      </div>
 
                     <div className="flex gap-2">
-                      <Button type="submit" size="sm" className="flex-1">Save</Button>
+                      <Button type="submit" size="sm" className="flex-1 bg-gym hover:bg-gym/90 text-white">Save</Button>
                       <Button type="button" variant="outline" size="sm" onClick={handleCancelEdit}>
                         Cancel
                       </Button>
@@ -343,7 +349,7 @@ export function MuscleGroupsManager() {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent>
+                          <AlertDialogContent className="border-gym/30">
                             <AlertDialogHeader>
                               <AlertDialogTitle>Delete Muscle Group</AlertDialogTitle>
                               <AlertDialogDescription>

@@ -42,9 +42,14 @@ export function LogSupplementDialog({ open, onOpenChange, selectedDate }: LogSup
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md border-supplements/30 bg-gradient-to-br from-background via-background to-supplements/5">
         <DialogHeader>
-          <DialogTitle>Log Supplement</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-supplements/20">
+              <Pill className="h-4 w-4 text-supplements" />
+            </div>
+            Log Supplement
+          </DialogTitle>
         </DialogHeader>
         
         {supplements.length === 0 ? (
@@ -86,6 +91,7 @@ export function LogSupplementDialog({ open, onOpenChange, selectedDate }: LogSup
                 onChange={(e) => setForm({ ...form, doses: e.target.value })}
                 min="0.5"
                 step="0.5"
+                className="focus:border-supplements focus:ring-supplements/30"
               />
             </div>
             
@@ -95,6 +101,7 @@ export function LogSupplementDialog({ open, onOpenChange, selectedDate }: LogSup
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 placeholder="e.g., After workout"
+                className="focus:border-supplements focus:ring-supplements/30"
               />
             </div>
           </div>
@@ -105,6 +112,7 @@ export function LogSupplementDialog({ open, onOpenChange, selectedDate }: LogSup
           <Button 
             onClick={handleSubmit} 
             disabled={!form.supplement_id || !form.doses || isSubmitting || supplements.length === 0}
+            className="bg-supplements hover:bg-supplements/90 text-white"
           >
             Log
           </Button>

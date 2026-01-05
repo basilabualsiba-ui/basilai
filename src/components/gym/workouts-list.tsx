@@ -501,14 +501,17 @@ export function WorkoutsList() {
           if (!open) resetForm();
         }}>
           <DialogTrigger asChild>
-            <Button className="flex items-center gap-2 mt-4">
+            <Button className="flex items-center gap-2 mt-4 bg-gym hover:bg-gym/90 text-white">
               <Plus className="h-4 w-4" />
               Add Workout
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto border-gym/30 bg-gradient-to-br from-background via-background to-gym/5">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-gym/20">
+                  <Target className="h-4 w-4 text-gym" />
+                </div>
                 {editingWorkout ? 'Edit Workout' : 'Create New Workout'}
                 <span className="text-sm font-normal text-muted-foreground ml-2">
                   Step {currentStep} of 2
@@ -576,6 +579,7 @@ export function WorkoutsList() {
                   <Button 
                     type="submit"
                     disabled={!formData.name.trim() || formData.selectedMuscles.length === 0}
+                    className="bg-gym hover:bg-gym/90 text-white"
                   >
                     Next: Select Exercises
                     <ArrowRight className="h-4 w-4 ml-2" />
@@ -661,6 +665,7 @@ export function WorkoutsList() {
                     <Button 
                       type="submit"
                       disabled={formData.selectedExercises.length === 0}
+                      className="bg-gym hover:bg-gym/90 text-white"
                     >
                       {editingWorkout ? 'Update Workout' : 'Create Workout'}
                     </Button>
