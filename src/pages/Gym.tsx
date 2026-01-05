@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useGym } from '@/contexts/GymContext';
 import { Button } from '@/components/ui/button';
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { ArrowLeft, Dumbbell, Calendar, Target, TrendingUp, Users, Play, BarChart3, Flame } from "lucide-react";
+import { ArrowLeft, Dumbbell, Calendar, Target, TrendingUp, Users, Play, BarChart3, Flame, Zap } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSound } from '@/hooks/useSound';
@@ -43,33 +43,34 @@ const Gym = () => {
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <div className="min-h-screen bg-background flex w-full">
+      <div className="min-h-screen bg-gradient-to-b from-background via-background to-green-500/5 flex w-full">
         {/* Header with Gradient */}
-        <header className="absolute top-0 left-0 right-0 z-50 border-b border-border/30 bg-gradient-to-r from-card/95 via-card/90 to-card/95 backdrop-blur-xl">
+        <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/20 bg-gradient-to-r from-background/95 via-background/90 to-background/95 backdrop-blur-2xl">
           <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 via-transparent to-emerald-500/5 pointer-events-none" />
-          <div className="container mx-auto px-4 py-4 flex items-center justify-between relative">
-            <div className="flex items-center gap-4">
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-green-500/30 to-transparent" />
+          <div className="container mx-auto px-4 py-3 flex items-center justify-between relative">
+            <div className="flex items-center gap-3">
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => { click(); navigate("/"); }} 
-                className="hover:bg-green-500/10 hover:text-green-500 transition-all duration-300 rounded-xl"
+                className="hover:bg-green-500/10 hover:text-green-500 transition-all duration-300 rounded-xl h-9 w-9"
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 shadow-lg shadow-green-500/25">
+                <div className="relative group">
+                  <div className="p-2.5 rounded-2xl bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 shadow-lg shadow-green-500/30 transition-transform duration-300 group-hover:scale-105">
                     <Dumbbell className="h-5 w-5 text-white" />
                   </div>
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 opacity-40 blur-lg -z-10" />
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 opacity-50 blur-xl -z-10 group-hover:opacity-70 transition-opacity" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+                  <h1 className="text-lg font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
                     Gym Tracker
                   </h1>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Flame className="h-3 w-3 text-orange-500" />
+                  <p className="text-[10px] text-muted-foreground font-medium tracking-wide uppercase flex items-center gap-1">
+                    <Flame className="h-2.5 w-2.5 text-orange-500" />
                     Stay consistent
                   </p>
                 </div>
@@ -80,27 +81,27 @@ const Gym = () => {
                 variant="outline" 
                 size="sm" 
                 onClick={() => handleTabChange('workout')} 
-                className={`flex items-center gap-2 rounded-xl border-border/50 transition-all duration-300 ${
+                className={`flex items-center gap-2 rounded-xl border-border/40 h-8 text-xs font-medium transition-all duration-300 ${
                   activeTab === 'workout' 
-                    ? 'bg-green-500/10 text-green-500 border-green-500/30 shadow-sm shadow-green-500/10' 
-                    : 'hover:bg-green-500/5 hover:border-green-500/20'
+                    ? 'bg-green-500/15 text-green-600 border-green-500/40 shadow-sm shadow-green-500/10' 
+                    : 'hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-600'
                 }`}
               >
-                <Play className="h-4 w-4" />
+                <Play className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Workout</span>
               </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={() => handleTabChange('muscle-groups')} 
-                className={`flex items-center gap-2 rounded-xl border-border/50 transition-all duration-300 ${
+                className={`flex items-center gap-2 rounded-xl border-border/40 h-8 text-xs font-medium transition-all duration-300 ${
                   activeTab === 'muscle-groups' 
-                    ? 'bg-green-500/10 text-green-500 border-green-500/30 shadow-sm shadow-green-500/10' 
-                    : 'hover:bg-green-500/5 hover:border-green-500/20'
+                    ? 'bg-green-500/15 text-green-600 border-green-500/40 shadow-sm shadow-green-500/10' 
+                    : 'hover:bg-green-500/10 hover:border-green-500/30 hover:text-green-600'
                 }`}
               >
-                <Users className="h-4 w-4" />
-                <span className="hidden sm:inline">Muscle Groups</span>
+                <Users className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Muscles</span>
               </Button>
               <SidebarTrigger className="hover:bg-green-500/10 hidden md:flex rounded-xl" />
             </div>
@@ -113,8 +114,8 @@ const Gym = () => {
         </div>
 
         {/* Main Content with Animation */}
-        <main className="flex-1 md:pt-24 md:pb-6 md:px-6 pt-20 pb-20 px-4 overflow-y-auto">
-          <div className="h-full animate-fade-in">
+        <main className="flex-1 md:pt-20 md:pb-6 md:px-6 pt-16 pb-20 px-4 overflow-y-auto">
+          <div className="h-full animate-fade-in max-w-6xl mx-auto">
             {activeTab === 'exercises' && <ExercisesList />}
             {activeTab === 'workouts' && <WorkoutsList />}
             {activeTab === 'planner' && <WorkoutPlanner />}
@@ -125,37 +126,38 @@ const Gym = () => {
           </div>
         </main>
 
-        {/* Mobile Bottom Tabs with Glow */}
+        {/* Mobile Bottom Tabs with Glass Effect */}
         <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-          <div className="absolute inset-x-0 -top-6 h-6 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-          <div className="bg-card/95 backdrop-blur-xl border-t border-border/30">
-            <div className="grid grid-cols-4 h-16">
+          <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+          <div className="bg-background/80 backdrop-blur-2xl border-t border-border/20 shadow-2xl shadow-black/10">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-green-500/30 to-transparent" />
+            <div className="grid grid-cols-4 h-16 px-2">
               {gymItems.map(item => (
                 <button 
                   key={item.value} 
                   onClick={() => handleTabChange(item.value)} 
-                  className={`relative flex flex-col items-center justify-center gap-1 transition-all duration-300 ${
+                  className={`relative flex flex-col items-center justify-center gap-0.5 transition-all duration-300 rounded-2xl mx-1 ${
                     activeTab === item.value 
-                      ? 'text-green-500' 
+                      ? 'text-green-600' 
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {activeTab === item.value && (
-                    <div className="absolute inset-0 bg-green-500/10 rounded-t-2xl" />
+                    <>
+                      <div className="absolute inset-1 bg-gradient-to-b from-green-500/15 to-green-500/5 rounded-xl" />
+                      <div className="absolute top-1 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-gradient-to-r from-transparent via-green-500 to-transparent rounded-full" />
+                    </>
                   )}
-                  <div className={`relative z-10 transition-transform duration-300 ${
-                    activeTab === item.value ? 'scale-110' : ''
+                  <div className={`relative z-10 transition-all duration-300 ${
+                    activeTab === item.value ? 'scale-110 -translate-y-0.5' : ''
                   }`}>
                     <item.icon className="h-5 w-5" />
                   </div>
-                  <span className={`relative z-10 text-xs font-medium transition-all duration-300 ${
+                  <span className={`relative z-10 text-[10px] font-medium transition-all duration-300 ${
                     activeTab === item.value ? 'font-semibold' : ''
                   }`}>
                     {item.title}
                   </span>
-                  {activeTab === item.value && (
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-green-500 rounded-full" />
-                  )}
                 </button>
               ))}
             </div>
@@ -171,17 +173,17 @@ const GymWithLoading = () => {
   
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background via-background to-green-500/5">
         <div className="text-center space-y-4">
           <div className="relative">
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 shadow-xl shadow-green-500/30 animate-pulse">
-              <Dumbbell className="h-8 w-8 text-white" />
+            <div className="p-5 rounded-3xl bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 shadow-2xl shadow-green-500/40 animate-pulse">
+              <Dumbbell className="h-10 w-10 text-white" />
             </div>
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 opacity-50 blur-xl animate-pulse-glow" />
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-green-500 to-emerald-500 opacity-60 blur-2xl animate-pulse" />
           </div>
           <div className="space-y-2">
-            <Skeleton className="h-4 w-48 mx-auto" />
-            <Skeleton className="h-3 w-32 mx-auto" />
+            <Skeleton className="h-4 w-32 mx-auto" />
+            <Skeleton className="h-3 w-24 mx-auto" />
           </div>
         </div>
       </div>
