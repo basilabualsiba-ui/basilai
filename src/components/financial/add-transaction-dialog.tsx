@@ -372,18 +372,18 @@ export const AddTransactionDialog = ({
   // Currency Selector Component
   const CurrencySelector = () => (
     <Drawer open={showCurrencySelector} onOpenChange={setShowCurrencySelector}>
-      <DrawerContent className="h-[70vh]">
-        <DrawerHeader className="border-b border-border">
-          <DrawerTitle className="text-lg font-semibold">Select Currency</DrawerTitle>
+      <DrawerContent className="h-[70vh] border-t-4 border-wallet">
+        <DrawerHeader className="border-b border-wallet/20 bg-gradient-to-r from-wallet/10 to-transparent">
+          <DrawerTitle className="text-lg font-semibold text-wallet">Select Currency</DrawerTitle>
           <DrawerDescription className="sr-only">Select a currency for this transaction</DrawerDescription>
         </DrawerHeader>
         <div className="p-4 space-y-3">
           {currencies.map(currency => (
-            <Card key={currency.code} className={`cursor-pointer transition-colors ${currency.code === selectedCurrency ? 'ring-2 ring-primary' : ''}`} onClick={() => handleCurrencySelect(currency.code)}>
+            <Card key={currency.code} className={`cursor-pointer transition-colors ${currency.code === selectedCurrency ? 'ring-2 ring-wallet' : ''}`} onClick={() => handleCurrencySelect(currency.code)}>
               <CardContent className="flex items-center justify-between p-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl font-bold">{currency.symbol}</span>
+                    <span className="text-2xl font-bold text-wallet">{currency.symbol}</span>
                     <div>
                       <h4 className="font-medium text-foreground">{currency.code}</h4>
                       <p className="text-sm text-muted-foreground">{currency.name}</p>
@@ -395,7 +395,7 @@ export const AddTransactionDialog = ({
                     1 {currency.code} = {getRate(currency.code, 'ILS').toFixed(4)} ₪
                   </p>
                 </div>
-                {currency.code === selectedCurrency && <div className="w-2 h-2 bg-primary rounded-full" />}
+                {currency.code === selectedCurrency && <div className="w-2 h-2 bg-wallet rounded-full" />}
               </CardContent>
             </Card>
           ))}
@@ -406,17 +406,17 @@ export const AddTransactionDialog = ({
 
   // Note Drawer Component
   const NoteDrawer = () => <Drawer open={showNoteDrawer} onOpenChange={setShowNoteDrawer}>
-      <DrawerContent className="h-[60vh]">
-        <DrawerHeader className="border-b border-border">
-          <DrawerTitle className="text-lg font-semibold">Add Note</DrawerTitle>
+      <DrawerContent className="h-[60vh] border-t-4 border-wallet">
+        <DrawerHeader className="border-b border-wallet/20 bg-gradient-to-r from-wallet/10 to-transparent">
+          <DrawerTitle className="text-lg font-semibold text-wallet">Add Note</DrawerTitle>
           <DrawerDescription className="sr-only">Add a note to this transaction</DrawerDescription>
         </DrawerHeader>
         <div className="p-4 space-y-4">
           <Textarea value={formData.description} onChange={e => setFormData(prev => ({
           ...prev,
           description: e.target.value
-        }))} placeholder="Add a note..." className="resize-none" rows={6} />
-          <Button onClick={() => setShowNoteDrawer(false)} className="w-full">
+        }))} placeholder="Add a note..." className="resize-none focus:border-wallet focus:ring-wallet" rows={6} />
+          <Button onClick={() => setShowNoteDrawer(false)} className="w-full bg-wallet hover:bg-wallet/90 text-white">
             Save Note
           </Button>
         </div>
@@ -425,9 +425,9 @@ export const AddTransactionDialog = ({
 
   // Date Picker Drawer Component
   const DatePickerDrawer = () => <Drawer open={showDatePicker} onOpenChange={setShowDatePicker}>
-      <DrawerContent className="h-[60vh]">
-        <DrawerHeader className="border-b border-border">
-          <DrawerTitle className="text-lg font-semibold">Select Date & Time</DrawerTitle>
+      <DrawerContent className="h-[60vh] border-t-4 border-wallet">
+        <DrawerHeader className="border-b border-wallet/20 bg-gradient-to-r from-wallet/10 to-transparent">
+          <DrawerTitle className="text-lg font-semibold text-wallet">Select Date & Time</DrawerTitle>
           <DrawerDescription className="sr-only">Select date and time for this transaction</DrawerDescription>
         </DrawerHeader>
         <div className="p-4 space-y-4">
@@ -435,7 +435,7 @@ export const AddTransactionDialog = ({
             <Label htmlFor="datetime">Date & Time</Label>
             <Popover>
               <PopoverTrigger asChild>
-                <div className="mt-2 p-3 border rounded-md bg-background cursor-pointer hover:bg-accent/50 transition-colors">
+                <div className="mt-2 p-3 border border-wallet/30 rounded-md bg-background cursor-pointer hover:bg-wallet/5 transition-colors">
                   <span className="text-foreground">
                     {new Date(formData.date).toLocaleDateString(undefined, {
                       day: '2-digit',
@@ -459,7 +459,6 @@ export const AddTransactionDialog = ({
                       const newDate = new Date(date);
                       newDate.setHours(currentDate.getHours());
                       newDate.setMinutes(currentDate.getMinutes());
-                      // Format as local datetime string to avoid timezone issues
                       const year = newDate.getFullYear();
                       const month = String(newDate.getMonth() + 1).padStart(2, '0');
                       const day = String(newDate.getDate()).padStart(2, '0');
@@ -484,7 +483,6 @@ export const AddTransactionDialog = ({
                         onValueChange={(hour) => {
                           const currentDate = new Date(formData.date);
                           currentDate.setHours(parseInt(hour));
-                          // Format as local datetime string to avoid timezone issues
                           const year = currentDate.getFullYear();
                           const month = String(currentDate.getMonth() + 1).padStart(2, '0');
                           const day = String(currentDate.getDate()).padStart(2, '0');
@@ -514,7 +512,6 @@ export const AddTransactionDialog = ({
                         onValueChange={(minute) => {
                           const currentDate = new Date(formData.date);
                           currentDate.setMinutes(parseInt(minute));
-                          // Format as local datetime string to avoid timezone issues
                           const year = currentDate.getFullYear();
                           const month = String(currentDate.getMonth() + 1).padStart(2, '0');
                           const day = String(currentDate.getDate()).padStart(2, '0');
@@ -544,7 +541,7 @@ export const AddTransactionDialog = ({
               </PopoverContent>
             </Popover>
           </div>
-          <Button onClick={() => setShowDatePicker(false)} className="w-full">
+          <Button onClick={() => setShowDatePicker(false)} className="w-full bg-wallet hover:bg-wallet/90 text-white">
             Save Date
           </Button>
         </div>
@@ -553,30 +550,30 @@ export const AddTransactionDialog = ({
 
   // Account Selector Component
   const AccountSelector = () => <Drawer open={showAccountSelector} onOpenChange={setShowAccountSelector}>
-      <DrawerContent className="h-[80vh]">
-        <DrawerHeader className="border-b border-border">
-          <DrawerTitle className="text-lg font-semibold">Select Account</DrawerTitle>
+      <DrawerContent className="h-[80vh] border-t-4 border-wallet">
+        <DrawerHeader className="border-b border-wallet/20 bg-gradient-to-r from-wallet/10 to-transparent">
+          <DrawerTitle className="text-lg font-semibold text-wallet">Select Account</DrawerTitle>
           <DrawerDescription className="sr-only">Select an account for this transaction</DrawerDescription>
         </DrawerHeader>
         <div className="p-4 space-y-3">
           {accounts.map(account => {
           const IconComponent = getAccountIcon(account.icon);
-          return <Card key={account.id} className={`cursor-pointer transition-colors ${account.id === formData.accountId ? 'ring-2 ring-primary' : ''}`} onClick={() => handleAccountSelect(account.id)}>
+          return <Card key={account.id} className={`cursor-pointer transition-colors ${account.id === formData.accountId ? 'ring-2 ring-wallet' : ''}`} onClick={() => handleAccountSelect(account.id)}>
                 <CardContent className="flex items-center gap-3 p-4">
                   {account.icon && account.icon.startsWith('http') ? (
                     <div className="w-12 h-12 rounded-full overflow-hidden shadow-sm">
                       <IconComponent className="w-full h-full object-cover" />
                     </div>
                   ) : (
-                    <div className={`p-3 rounded-full ${account.type === 'cash' ? 'bg-green-100' : account.type === 'bank' ? 'bg-blue-100' : 'bg-purple-100'}`}>
-                      <IconComponent className={`h-6 w-6 ${account.type === 'cash' ? 'text-green-600' : account.type === 'bank' ? 'text-blue-600' : 'text-purple-600'}`} />
+                    <div className={`p-3 rounded-full bg-wallet/10`}>
+                      <IconComponent className={`h-6 w-6 text-wallet`} />
                     </div>
                   )}
                   <div className="flex-1">
                     <h4 className="font-medium text-foreground">{account.name}</h4>
-                    <p className="text-lg font-bold text-foreground">{getCurrencySymbol(account.currency)}{account.amount.toLocaleString()}</p>
+                    <p className="text-lg font-bold text-wallet">{getCurrencySymbol(account.currency)}{account.amount.toLocaleString()}</p>
                   </div>
-                  {account.id === formData.accountId && <div className="w-2 h-2 bg-primary rounded-full" />}
+                  {account.id === formData.accountId && <div className="w-2 h-2 bg-wallet rounded-full" />}
                 </CardContent>
               </Card>;
         })}
@@ -588,11 +585,11 @@ export const AddTransactionDialog = ({
         <DrawerTrigger asChild>
           {trigger}
         </DrawerTrigger>
-        <DrawerContent className="h-[90vh]">
-          <DrawerHeader className="border-b border-border">
+        <DrawerContent className="h-[90vh] border-t-4 border-wallet">
+          <DrawerHeader className="border-b border-wallet/20 bg-gradient-to-r from-wallet/10 to-transparent">
             <div className="flex items-center justify-between">
-              <X className="h-6 w-6 cursor-pointer text-muted-foreground" onClick={() => setOpen(false)} />
-              <DrawerTitle className="text-lg font-semibold">
+              <X className="h-6 w-6 cursor-pointer text-wallet" onClick={() => setOpen(false)} />
+              <DrawerTitle className="text-lg font-semibold text-wallet">
                 {editTransaction ? 'Edit Transaction' : categories.find(c => c.id === formData.categoryId)?.name || 'Add Transaction'}
               </DrawerTitle>
               <div className="w-6" />
@@ -703,7 +700,7 @@ export const AddTransactionDialog = ({
                   .
                 </Button>
                 
-                <Button className="h-14 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold text-2xl" onClick={operator ? () => handleCalculatorInput('=') : handleSubmit} disabled={!displayExpression || !formData.accountId}>
+                <Button className="h-14 bg-wallet hover:bg-wallet/90 text-white font-semibold text-2xl" onClick={operator ? () => handleCalculatorInput('=') : handleSubmit} disabled={!displayExpression || !formData.accountId}>
                   {operator ? '=' : '✓'}
                 </Button>
                 
