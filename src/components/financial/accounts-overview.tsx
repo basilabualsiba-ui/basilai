@@ -526,26 +526,28 @@ export const AccountsOverview = () => {
     return sum + (account.amount * conversionRate);
   }, 0);
   return <div className="space-y-6">
-      {/* Net Worth Card */}
-      <Card className="bg-gradient-primary border-0 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-accent opacity-20" />
+      {/* Net Worth Card - Modern Design */}
+      <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white shadow-2xl shadow-emerald-500/30">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent" />
+        <div className="absolute -top-20 -right-20 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-teal-400/20 rounded-full blur-2xl" />
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
-          <CardTitle className="text-lg font-medium text-white">Net Worth</CardTitle>
-          <div className="flex gap-2">
-            <button onClick={togglePrivacyMode} className={`p-2 rounded-full transition-all ${isPrivacyMode ? 'bg-white/30' : 'bg-white/20'} hover:bg-white/40`}>
-              <Eye className={`h-4 w-4 ${isPrivacyMode ? 'text-white' : 'text-white/80'}`} />
-            </button>
-          </div>
-        </CardHeader>
-        <CardContent className="relative z-10">
-          <div className="text-4xl font-bold mb-6">₪{formatPrivateValue(totalBalance.toLocaleString())}</div>
-          <div className="grid grid-cols-2 gap-4">
-            
-            <div>
-              
-              
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-white/15 backdrop-blur-sm">
+              <Wallet className="h-5 w-5" />
             </div>
+            <CardTitle className="text-base font-semibold text-white/90">Net Worth</CardTitle>
           </div>
+          <button 
+            onClick={togglePrivacyMode} 
+            className={`p-2.5 rounded-xl transition-all duration-300 ${isPrivacyMode ? 'bg-white/25 shadow-inner' : 'bg-white/15'} hover:bg-white/30 active:scale-95`}
+          >
+            <Eye className={`h-4 w-4 ${isPrivacyMode ? 'text-white' : 'text-white/80'}`} />
+          </button>
+        </CardHeader>
+        <CardContent className="relative z-10 pt-2 pb-6">
+          <div className="text-4xl font-bold tracking-tight mb-2">₪{formatPrivateValue(totalBalance.toLocaleString())}</div>
+          <p className="text-sm text-white/70 font-medium">Total across all accounts</p>
         </CardContent>
       </Card>
 
@@ -555,13 +557,18 @@ export const AccountsOverview = () => {
         <AddAccountDialog />
       </div>
 
-      {/* Accounts Section */}
-      <div className="space-y-6">
+      {/* Accounts Sections */}
+      <div className="space-y-8">
         {/* Cash Accounts */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-foreground">Cash Accounts</h3>
-            <span className="text-lg font-medium text-accent">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-green-500/10">
+                <Banknote className="h-4 w-4 text-green-600" />
+              </div>
+              <h3 className="text-base font-semibold text-foreground">Cash</h3>
+            </div>
+            <span className="text-base font-bold text-green-600">
               ₪{formatPrivateValue(
                 accounts
                   .filter(account => account.type === 'cash')
@@ -574,7 +581,7 @@ export const AccountsOverview = () => {
             </span>
           </div>
 
-          <div className="grid gap-4 grid-cols-2 md:grid-cols-3">
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
             {accounts
               .filter(account => account.type === 'cash')
               .map(account => {
@@ -596,30 +603,31 @@ export const AccountsOverview = () => {
                 return (
                   <Card 
                     key={account.id} 
-                    className="border-0 hover:shadow-card transition-shadow cursor-pointer bg-card"
+                    className="group relative overflow-hidden border border-border/40 hover:border-green-500/30 hover:shadow-lg hover:shadow-green-500/10 transition-all duration-300 cursor-pointer bg-card/50 backdrop-blur-sm"
                     {...longPressHandlers}
                   >
-                    <CardContent className="p-4 text-center">
+                    <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <CardContent className="p-4 text-center relative z-10">
                       {account.icon && account.icon.startsWith('http') ? (
-                        <div className="w-12 h-12 rounded-full overflow-hidden shadow-sm mx-auto mb-3">
+                        <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg mx-auto mb-3 ring-2 ring-border/50 group-hover:ring-green-500/30 transition-all">
                           <IconComponent className="w-full h-full object-cover" />
                         </div>
                       ) : (
-                        <div className="inline-flex p-3 rounded-full bg-gradient-accent mb-3">
-                          <IconComponent className="h-6 w-6 text-primary" />
+                        <div className="inline-flex p-3.5 rounded-2xl bg-gradient-to-br from-green-500/15 to-emerald-500/10 mb-3 group-hover:from-green-500/25 group-hover:to-emerald-500/15 transition-all shadow-sm">
+                          <IconComponent className="h-6 w-6 text-green-600" />
                         </div>
                       )}
-                      <h4 className="font-medium text-foreground mb-1">{account.name}</h4>
+                      <h4 className="font-semibold text-foreground mb-0.5 text-sm">{account.name}</h4>
                       <p className="text-lg font-bold text-foreground">
                         {currencySymbol}{formatPrivateValue(account.amount.toLocaleString())}
                       </p>
-                       {account.currency !== 'ILS' && (
-                         <p className="text-sm text-muted-foreground">
-                           ≈ ₪{formatPrivateValue((account.amount * getRate(account.currency, 'ILS')).toLocaleString())}
-                         </p>
-                       )}
-                     </CardContent>
-                   </Card>
+                      {account.currency !== 'ILS' && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          ≈ ₪{formatPrivateValue((account.amount * getRate(account.currency, 'ILS')).toLocaleString())}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
                 );
               })}
           </div>
@@ -628,8 +636,13 @@ export const AccountsOverview = () => {
         {/* Bank Accounts */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-foreground">Bank Accounts</h3>
-            <span className="text-lg font-medium text-accent">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-blue-500/10">
+                <Building2 className="h-4 w-4 text-blue-600" />
+              </div>
+              <h3 className="text-base font-semibold text-foreground">Bank</h3>
+            </div>
+            <span className="text-base font-bold text-blue-600">
               ₪{formatPrivateValue(
                 accounts
                   .filter(account => account.type === 'bank')
@@ -642,7 +655,7 @@ export const AccountsOverview = () => {
             </span>
           </div>
 
-          <div className="grid gap-4 grid-cols-2 md:grid-cols-3">
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
             {accounts
               .filter(account => account.type === 'bank')
               .map(account => {
@@ -664,30 +677,31 @@ export const AccountsOverview = () => {
                 return (
                   <Card 
                     key={account.id} 
-                    className="border-0 hover:shadow-card transition-shadow cursor-pointer bg-card"
+                    className="group relative overflow-hidden border border-border/40 hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-300 cursor-pointer bg-card/50 backdrop-blur-sm"
                     {...longPressHandlers}
                   >
-                    <CardContent className="p-4 text-center">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <CardContent className="p-4 text-center relative z-10">
                       {account.icon && account.icon.startsWith('http') ? (
-                        <div className="w-12 h-12 rounded-full overflow-hidden shadow-sm mx-auto mb-3">
+                        <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg mx-auto mb-3 ring-2 ring-border/50 group-hover:ring-blue-500/30 transition-all">
                           <IconComponent className="w-full h-full object-cover" />
                         </div>
                       ) : (
-                        <div className="inline-flex p-3 rounded-full bg-gradient-accent mb-3">
-                          <IconComponent className="h-6 w-6 text-primary" />
+                        <div className="inline-flex p-3.5 rounded-2xl bg-gradient-to-br from-blue-500/15 to-cyan-500/10 mb-3 group-hover:from-blue-500/25 group-hover:to-cyan-500/15 transition-all shadow-sm">
+                          <IconComponent className="h-6 w-6 text-blue-600" />
                         </div>
                       )}
-                      <h4 className="font-medium text-foreground mb-1">{account.name}</h4>
+                      <h4 className="font-semibold text-foreground mb-0.5 text-sm">{account.name}</h4>
                       <p className="text-lg font-bold text-foreground">
                         {currencySymbol}{formatPrivateValue(account.amount.toLocaleString())}
                       </p>
-                       {account.currency !== 'ILS' && (
-                         <p className="text-sm text-muted-foreground">
-                           ≈ ₪{formatPrivateValue((account.amount * getRate(account.currency, 'ILS')).toLocaleString())}
-                         </p>
-                       )}
-                     </CardContent>
-                   </Card>
+                      {account.currency !== 'ILS' && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          ≈ ₪{formatPrivateValue((account.amount * getRate(account.currency, 'ILS')).toLocaleString())}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
                 );
               })}
           </div>
@@ -697,8 +711,13 @@ export const AccountsOverview = () => {
         {accounts.filter(account => account.type === 'credit').length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-foreground">Credit Accounts</h3>
-              <span className="text-lg font-medium text-accent">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-purple-500/10">
+                  <CreditCard className="h-4 w-4 text-purple-600" />
+                </div>
+                <h3 className="text-base font-semibold text-foreground">Credit</h3>
+              </div>
+              <span className="text-base font-bold text-purple-600">
                 ₪{formatPrivateValue(
                   accounts
                     .filter(account => account.type === 'credit')
@@ -711,7 +730,7 @@ export const AccountsOverview = () => {
               </span>
             </div>
 
-            <div className="grid gap-4 grid-cols-2 md:grid-cols-3">
+            <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
               {accounts
                 .filter(account => account.type === 'credit')
                 .map(account => {
@@ -733,30 +752,31 @@ export const AccountsOverview = () => {
                   return (
                     <Card 
                       key={account.id} 
-                      className="border-0 hover:shadow-card transition-shadow cursor-pointer bg-card"
+                      className="group relative overflow-hidden border border-border/40 hover:border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300 cursor-pointer bg-card/50 backdrop-blur-sm"
                       {...longPressHandlers}
                     >
-                      <CardContent className="p-4 text-center">
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <CardContent className="p-4 text-center relative z-10">
                         {account.icon && account.icon.startsWith('http') ? (
-                          <div className="w-12 h-12 rounded-full overflow-hidden shadow-sm mx-auto mb-3">
+                          <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg mx-auto mb-3 ring-2 ring-border/50 group-hover:ring-purple-500/30 transition-all">
                             <IconComponent className="w-full h-full object-cover" />
                           </div>
                         ) : (
-                          <div className="inline-flex p-3 rounded-full bg-gradient-accent mb-3">
-                            <IconComponent className="h-6 w-6 text-primary" />
+                          <div className="inline-flex p-3.5 rounded-2xl bg-gradient-to-br from-purple-500/15 to-violet-500/10 mb-3 group-hover:from-purple-500/25 group-hover:to-violet-500/15 transition-all shadow-sm">
+                            <IconComponent className="h-6 w-6 text-purple-600" />
                           </div>
                         )}
-                        <h4 className="font-medium text-foreground mb-1">{account.name}</h4>
+                        <h4 className="font-semibold text-foreground mb-0.5 text-sm">{account.name}</h4>
                         <p className="text-lg font-bold text-foreground">
                           {currencySymbol}{formatPrivateValue(account.amount.toLocaleString())}
                         </p>
-                         {account.currency !== 'ILS' && (
-                           <p className="text-sm text-muted-foreground">
-                             ≈ ₪{formatPrivateValue((account.amount * getRate(account.currency, 'ILS')).toLocaleString())}
-                           </p>
-                         )}
-                       </CardContent>
-                     </Card>
+                        {account.currency !== 'ILS' && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            ≈ ₪{formatPrivateValue((account.amount * getRate(account.currency, 'ILS')).toLocaleString())}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
                   );
                 })}
             </div>

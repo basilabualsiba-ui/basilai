@@ -491,10 +491,10 @@ export function WorkoutsList() {
 
   return (
     <div className="space-y-6">
-      <div className="mt-6">
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mt-6">
         <div>
-          <h1 className="text-3xl font-bold">Workouts</h1>
-          <p className="text-muted-foreground">Create and manage your workout routines</p>
+          <h1 className="text-2xl font-bold">Workouts</h1>
+          <p className="text-sm text-muted-foreground">Create and manage your workout routines</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => {
           setDialogOpen(open);

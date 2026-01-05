@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Home, Search, Sparkles, Star, Target, Plus } from "lucide-react";
+import { Home, Search, Sparkles, Star, Target, Plus, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Logo } from "@/components/ui/logo";
 import { useDreams } from "@/contexts/DreamsContext";
 import { AddDreamDialog } from "@/components/dreams/add-dream-dialog";
 import { DreamCard } from "@/components/dreams/dream-card";
@@ -31,56 +30,65 @@ const Dreams = () => {
   const inProgressCount = dreams.filter(d => d.status === 'in_progress').length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-pink-500/5">
       {/* Header with Gradient */}
-      <header className="border-b border-border/30 bg-gradient-to-r from-card/95 via-card/90 to-card/95 backdrop-blur-xl sticky top-0 z-50">
+      <header className="border-b border-border/20 bg-gradient-to-r from-background/95 via-background/90 to-background/95 backdrop-blur-2xl sticky top-0 z-50">
         <div className="absolute inset-0 bg-gradient-to-r from-pink-500/5 via-transparent to-violet-500/5 pointer-events-none" />
-        <div className="container mx-auto px-4 py-4 relative">
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-pink-500/30 to-transparent" />
+        <div className="container mx-auto px-4 py-3 relative">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-pink-500 via-rose-500 to-violet-500 shadow-lg shadow-pink-500/25">
-                  <Star className="h-5 w-5 text-white" />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => { click(); navigate("/"); }}
+                className="hover:bg-pink-500/10 hover:text-pink-500 transition-all duration-300 rounded-xl h-9 w-9"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div className="flex items-center gap-3">
+                <div className="relative group">
+                  <div className="p-2.5 rounded-2xl bg-gradient-to-br from-pink-500 via-rose-500 to-violet-500 shadow-lg shadow-pink-500/30 transition-transform duration-300 group-hover:scale-105">
+                    <Star className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-pink-500 to-violet-500 opacity-50 blur-xl -z-10 group-hover:opacity-70 transition-opacity" />
                 </div>
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-pink-500 to-violet-500 opacity-40 blur-lg -z-10" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
-                  Dreams & Goals
-                </h1>
-                <p className="text-xs text-muted-foreground">Chase your aspirations</p>
+                <div>
+                  <h1 className="text-lg font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
+                    Dreams & Goals
+                  </h1>
+                  <p className="text-[10px] text-muted-foreground font-medium tracking-wide uppercase">Chase your aspirations</p>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <AddDreamDialog />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => { click(); navigate("/"); }}
-                className="hover:bg-pink-500/10 hover:text-pink-500 transition-all duration-300 rounded-xl"
-              >
-                <Home className="h-5 w-5" />
-              </Button>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8 animate-fade-in">
+      <main className="container mx-auto px-4 py-6 animate-fade-in">
         {/* Stats Bar */}
-        <div className="flex items-center gap-4 mb-6 overflow-x-auto pb-2">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500/10 to-rose-500/10 border border-pink-500/20 shrink-0">
-            <Target className="h-4 w-4 text-pink-500" />
-            <span className="text-sm font-medium">{dreams.length} Dreams</span>
+        <div className="flex items-center gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-pink-500/10 to-rose-500/10 border border-pink-500/20 shrink-0 shadow-sm">
+            <div className="p-1 rounded-lg bg-pink-500/20">
+              <Target className="h-3.5 w-3.5 text-pink-500" />
+            </div>
+            <span className="text-sm font-semibold">{dreams.length} Dreams</span>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 shrink-0">
-            <Sparkles className="h-4 w-4 text-blue-500" />
-            <span className="text-sm font-medium">{inProgressCount} In Progress</span>
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 shrink-0 shadow-sm">
+            <div className="p-1 rounded-lg bg-blue-500/20">
+              <Sparkles className="h-3.5 w-3.5 text-blue-500" />
+            </div>
+            <span className="text-sm font-semibold">{inProgressCount} Active</span>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 shrink-0">
-            <Star className="h-4 w-4 text-green-500" />
-            <span className="text-sm font-medium">{completedCount} Achieved</span>
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 shrink-0 shadow-sm">
+            <div className="p-1 rounded-lg bg-green-500/20">
+              <Star className="h-3.5 w-3.5 text-green-500" />
+            </div>
+            <span className="text-sm font-semibold">{completedCount} Done</span>
           </div>
         </div>
 
@@ -92,11 +100,11 @@ const Dreams = () => {
               placeholder="Search dreams..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 rounded-xl border-border/50 focus:border-pink-500/50 focus:ring-pink-500/20"
+              className="pl-10 rounded-xl border-border/40 bg-card/50 backdrop-blur-sm focus:border-pink-500/50 focus:ring-pink-500/20 h-11"
             />
           </div>
           <Select value={filterType} onValueChange={(v) => { click(); setFilterType(v); }}>
-            <SelectTrigger className="w-full sm:w-40 rounded-xl border-border/50">
+            <SelectTrigger className="w-full sm:w-40 rounded-xl border-border/40 bg-card/50 backdrop-blur-sm h-11">
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
@@ -110,7 +118,7 @@ const Dreams = () => {
             </SelectContent>
           </Select>
           <Select value={filterStatus} onValueChange={(v) => { click(); setFilterStatus(v); }}>
-            <SelectTrigger className="w-full sm:w-40 rounded-xl border-border/50">
+            <SelectTrigger className="w-full sm:w-40 rounded-xl border-border/40 bg-card/50 backdrop-blur-sm h-11">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -124,30 +132,30 @@ const Dreams = () => {
 
         {/* Dreams Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="space-y-3">
-                <Skeleton className="h-48 w-full rounded-xl" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-3 w-1/2" />
+              <div key={i} className="space-y-3 p-4 rounded-2xl bg-card/50 border border-border/30">
+                <Skeleton className="h-40 w-full rounded-xl" />
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
               </div>
             ))}
           </div>
         ) : filteredDreams.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="relative inline-block mb-4">
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-pink-500/10 to-violet-500/10 border border-pink-500/20">
-                <Star className="h-12 w-12 text-pink-500" />
+          <div className="text-center py-20">
+            <div className="relative inline-block mb-6">
+              <div className="p-8 rounded-3xl bg-gradient-to-br from-pink-500/10 to-violet-500/10 border border-pink-500/20 shadow-xl">
+                <Star className="h-16 w-16 text-pink-500" />
               </div>
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-pink-500 to-violet-500 opacity-20 blur-xl -z-10" />
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-pink-500 to-violet-500 opacity-20 blur-2xl -z-10" />
             </div>
-            <p className="text-muted-foreground mb-4 text-lg">
+            <p className="text-muted-foreground mb-6 text-lg max-w-md mx-auto">
               {dreams.length === 0 ? "No dreams yet. Start by adding your first dream!" : "No dreams match your filters."}
             </p>
             {dreams.length === 0 && <AddDreamDialog />}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredDreams.map((dream, index) => (
               <div 
                 key={dream.id} 
