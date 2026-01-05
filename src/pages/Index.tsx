@@ -101,8 +101,8 @@ const Index = () => {
           {/* Dashboard View */}
           <div className="space-y-4">
             <BentoGrid>
-              <FinanceCard />
               <TodayAgendaCard />
+              <FinanceCard />
               <GymCard />
               <SupplementsCard />
               <WeightStatsCard />

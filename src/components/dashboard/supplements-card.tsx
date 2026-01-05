@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { BentoCard } from "./bento-grid";
-import { Pill, AlertTriangle, ArrowRight, Plus, Check } from "lucide-react";
+import { Pill, AlertTriangle, Plus, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSupplement } from "@/contexts/SupplementContext";
 import { Button } from "@/components/ui/button";
@@ -33,25 +33,22 @@ export function SupplementsCard() {
 
   return (
     <>
-      <BentoCard onClick={handleCardClick}>
+      <BentoCard onClick={handleCardClick} className="group">
         <div className="flex items-start justify-between mb-3">
           <div className={cn(
-            "w-10 h-10 rounded-xl bg-success/20 flex items-center justify-center",
-            "group-hover:animate-bounce-subtle"
+            "w-10 h-10 rounded-xl bg-supplements/20 flex items-center justify-center",
+            "group-hover:scale-110 transition-transform"
           )}>
-            <Pill className="h-5 w-5 text-success" />
+            <Pill className="h-5 w-5 text-supplements" />
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-success"
-              onClick={handleLogClick}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-supplements hover:bg-supplements/10"
+            onClick={handleLogClick}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
 
         <h3 className="font-semibold text-foreground mb-1">Supplements</h3>
@@ -69,14 +66,14 @@ export function SupplementsCard() {
                 <span className="text-xs text-muted-foreground">Today's progress</span>
                 <div className="flex items-center gap-1">
                   {dailyProgress === 100 && (
-                    <Check className="h-3 w-3 text-success" />
+                    <Check className="h-3 w-3 text-supplements" />
                   )}
                   <span className="text-xs font-medium text-foreground">
                     {supplementsTakenToday}/{totalSupplements}
                   </span>
                 </div>
               </div>
-              <GradientProgress value={dailyProgress} size="sm" />
+              <GradientProgress value={dailyProgress} size="sm" className="bg-supplements/20" />
             </div>
           )}
 

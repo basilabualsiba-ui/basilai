@@ -5,12 +5,12 @@ import { cn } from "@/lib/utils";
 interface SparklineProps {
   data: number[];
   className?: string;
-  color?: "primary" | "success" | "destructive" | "warning" | "accent";
+  color?: "primary" | "success" | "destructive" | "warning" | "accent" | "gym" | "wallet" | "supplements" | "dreams" | "weight" | "agenda";
   showGradient?: boolean;
   height?: number;
 }
 
-const colorMap = {
+const colorMap: Record<string, { stroke: string; fill: string }> = {
   primary: {
     stroke: "hsl(35, 100%, 55%)",
     fill: "hsl(35, 100%, 55%)",
@@ -30,6 +30,30 @@ const colorMap = {
   accent: {
     stroke: "hsl(35, 85%, 60%)",
     fill: "hsl(35, 85%, 60%)",
+  },
+  gym: {
+    stroke: "hsl(0, 72%, 51%)",
+    fill: "hsl(0, 72%, 51%)",
+  },
+  wallet: {
+    stroke: "hsl(142, 76%, 36%)",
+    fill: "hsl(142, 76%, 36%)",
+  },
+  supplements: {
+    stroke: "hsl(271, 81%, 56%)",
+    fill: "hsl(271, 81%, 56%)",
+  },
+  dreams: {
+    stroke: "hsl(330, 81%, 60%)",
+    fill: "hsl(330, 81%, 60%)",
+  },
+  weight: {
+    stroke: "hsl(217, 91%, 60%)",
+    fill: "hsl(217, 91%, 60%)",
+  },
+  agenda: {
+    stroke: "hsl(35, 100%, 55%)",
+    fill: "hsl(35, 100%, 55%)",
   },
 };
 
