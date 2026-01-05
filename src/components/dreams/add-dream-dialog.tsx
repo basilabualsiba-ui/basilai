@@ -163,15 +163,20 @@ export const AddDreamDialog = ({ open: controlledOpen, onOpenChange }: AddDreamD
     <Dialog open={open} onOpenChange={setOpen}>
       {!isControlled && (
         <DialogTrigger asChild>
-          <Button className="gap-2">
+          <Button className="gap-2 bg-dreams hover:bg-dreams/90 text-white">
             <Plus className="h-4 w-4" />
             Add Dream
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-dreams/30 bg-gradient-to-br from-background via-background to-dreams/5">
         <DialogHeader>
-          <DialogTitle>Add New Dream</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-dreams/20">
+              <Sparkles className="h-4 w-4 text-dreams" />
+            </div>
+            Add New Dream
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -182,6 +187,7 @@ export const AddDreamDialog = ({ open: controlledOpen, onOpenChange }: AddDreamD
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="What's your dream?"
               required
+              className="focus:border-dreams focus:ring-dreams/30"
             />
           </div>
 
@@ -193,6 +199,7 @@ export const AddDreamDialog = ({ open: controlledOpen, onOpenChange }: AddDreamD
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Describe your dream..."
               rows={3}
+              className="focus:border-dreams focus:ring-dreams/30"
             />
             <p className="text-xs text-muted-foreground">
               💡 AI will automatically categorize your dream based on your description
@@ -207,6 +214,7 @@ export const AddDreamDialog = ({ open: controlledOpen, onOpenChange }: AddDreamD
               onChange={(e) => setFormData({ ...formData, why_important: e.target.value })}
               placeholder="Your motivation..."
               rows={2}
+              className="focus:border-dreams focus:ring-dreams/30"
             />
           </div>
 
@@ -218,6 +226,7 @@ export const AddDreamDialog = ({ open: controlledOpen, onOpenChange }: AddDreamD
                 type="date"
                 value={formData.target_date}
                 onChange={(e) => setFormData({ ...formData, target_date: e.target.value })}
+                className="focus:border-dreams focus:ring-dreams/30"
               />
             </div>
 
@@ -230,6 +239,7 @@ export const AddDreamDialog = ({ open: controlledOpen, onOpenChange }: AddDreamD
                 value={formData.estimated_cost}
                 onChange={(e) => setFormData({ ...formData, estimated_cost: e.target.value })}
                 placeholder="0.00"
+                className="focus:border-dreams focus:ring-dreams/30"
               />
             </div>
           </div>
@@ -241,11 +251,12 @@ export const AddDreamDialog = ({ open: controlledOpen, onOpenChange }: AddDreamD
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               placeholder="e.g., Paris, France"
+              className="focus:border-dreams focus:ring-dreams/30"
             />
           </div>
 
           {formData.estimated_cost && (
-            <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/30">
+            <div className="flex items-center justify-between p-4 border border-dreams/20 rounded-lg bg-dreams/5">
               <div className="space-y-1">
                 <Label htmlFor="create-goal" className="text-base">
                   Create Financial Savings Goal
@@ -266,7 +277,7 @@ export const AddDreamDialog = ({ open: controlledOpen, onOpenChange }: AddDreamD
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isGeneratingImage}>
+            <Button type="submit" disabled={isGeneratingImage} className="bg-dreams hover:bg-dreams/90 text-white">
               {isGeneratingImage ? (
                 <>
                   <Sparkles className="h-4 w-4 mr-2 animate-spin" />

@@ -173,10 +173,12 @@ export function WeightStatsCard() {
       </BentoCard>
 
       <Dialog open={showAddWeight} onOpenChange={setShowAddWeight}>
-        <DialogContent className="max-w-sm border-weight/30">
+        <DialogContent className="max-w-sm border-weight/30 bg-gradient-to-br from-background via-background to-weight/5">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Scale className="h-5 w-5 text-weight" />
+              <div className="p-2 rounded-xl bg-weight/20">
+                <Scale className="h-5 w-5 text-weight" />
+              </div>
               Add Weight
             </DialogTitle>
           </DialogHeader>
@@ -191,13 +193,13 @@ export function WeightStatsCard() {
                 value={newWeight}
                 onChange={(e) => setNewWeight(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddWeight()}
-                className="focus-glow"
+                className="focus:border-weight focus:ring-weight/30"
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddWeight(false)}>Cancel</Button>
-            <Button onClick={handleAddWeight} className="bg-weight hover:bg-weight/90">Save</Button>
+            <Button onClick={handleAddWeight} className="bg-weight hover:bg-weight/90 text-white">Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -64,14 +64,19 @@ export const AddCategoryDialog = ({ trigger, defaultType }: { trigger?: React.Re
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button size="icon" className="bg-primary text-primary-foreground">
+          <Button size="icon" className="bg-wallet hover:bg-wallet/90 text-white">
             <Plus className="h-4 w-4" />
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md border-wallet/30 bg-gradient-to-br from-background via-background to-wallet/5">
         <DialogHeader>
-          <DialogTitle>Add New Category</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-wallet/20">
+              <Plus className="h-4 w-4 text-wallet" />
+            </div>
+            Add New Category
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -82,6 +87,7 @@ export const AddCategoryDialog = ({ trigger, defaultType }: { trigger?: React.Re
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="e.g., Food & Dining"
               required
+              className="focus:border-wallet focus:ring-wallet/30"
             />
           </div>
 
@@ -111,7 +117,7 @@ export const AddCategoryDialog = ({ trigger, defaultType }: { trigger?: React.Re
                   variant={formData.icon === name ? "default" : "outline"}
                   size="sm"
                   onClick={() => setFormData(prev => ({ ...prev, icon: name }))}
-                  className="h-12 flex flex-col gap-1"
+                  className={`h-12 flex flex-col gap-1 ${formData.icon === name ? 'bg-wallet hover:bg-wallet/90 text-white' : 'hover:bg-wallet/10 hover:text-wallet hover:border-wallet/30'}`}
                 >
                   <Icon className="h-4 w-4" />
                   <span className="text-xs">{name}</span>
@@ -120,7 +126,7 @@ export const AddCategoryDialog = ({ trigger, defaultType }: { trigger?: React.Re
             </div>
           </div>
 
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full bg-wallet hover:bg-wallet/90 text-white">
             Add Category
           </Button>
         </form>

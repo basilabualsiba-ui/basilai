@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSupplement, Supplement } from '@/contexts/SupplementContext';
+import { Edit3 } from 'lucide-react';
 
 interface EditSupplementDialogProps {
   supplement: Supplement;
@@ -57,9 +58,14 @@ export function EditSupplementDialog({ supplement, open, onOpenChange }: EditSup
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md border-supplements/30 bg-gradient-to-br from-background via-background to-supplements/5">
         <DialogHeader>
-          <DialogTitle>Edit Supplement</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-supplements/20">
+              <Edit3 className="h-4 w-4 text-supplements" />
+            </div>
+            Edit Supplement
+          </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -68,6 +74,7 @@ export function EditSupplementDialog({ supplement, open, onOpenChange }: EditSup
             <Input
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="focus:border-supplements focus:ring-supplements/30"
             />
           </div>
           
@@ -76,6 +83,7 @@ export function EditSupplementDialog({ supplement, open, onOpenChange }: EditSup
             <Input
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
+              className="focus:border-supplements focus:ring-supplements/30"
             />
           </div>
           
@@ -100,6 +108,7 @@ export function EditSupplementDialog({ supplement, open, onOpenChange }: EditSup
                 type="number"
                 value={form.warning_threshold}
                 onChange={(e) => setForm({ ...form, warning_threshold: e.target.value })}
+                className="focus:border-supplements focus:ring-supplements/30"
               />
             </div>
           </div>
@@ -107,7 +116,7 @@ export function EditSupplementDialog({ supplement, open, onOpenChange }: EditSup
         
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={!form.name || isSubmitting}>
+          <Button onClick={handleSubmit} disabled={!form.name || isSubmitting} className="bg-supplements hover:bg-supplements/90 text-white">
             Save
           </Button>
         </DialogFooter>

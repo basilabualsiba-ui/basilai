@@ -176,28 +176,33 @@ export function ExercisesList() {
         
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-lg shadow-green-500/25">
+            <Button className="flex items-center gap-2 rounded-xl bg-gym hover:bg-gym/90 text-white shadow-lg shadow-gym/25">
               <Plus className="h-4 w-4" />
               Add Exercise
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto border-gym/30 bg-gradient-to-br from-background via-background to-gym/5">
             <DialogHeader>
-              <DialogTitle>Add New Exercise</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-gym/20">
+                  <Plus className="h-4 w-4 text-gym" />
+                </div>
+                Add New Exercise
+              </DialogTitle>
               <DialogDescription>
                 Create a new exercise for your library
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Auto Import Section */}
-              <div className="space-y-3 p-4 bg-gradient-to-br from-green-500/10 to-emerald-500/5 rounded-xl border border-green-500/20">
+              <div className="space-y-3 p-4 bg-gradient-to-br from-gym/10 to-rose-500/5 rounded-xl border border-gym/20">
                 <Label className="text-sm font-semibold">Quick Import</Label>
                 <div className="flex gap-2">
                   <Input
                     placeholder="muscleandstrength.com URL..."
                     value={importUrl}
                     onChange={(e) => setImportUrl(e.target.value)}
-                    className="flex-1 rounded-xl"
+                    className="flex-1 rounded-xl focus:border-gym focus:ring-gym/30"
                   />
                   <Button 
                     type="button"
@@ -205,7 +210,7 @@ export function ExercisesList() {
                     disabled={isImporting || !importUrl.trim()}
                     variant="outline"
                     size="sm"
-                    className="rounded-xl"
+                    className="rounded-xl hover:bg-gym/10 hover:text-gym hover:border-gym/30"
                   >
                     {isImporting ? (
                       <>
@@ -227,7 +232,7 @@ export function ExercisesList() {
                 <Input id="name" value={formData.name} onChange={e => setFormData({
                 ...formData,
                 name: e.target.value
-              })} placeholder="e.g., Bench Press" required className="rounded-xl" />
+              })} placeholder="e.g., Bench Press" required className="rounded-xl focus:border-gym focus:ring-gym/30" />
               </div>
               <div>
                 <Label htmlFor="muscle_group">Primary Muscle Group</Label>
@@ -258,7 +263,7 @@ export function ExercisesList() {
                             : formData.side_muscle_groups.filter(name => name !== group.name);
                           setFormData({ ...formData, side_muscle_groups: newSideGroups });
                         }}
-                        className="w-4 h-4 text-green-500 bg-background border-border rounded focus:ring-green-500"
+                        className="w-4 h-4 text-gym bg-background border-border rounded focus:ring-gym"
                       />
                       <Label htmlFor={`side-${group.id}`} className="text-sm">{group.name}</Label>
                     </div>
@@ -270,7 +275,7 @@ export function ExercisesList() {
                 <Input id="equipment" value={formData.equipment} onChange={e => setFormData({
                 ...formData,
                 equipment: e.target.value
-              })} placeholder="e.g., Barbell, Bodyweight" className="rounded-xl" />
+              })} placeholder="e.g., Barbell, Bodyweight" className="rounded-xl focus:border-gym focus:ring-gym/30" />
               </div>
               <div>
                 <Label htmlFor="difficulty_level">Difficulty</Label>
@@ -299,7 +304,7 @@ export function ExercisesList() {
                   <Input id="video_url" value={formData.video_url} onChange={e => setFormData({
                   ...formData,
                   video_url: e.target.value
-                })} placeholder="YouTube embed URL or video link..." className="rounded-xl" />
+                })} placeholder="YouTube embed URL or video link..." className="rounded-xl focus:border-gym focus:ring-gym/30" />
                 </div>
                 <div>
                   <Label htmlFor="photo_url" className="flex items-center gap-2">
@@ -309,7 +314,7 @@ export function ExercisesList() {
                   <Input id="photo_url" value={formData.photo_url} onChange={e => setFormData({
                   ...formData,
                   photo_url: e.target.value
-                })} placeholder="Image URL..." className="rounded-xl" />
+                })} placeholder="Image URL..." className="rounded-xl focus:border-gym focus:ring-gym/30" />
                 </div>
               </div>
 
@@ -318,10 +323,10 @@ export function ExercisesList() {
                 <Textarea id="instructions" value={formData.instructions} onChange={e => setFormData({
                 ...formData,
                 instructions: e.target.value
-              })} placeholder="Exercise instructions..." rows={3} className="rounded-xl" />
+              })} placeholder="Exercise instructions..." rows={3} className="rounded-xl focus:border-gym focus:ring-gym/30" />
               </div>
               <div className="flex gap-2">
-                <Button type="submit" className="flex-1 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700">
+                <Button type="submit" className="flex-1 rounded-xl bg-gym hover:bg-gym/90 text-white">
                   Add Exercise
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)} className="rounded-xl">
@@ -357,14 +362,14 @@ export function ExercisesList() {
           return (
             <Card 
               key={exercise.id} 
-              className="group relative overflow-hidden border border-border/40 hover:border-green-500/30 hover:shadow-lg hover:shadow-green-500/10 transition-all duration-300 cursor-pointer bg-card/50 backdrop-blur-sm"
+              className="group relative overflow-hidden border border-border/40 hover:border-gym/30 hover:shadow-lg hover:shadow-gym/10 transition-all duration-300 cursor-pointer bg-card/50 backdrop-blur-sm"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 bg-gradient-to-br from-gym/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <CardHeader className="pb-3 relative z-10">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2 flex-1" onClick={() => handleExerciseClick(exercise)}>
-                    <div className="p-2 rounded-xl bg-gradient-to-br from-green-500/15 to-emerald-500/10 group-hover:from-green-500/25 group-hover:to-emerald-500/15 transition-all">
-                      <Dumbbell className="h-4 w-4 text-green-600" />
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-gym/15 to-rose-500/10 group-hover:from-gym/25 group-hover:to-rose-500/15 transition-all">
+                      <Dumbbell className="h-4 w-4 text-gym" />
                     </div>
                     <CardTitle className="text-base font-semibold">{exercise.name}</CardTitle>
                   </div>
@@ -372,7 +377,7 @@ export function ExercisesList() {
                     <Button size="sm" variant="ghost" onClick={e => {
                       e.stopPropagation();
                       handleEdit(exercise);
-                    }} className="h-8 w-8 p-0 rounded-xl hover:bg-green-500/10">
+                    }} className="h-8 w-8 p-0 rounded-xl hover:bg-gym/10">
                       <Edit2 className="h-3.5 w-3.5" />
                     </Button>
                     <Button size="sm" variant="ghost" onClick={e => {
@@ -384,7 +389,7 @@ export function ExercisesList() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-2" onClick={() => handleExerciseClick(exercise)}>
-                  <Badge className="bg-green-500/15 text-green-600 border-green-500/30 text-xs">{exercise.muscle_group}</Badge>
+                  <Badge className="bg-gym/15 text-gym border-gym/30 text-xs">{exercise.muscle_group}</Badge>
                   {exercise.side_muscle_groups && exercise.side_muscle_groups.length > 0 && (
                     exercise.side_muscle_groups.slice(0, 2).map(sideGroup => (
                       <Badge key={sideGroup} variant="secondary" className="text-[10px]">
@@ -428,8 +433,8 @@ export function ExercisesList() {
 
       {filteredExercises.length === 0 && (
         <div className="text-center py-16">
-          <div className="p-6 rounded-3xl bg-green-500/10 inline-block mb-4">
-            <Dumbbell className="h-12 w-12 text-green-500/50" />
+          <div className="p-6 rounded-3xl bg-gym/10 inline-block mb-4">
+            <Dumbbell className="h-12 w-12 text-gym/50" />
           </div>
           <h3 className="text-lg font-semibold text-foreground mb-2">No exercises found</h3>
           <p className="text-muted-foreground mb-4">
@@ -443,9 +448,14 @@ export function ExercisesList() {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingExercise} onOpenChange={open => !open && setEditingExercise(null)}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto border-gym/30 bg-gradient-to-br from-background via-background to-gym/5">
           <DialogHeader>
-            <DialogTitle>Edit Exercise</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <div className="p-2 rounded-xl bg-gym/20">
+                <Edit2 className="h-4 w-4 text-gym" />
+              </div>
+              Edit Exercise
+            </DialogTitle>
             <DialogDescription>
               Update exercise details
             </DialogDescription>
@@ -456,7 +466,7 @@ export function ExercisesList() {
               <Input id="edit-name" value={formData.name} onChange={e => setFormData({
               ...formData,
               name: e.target.value
-            })} placeholder="e.g., Bench Press" required />
+            })} placeholder="e.g., Bench Press" required className="focus:border-gym focus:ring-gym/30" />
             </div>
             <div>
               <Label htmlFor="edit-muscle_group">Primary Muscle Group</Label>
@@ -487,7 +497,7 @@ export function ExercisesList() {
                           : formData.side_muscle_groups.filter(name => name !== group.name);
                         setFormData({ ...formData, side_muscle_groups: newSideGroups });
                       }}
-                      className="w-4 h-4 text-primary bg-background border-border rounded focus:ring-primary"
+                      className="w-4 h-4 text-gym bg-background border-border rounded focus:ring-gym"
                     />
                     <Label htmlFor={`edit-side-${group.id}`} className="text-sm">{group.name}</Label>
                   </div>
@@ -499,7 +509,7 @@ export function ExercisesList() {
               <Input id="edit-equipment" value={formData.equipment} onChange={e => setFormData({
               ...formData,
               equipment: e.target.value
-            })} placeholder="e.g., Barbell, Bodyweight" />
+            })} placeholder="e.g., Barbell, Bodyweight" className="focus:border-gym focus:ring-gym/30" />
             </div>
             <div>
               <Label htmlFor="edit-difficulty_level">Difficulty</Label>
@@ -528,7 +538,7 @@ export function ExercisesList() {
                 <Input id="edit-video_url" value={formData.video_url} onChange={e => setFormData({
                 ...formData,
                 video_url: e.target.value
-              })} placeholder="YouTube embed URL or video link..." />
+              })} placeholder="YouTube embed URL or video link..." className="focus:border-gym focus:ring-gym/30" />
               </div>
               <div>
                 <Label htmlFor="edit-photo_url" className="flex items-center gap-2">
@@ -538,7 +548,7 @@ export function ExercisesList() {
                 <Input id="edit-photo_url" value={formData.photo_url} onChange={e => setFormData({
                 ...formData,
                 photo_url: e.target.value
-              })} placeholder="Image URL..." />
+              })} placeholder="Image URL..." className="focus:border-gym focus:ring-gym/30" />
               </div>
             </div>
 
@@ -547,10 +557,10 @@ export function ExercisesList() {
               <Textarea id="edit-instructions" value={formData.instructions} onChange={e => setFormData({
               ...formData,
               instructions: e.target.value
-            })} placeholder="Exercise instructions..." rows={3} />
+            })} placeholder="Exercise instructions..." rows={3} className="focus:border-gym focus:ring-gym/30" />
             </div>
             <div className="flex gap-2">
-              <Button type="submit" className="flex-1">
+              <Button type="submit" className="flex-1 bg-gym hover:bg-gym/90 text-white">
                 Update Exercise
               </Button>
               <Button type="button" variant="outline" onClick={() => setEditingExercise(null)}>
