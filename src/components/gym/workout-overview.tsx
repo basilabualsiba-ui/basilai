@@ -126,40 +126,42 @@ export function WorkoutOverview({
   if (!todayWorkout || todayWorkout.exercises.length === 0) {
     return (
       <div className="min-h-screen bg-background p-4">
-        <Card className="text-center py-12 border-gym/30 bg-gradient-to-br from-gym/5 to-transparent animate-fade-in">
-          <CardContent className="space-y-6">
+        {/* Empty state card */}
+        <Card className="text-center py-8 border-gym/30 bg-gradient-to-br from-gym/5 to-transparent animate-fade-in mb-6">
+          <CardContent className="space-y-4">
             <div className="relative">
               <div className="absolute inset-0 bg-gym/20 blur-3xl rounded-full animate-pulse" />
-              <Dumbbell className="h-16 w-16 mx-auto text-gym relative z-10 animate-scale-in" />
+              <Dumbbell className="h-14 w-14 mx-auto text-gym/60 relative z-10" />
             </div>
-            <div className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
-              <h3 className="text-xl font-bold text-foreground mb-2">No workout scheduled</h3>
-              <p className="text-muted-foreground">Choose how you'd like to start</p>
-            </div>
-            
-            <div className="flex flex-col gap-3 max-w-md mx-auto">
-              <Button 
-                onClick={onStartBlankWorkout} 
-                className="w-full h-14 bg-gym hover:bg-gym/90 text-white font-semibold shadow-lg shadow-gym/25 hover:shadow-gym/40 transition-all duration-300 hover:scale-[1.02] animate-fade-in"
-                style={{ animationDelay: '0.2s' }}
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Start Blank Workout
-                <Sparkles className="h-4 w-4 ml-2 opacity-60" />
-              </Button>
-              
-              <Button 
-                onClick={() => setIsWorkoutSelectOpen(true)} 
-                variant="outline" 
-                className="w-full h-14 border-gym/30 hover:border-gym hover:bg-gym/10 transition-all duration-300 hover:scale-[1.02] animate-fade-in"
-                style={{ animationDelay: '0.3s' }}
-              >
-                <List className="h-5 w-5 mr-2 text-gym" />
-                Select from Saved Workouts
-              </Button>
+            <div>
+              <h3 className="text-lg font-semibold text-foreground mb-1">No Workouts Scheduled</h3>
+              <p className="text-sm text-muted-foreground">No workouts are planned for this day. Check your workout plans or create a new one.</p>
             </div>
           </CardContent>
         </Card>
+
+        {/* Start Workout Options */}
+        <div className="space-y-3 animate-fade-in" style={{ animationDelay: '0.15s' }}>
+          <h3 className="text-sm font-medium text-muted-foreground mb-3">Quick Actions</h3>
+          
+          <Button 
+            onClick={onStartBlankWorkout} 
+            className="w-full h-14 bg-gym hover:bg-gym/90 text-white font-semibold shadow-lg shadow-gym/25 hover:shadow-gym/40 transition-all duration-300 hover:scale-[1.02] group"
+          >
+            <Plus className="h-5 w-5 mr-2 group-hover:rotate-90 transition-transform duration-300" />
+            Start Blank Workout
+            <Sparkles className="h-4 w-4 ml-2 opacity-60" />
+          </Button>
+          
+          <Button 
+            onClick={() => setIsWorkoutSelectOpen(true)} 
+            variant="outline" 
+            className="w-full h-14 border-gym/30 hover:border-gym hover:bg-gym/10 transition-all duration-300 hover:scale-[1.02] group"
+          >
+            <List className="h-5 w-5 mr-2 text-gym group-hover:scale-110 transition-transform duration-300" />
+            Select from Saved Workouts
+          </Button>
+        </div>
 
         {/* Workout Selection Dialog */}
         <Dialog open={isWorkoutSelectOpen} onOpenChange={setIsWorkoutSelectOpen}>
