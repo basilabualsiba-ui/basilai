@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Dumbbell, Play, Target, CheckCircle2, TrendingUp, Plus, List, Users } from 'lucide-react';
+import { ArrowLeft, Dumbbell, Play, Target, CheckCircle2, TrendingUp, Plus, List, Users, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { ExerciseInfoDialog } from './exercise-info-dialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 interface WorkoutOverviewProps {
   onStartWorkout: () => void;
   onBack: () => void;
@@ -42,6 +47,7 @@ export function WorkoutOverview({
   const [exercisePRs, setExercisePRs] = useState<Record<string, { weight: number; reps: number }>>({});
   const [sessionSets, setSessionSets] = useState<Record<string, Array<{ weight: number; reps: number; set_number: number }>>>({});
   const [isWorkoutSelectOpen, setIsWorkoutSelectOpen] = useState(false);
+  const [showAlternativeOptions, setShowAlternativeOptions] = useState(false);
   const todayWorkout = selectedDate ? getWorkoutForDate(format(selectedDate, 'yyyy-MM-dd')) : getTodayWorkout();
   const isCompleted = todayWorkout?.session?.completed_at;
   console.log('WorkoutOverview - todayWorkout:', todayWorkout);
@@ -120,30 +126,35 @@ export function WorkoutOverview({
   if (!todayWorkout || todayWorkout.exercises.length === 0) {
     return (
       <div className="min-h-screen bg-background p-4">
-        <Card className="text-center py-12">
+        <Card className="text-center py-12 border-gym/30 bg-gradient-to-br from-gym/5 to-transparent animate-fade-in">
           <CardContent className="space-y-6">
-            <Dumbbell className="h-12 w-12 mx-auto text-muted-foreground" />
-            <div>
-              <h3 className="text-lg font-medium text-foreground mb-2">No workout scheduled</h3>
+            <div className="relative">
+              <div className="absolute inset-0 bg-gym/20 blur-3xl rounded-full animate-pulse" />
+              <Dumbbell className="h-16 w-16 mx-auto text-gym relative z-10 animate-scale-in" />
+            </div>
+            <div className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              <h3 className="text-xl font-bold text-foreground mb-2">No workout scheduled</h3>
               <p className="text-muted-foreground">Choose how you'd like to start</p>
             </div>
             
             <div className="flex flex-col gap-3 max-w-md mx-auto">
               <Button 
                 onClick={onStartBlankWorkout} 
-                variant="default" 
-                className="w-full h-12"
+                className="w-full h-14 bg-gym hover:bg-gym/90 text-white font-semibold shadow-lg shadow-gym/25 hover:shadow-gym/40 transition-all duration-300 hover:scale-[1.02] animate-fade-in"
+                style={{ animationDelay: '0.2s' }}
               >
                 <Plus className="h-5 w-5 mr-2" />
                 Start Blank Workout
+                <Sparkles className="h-4 w-4 ml-2 opacity-60" />
               </Button>
               
               <Button 
                 onClick={() => setIsWorkoutSelectOpen(true)} 
                 variant="outline" 
-                className="w-full h-12"
+                className="w-full h-14 border-gym/30 hover:border-gym hover:bg-gym/10 transition-all duration-300 hover:scale-[1.02] animate-fade-in"
+                style={{ animationDelay: '0.3s' }}
               >
-                <List className="h-5 w-5 mr-2" />
+                <List className="h-5 w-5 mr-2 text-gym" />
                 Select from Saved Workouts
               </Button>
             </div>
@@ -152,20 +163,27 @@ export function WorkoutOverview({
 
         {/* Workout Selection Dialog */}
         <Dialog open={isWorkoutSelectOpen} onOpenChange={setIsWorkoutSelectOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md border-gym/30 bg-gradient-to-br from-background to-gym/5">
             <DialogHeader>
-              <DialogTitle>Select a Workout</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <List className="h-5 w-5 text-gym" />
+                Select a Workout
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-2 max-h-[60vh] overflow-y-auto">
               {workouts.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  No saved workouts. Create one first!
-                </p>
+                <div className="text-center py-8 animate-fade-in">
+                  <Dumbbell className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+                  <p className="text-muted-foreground">
+                    No saved workouts. Create one first!
+                  </p>
+                </div>
               ) : (
-                workouts.map((workout) => (
+                workouts.map((workout, index) => (
                   <Card 
                     key={workout.id}
-                    className="cursor-pointer hover:bg-accent transition-colors"
+                    className="cursor-pointer border-transparent hover:border-gym/50 hover:bg-gym/10 transition-all duration-300 hover:scale-[1.01] animate-fade-in"
+                    style={{ animationDelay: `${index * 0.05}s` }}
                     onClick={() => handleWorkoutSelect(workout.id)}
                   >
                     <CardContent className="p-4">
@@ -178,7 +196,7 @@ export function WorkoutOverview({
                       {workout.muscle_groups && workout.muscle_groups.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {workout.muscle_groups.map((muscle: string) => (
-                            <Badge key={muscle} variant="secondary" className="text-xs">
+                            <Badge key={muscle} variant="secondary" className="text-xs bg-gym/10 text-gym border-gym/20">
                               {muscle}
                             </Badge>
                           ))}
@@ -263,26 +281,78 @@ export function WorkoutOverview({
 
   return <div className="min-h-screen bg-background p-4">
       {/* Workout Name Header */}
-      {workoutName && (
-        <div className="mb-4">
-          <h1 className="text-xl font-bold text-foreground">{workoutName}</h1>
-          <p className="text-sm text-muted-foreground">
-            {selectedDate ? format(selectedDate, 'EEEE, MMMM d, yyyy') : 'Today'}
-          </p>
-        </div>
+      <div className="mb-4 animate-fade-in">
+        <h1 className="text-xl font-bold text-foreground">{workoutName || 'Today\'s Workout'}</h1>
+        <p className="text-sm text-muted-foreground">
+          {selectedDate ? format(selectedDate, 'EEEE, MMMM d, yyyy') : 'Today'}
+        </p>
+      </div>
+
+      {/* Alternative Options - Always visible */}
+      {!isCompleted && (
+        <Collapsible 
+          open={showAlternativeOptions} 
+          onOpenChange={setShowAlternativeOptions}
+          className="mb-6 animate-fade-in"
+          style={{ animationDelay: '0.1s' }}
+        >
+          <CollapsibleTrigger asChild>
+            <Button 
+              variant="ghost" 
+              className="w-full flex items-center justify-between p-3 h-auto bg-gym/5 hover:bg-gym/10 border border-gym/20 rounded-xl transition-all duration-300"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gym/20 flex items-center justify-center">
+                  <Sparkles className="h-4 w-4 text-gym" />
+                </div>
+                <span className="text-sm font-medium text-foreground">Different workout options</span>
+              </div>
+              {showAlternativeOptions ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground transition-transform duration-300" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-300" />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+            <div className="pt-3 space-y-2">
+              <Button 
+                onClick={onStartBlankWorkout} 
+                variant="outline"
+                className="w-full h-12 border-gym/30 hover:border-gym hover:bg-gym/10 transition-all duration-300 hover:scale-[1.01] group"
+              >
+                <Plus className="h-4 w-4 mr-2 text-gym group-hover:scale-110 transition-transform duration-300" />
+                <span>Start Blank Workout</span>
+              </Button>
+              
+              <Button 
+                onClick={() => setIsWorkoutSelectOpen(true)} 
+                variant="outline" 
+                className="w-full h-12 border-gym/30 hover:border-gym hover:bg-gym/10 transition-all duration-300 hover:scale-[1.01] group"
+              >
+                <List className="h-4 w-4 mr-2 text-gym group-hover:scale-110 transition-transform duration-300" />
+                <span>Select from Saved Workouts</span>
+              </Button>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       )}
 
       {/* Target Muscles Section */}
-      <div className="mb-6">
+      <div className="mb-6 animate-fade-in" style={{ animationDelay: '0.15s' }}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-medium text-muted-foreground">Target Muscles</h2>
         </div>
         
         <div className="grid grid-cols-4 gap-4">
-          {muscleDistribution.map(({ muscle, percentage, isMain }) => {
+          {muscleDistribution.map(({ muscle, percentage, isMain }, index) => {
           const details = getMuscleGroupDetails(muscle);
-          return <div key={muscle} className="text-center">
-                <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center mb-2 mx-auto border-2" style={{
+          return <div 
+            key={muscle} 
+            className="text-center animate-scale-in"
+            style={{ animationDelay: `${0.2 + index * 0.05}s` }}
+          >
+                <div className="w-16 h-16 rounded-lg overflow-hidden flex items-center justify-center mb-2 mx-auto border-2 transition-transform duration-300 hover:scale-110" style={{
               backgroundColor: `${details.color}20`,
               borderColor: details.color
             }}>
@@ -299,22 +369,27 @@ export function WorkoutOverview({
       </div>
 
       {/* Exercises Section */}
-      <div className="mb-20">
-        <div className="flex items-center justify-between mb-4">
+      <div className="mb-32">
+        <div className="flex items-center justify-between mb-4 animate-fade-in" style={{ animationDelay: '0.25s' }}>
           <h2 className="text-lg font-medium text-muted-foreground">{todayWorkout.exercises.length} Exercises</h2>
         </div>
 
         <div className="space-y-3">
           {todayWorkout.exercises.map((exercise, index) => {
           const details = getMuscleGroupDetails(exercise.muscle_group);
-          return <Card key={exercise.id} className="bg-card border-border cursor-pointer hover:border-primary/30 transition-colors" onClick={() => handleExerciseClick(exercise)}>
+          return <Card 
+            key={exercise.id} 
+            className="bg-card border-border cursor-pointer hover:border-gym/50 transition-all duration-300 hover:scale-[1.01] hover:shadow-lg hover:shadow-gym/10 animate-fade-in" 
+            style={{ animationDelay: `${0.3 + index * 0.05}s` }}
+            onClick={() => handleExerciseClick(exercise)}
+          >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                      <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
                         {exercise.photo_url ? <img src={exercise.photo_url} alt={exercise.name} className="w-full h-full object-cover rounded-lg" /> : <Dumbbell className="h-6 w-6 text-muted-foreground" />}
                       </div>
-                      <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg overflow-hidden border-2 border-white">
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg overflow-hidden border-2 border-background shadow-sm">
                         {details.photo_url ? <img src={details.photo_url} alt={exercise.muscle_group} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs" style={{
                       backgroundColor: details.color
                     }}>
@@ -340,8 +415,8 @@ export function WorkoutOverview({
                       )}
                       {!isCompleted && exercisePRs[exercise.id] && (
                         <div className="flex items-center gap-1 mt-1">
-                          <TrendingUp className="h-3 w-3 text-primary" />
-                          <span className="text-xs text-primary font-medium">
+                          <TrendingUp className="h-3 w-3 text-gym" />
+                          <span className="text-xs text-gym font-medium">
                             PR: {exercisePRs[exercise.id].weight}kg × {exercisePRs[exercise.id].reps}
                           </span>
                         </div>
@@ -355,11 +430,11 @@ export function WorkoutOverview({
       </div>
 
       {/* Start Workout Button */}
-      <div className="fixed bottom-20 md:bottom-4 left-0 right-0 p-4 bg-gradient-to-t from-background via-background/80 to-transparent z-50">
+      <div className="fixed bottom-20 md:bottom-4 left-0 right-0 p-4 bg-gradient-to-t from-background via-background/95 to-transparent z-50">
         {isCompleted ? (
-          <div className="space-y-2">
+          <div className="space-y-2 animate-fade-in">
             {/* Trainer Toggle for completed workout */}
-            <div className="flex items-center justify-center gap-3 p-3 bg-card rounded-lg border border-border">
+            <div className="flex items-center justify-center gap-3 p-3 bg-card rounded-xl border border-border shadow-sm">
               <Users className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm text-foreground">With Trainer</span>
               <Switch
@@ -371,18 +446,70 @@ export function WorkoutOverview({
                 }}
               />
             </div>
-            <div className="w-full h-14 bg-green-500/10 border border-green-500/20 rounded-lg flex items-center justify-center shadow-lg">
+            <div className="w-full h-14 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center justify-center shadow-lg">
               <CheckCircle2 className="h-5 w-5 mr-2 text-green-500" />
               <span className="text-green-500 font-semibold text-lg">Workout Completed</span>
             </div>
           </div>
         ) : (
-          <Button onClick={onStartWorkout} className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg shadow-lg">
+          <Button 
+            onClick={onStartWorkout} 
+            className="w-full h-14 bg-gym hover:bg-gym/90 text-white font-semibold text-lg shadow-xl shadow-gym/25 hover:shadow-gym/40 transition-all duration-300 hover:scale-[1.02] rounded-xl animate-fade-in"
+          >
             <Play className="h-5 w-5 mr-2" />
-            {isToday ? 'Start Workout' : 'Log Workout'}
+            {isToday ? 'Start Scheduled Workout' : 'Log Workout'}
           </Button>
         )}
       </div>
+
+      {/* Workout Selection Dialog */}
+      <Dialog open={isWorkoutSelectOpen} onOpenChange={setIsWorkoutSelectOpen}>
+        <DialogContent className="max-w-md border-gym/30 bg-gradient-to-br from-background to-gym/5">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <List className="h-5 w-5 text-gym" />
+              Select a Workout
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+            {workouts.length === 0 ? (
+              <div className="text-center py-8 animate-fade-in">
+                <Dumbbell className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+                <p className="text-muted-foreground">
+                  No saved workouts. Create one first!
+                </p>
+              </div>
+            ) : (
+              workouts.map((workout, index) => (
+                <Card 
+                  key={workout.id}
+                  className="cursor-pointer border-transparent hover:border-gym/50 hover:bg-gym/10 transition-all duration-300 hover:scale-[1.01] animate-fade-in"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                  onClick={() => handleWorkoutSelect(workout.id)}
+                >
+                  <CardContent className="p-4">
+                    <h4 className="font-medium text-foreground">{workout.name}</h4>
+                    {workout.description && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {workout.description}
+                      </p>
+                    )}
+                    {workout.muscle_groups && workout.muscle_groups.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {workout.muscle_groups.map((muscle: string) => (
+                          <Badge key={muscle} variant="secondary" className="text-xs bg-gym/10 text-gym border-gym/20">
+                            {muscle}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Exercise Info Dialog */}
       <ExerciseInfoDialog exercise={selectedExercise} open={isDialogOpen} onOpenChange={setIsDialogOpen} />
