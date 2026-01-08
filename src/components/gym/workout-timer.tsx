@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
-import { X, Clock, Settings, CheckCircle, Dumbbell, Pause, Play, Plus, Minus, RotateCcw, TrendingUp, RefreshCw, ChevronUp, ChevronDown, Users } from 'lucide-react';
+import { Clock, Settings, CheckCircle, Dumbbell, Pause, Play, RotateCcw, TrendingUp, RefreshCw, ChevronUp, ChevronDown, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { WorkoutExerciseManager } from './workout-exercise-manager';
 import { SwapExerciseDialog } from './swap-exercise-dialog';
@@ -45,7 +45,6 @@ export function WorkoutTimer({
   const todayWorkout = getTodayWorkout();
   const session = workoutSessions.find(s => s.id === sessionId);
 
-  // Fetch workout exercise details when exercises change
   useEffect(() => {
     const fetchWorkoutExerciseDetails = async () => {
       if (!currentExercises || currentExercises.length === 0) return;
@@ -73,7 +72,6 @@ export function WorkoutTimer({
     fetchWorkoutExerciseDetails();
   }, [currentExercises]);
 
-  // Compute completed exercises from database
   useEffect(() => {
     const computeCompletedExercises = () => {
       const completed = new Set<string>();
@@ -96,7 +94,6 @@ export function WorkoutTimer({
     computeCompletedExercises();
   }, [currentExercises, exerciseSets, sessionId]);
 
-  // Fetch exercise PRs
   useEffect(() => {
     const fetchExercisePRs = async () => {
       if (!currentExercises || currentExercises.length === 0) return;
@@ -131,7 +128,6 @@ export function WorkoutTimer({
     fetchExercisePRs();
   }, [currentExercises]);
 
-  // Timer effect
   useEffect(() => {
     let interval: NodeJS.Timeout;
     
@@ -167,19 +163,16 @@ export function WorkoutTimer({
   const completedCount = computedCompletedExercises.size;
   const progressPercentage = totalExercises > 0 ? (completedCount / totalExercises) * 100 : 0;
 
-  // Calculate muscle distribution
   const muscleDistribution = () => {
     const muscleScores: Record<string, { score: number; isMain: boolean }> = {};
     
     currentExercises.forEach(exercise => {
-      // Main muscle gets 75% weight
       if (!muscleScores[exercise.muscle_group]) {
         muscleScores[exercise.muscle_group] = { score: 0, isMain: true };
       }
       muscleScores[exercise.muscle_group].score += 0.75;
-      muscleScores[exercise.muscle_group].isMain = true; // Mark as main muscle
+      muscleScores[exercise.muscle_group].isMain = true;
       
-      // Side muscles get 25% weight (split among them)
       const sideMuscles = exercise.side_muscle_groups || [];
       if (sideMuscles.length > 0) {
         const sideWeight = 0.25 / sideMuscles.length;
@@ -188,12 +181,10 @@ export function WorkoutTimer({
             muscleScores[sideMuscle] = { score: 0, isMain: false };
           }
           muscleScores[sideMuscle].score += sideWeight;
-          // Keep isMain as false only if it was never a main muscle
         });
       }
     });
     
-    // Calculate total and convert to percentages
     const totalScore = Object.values(muscleScores).reduce((sum, { score }) => sum + score, 0);
     const musclePercentages = Object.entries(muscleScores).map(([muscle, { score, isMain }]) => ({
       muscle,
@@ -201,7 +192,6 @@ export function WorkoutTimer({
       isMain
     })).sort((a, b) => b.percentage - a.percentage);
     
-    // Separate into main and side based on isMain flag
     const mainMuscles = musclePercentages.filter(m => m.isMain);
     const sideMuscles = musclePercentages.filter(m => !m.isMain);
     
@@ -276,13 +266,14 @@ export function WorkoutTimer({
   return (
     <div className="min-h-screen bg-background p-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 animate-fade-in">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm text-muted-foreground">Trainer</span>
           <Switch
             checked={session?.with_trainer || false}
             onCheckedChange={handleTrainerToggle}
+            className="data-[state=checked]:bg-gym"
           />
         </div>
         <div className="flex gap-2">
@@ -291,6 +282,7 @@ export function WorkoutTimer({
             size="icon" 
             onClick={onReset}
             title="Reset workout"
+            className="hover:bg-gym/10 hover:text-gym transition-colors"
           >
             <RotateCcw className="h-5 w-5" />
           </Button>
@@ -299,6 +291,7 @@ export function WorkoutTimer({
             size="icon" 
             onClick={() => setIsExerciseManagerOpen(true)}
             title="Manage exercises"
+            className="hover:bg-gym/10 hover:text-gym transition-colors"
           >
             <Settings className="h-5 w-5" />
           </Button>
@@ -306,10 +299,10 @@ export function WorkoutTimer({
       </div>
 
       {/* Timer Display */}
-      <div className="text-center mb-8">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <div className={`w-3 h-3 rounded-full ${isRunning ? 'bg-primary animate-pulse' : 'bg-muted-foreground'}`} />
-          <span className="text-4xl font-mono font-bold text-foreground">
+      <div className="text-center mb-8 animate-fade-in" style={{ animationDelay: '0.05s' }}>
+        <div className="flex items-center justify-center gap-3 mb-3">
+          <div className={`w-3 h-3 rounded-full transition-all duration-300 ${isRunning ? 'bg-gym animate-pulse shadow-lg shadow-gym/50' : 'bg-muted-foreground'}`} />
+          <span className="text-5xl font-mono font-bold text-foreground tracking-tight">
             {formatTime(timer)}
           </span>
         </div>
@@ -317,7 +310,7 @@ export function WorkoutTimer({
           variant="ghost" 
           size="sm" 
           onClick={toggleTimer}
-          className="text-muted-foreground"
+          className="text-muted-foreground hover:text-gym hover:bg-gym/10 transition-colors"
         >
           {isRunning ? <Pause className="h-4 w-4 mr-1" /> : <Play className="h-4 w-4 mr-1" />}
           {isRunning ? 'Pause' : 'Resume'}
@@ -325,13 +318,14 @@ export function WorkoutTimer({
       </div>
 
       {/* Progress */}
-      <div className="mb-6">
+      <div className="mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-lg font-medium text-foreground">{totalExercises} Exercise{totalExercises !== 1 ? 's' : ''}</span>
+          <span className="text-lg font-semibold text-foreground">{totalExercises} Exercise{totalExercises !== 1 ? 's' : ''}</span>
+          <span className="text-sm font-medium text-gym">{Math.round(progressPercentage)}%</span>
         </div>
         
         <div className="mb-2">
-          <Progress value={progressPercentage} className="h-2" />
+          <Progress value={progressPercentage} className="h-2 bg-muted [&>div]:bg-gym" />
         </div>
         
         <div className="text-sm text-muted-foreground text-center">
@@ -341,16 +335,19 @@ export function WorkoutTimer({
 
       {/* Muscle Distribution Card */}
       {(mainMuscles.length > 0 || sideMuscles.length > 0) && (
-        <Card className="mb-6">
+        <Card className="mb-6 border-gym/20 bg-gradient-to-br from-gym/5 to-transparent animate-fade-in" style={{ animationDelay: '0.15s' }}>
           <CardContent className="p-4">
-            <h3 className="text-sm font-semibold text-foreground mb-3">Target Muscles</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-gym" />
+              Target Muscles
+            </h3>
             
             {/* Main Muscles */}
             {mainMuscles.length > 0 && (
               <div className="mb-4">
-                <p className="text-xs font-medium text-muted-foreground mb-2">Main Muscles</p>
+                <p className="text-xs font-medium text-muted-foreground mb-2">Main</p>
                 <div className="flex flex-wrap gap-2">
-                  {mainMuscles.map(({ muscle, percentage }) => {
+                  {mainMuscles.map(({ muscle, percentage }, index) => {
                     const muscleGroup = muscleGroups.find(mg => mg.name === muscle);
                     const color = muscleGroup?.color || '#ff7f00';
                     const photo_url = muscleGroup?.photo_url;
@@ -358,9 +355,13 @@ export function WorkoutTimer({
                     return (
                       <div 
                         key={muscle}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card"
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl border bg-card transition-all duration-300 hover:scale-105 animate-scale-in"
+                        style={{ 
+                          borderColor: `${color}40`,
+                          animationDelay: `${0.2 + index * 0.05}s`
+                        }}
                       >
-                        <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0">
+                        <div className="w-6 h-6 rounded-lg overflow-hidden flex-shrink-0">
                           {photo_url ? (
                             <img src={photo_url} alt={muscle} className="w-full h-full object-cover" />
                           ) : (
@@ -370,7 +371,7 @@ export function WorkoutTimer({
                           )}
                         </div>
                         <span className="text-xs font-medium text-foreground capitalize">{muscle}</span>
-                        <span className="text-xs font-semibold text-primary">{percentage}%</span>
+                        <span className="text-xs font-bold" style={{ color }}>{percentage}%</span>
                       </div>
                     );
                   })}
@@ -381,9 +382,9 @@ export function WorkoutTimer({
             {/* Side Muscles */}
             {sideMuscles.length > 0 && (
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-2">Side Muscles</p>
+                <p className="text-xs font-medium text-muted-foreground mb-2">Side</p>
                 <div className="flex flex-wrap gap-2">
-                  {sideMuscles.map(({ muscle, percentage }) => {
+                  {sideMuscles.map(({ muscle, percentage }, index) => {
                     const muscleGroup = muscleGroups.find(mg => mg.name === muscle);
                     const color = muscleGroup?.color || '#ff7f00';
                     const photo_url = muscleGroup?.photo_url;
@@ -391,9 +392,10 @@ export function WorkoutTimer({
                     return (
                       <div 
                         key={muscle}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card"
+                        className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-card/50 transition-all duration-300 hover:scale-105 animate-scale-in"
+                        style={{ animationDelay: `${0.3 + index * 0.05}s` }}
                       >
-                        <div className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0">
+                        <div className="w-5 h-5 rounded-md overflow-hidden flex-shrink-0 opacity-80">
                           {photo_url ? (
                             <img src={photo_url} alt={muscle} className="w-full h-full object-cover" />
                           ) : (
@@ -415,87 +417,89 @@ export function WorkoutTimer({
       )}
 
       {/* Exercise List */}
-      <div className="space-y-3 mb-20">
+      <div className="space-y-3 mb-24">
         {currentExercises.map((exercise, index) => {
           const isCompleted = computedCompletedExercises.has(exercise.id);
           const exerciseSetCount = exerciseSets.filter(
             set => set.session_id === sessionId && set.exercise_id === exercise.id
           ).length;
+          const muscleGroup = muscleGroups.find(mg => mg.name === exercise.muscle_group);
+          const color = muscleGroup?.color || '#ff7f00';
 
           return (
             <Card 
               key={exercise.id} 
-              className={`transition-all ${
-                isCompleted ? 'bg-success/10 border-success/30' : 'bg-card border-border'
+              className={`transition-all duration-300 animate-fade-in hover:scale-[1.01] ${
+                isCompleted 
+                  ? 'bg-green-500/10 border-green-500/30 hover:border-green-500/50' 
+                  : 'bg-card border-border hover:border-gym/50 hover:shadow-lg hover:shadow-gym/10'
               }`}
+              style={{ animationDelay: `${0.2 + index * 0.05}s` }}
             >
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div 
-                    className="relative cursor-pointer"
+                    className="relative cursor-pointer group"
                     onClick={() => !isCompleted && onExerciseSelect(exercise, workoutExerciseDetails[exercise.id])}
                   >
-                    <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
+                    <div className="w-14 h-14 bg-muted rounded-xl flex items-center justify-center overflow-hidden transition-transform duration-300 group-hover:scale-105">
                       {exercise.photo_url ? (
                         <img 
                           src={exercise.photo_url} 
                           alt={exercise.name}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover rounded-xl"
                         />
                       ) : (
-                        <Dumbbell className="h-6 w-6 text-muted-foreground" />
+                        <Dumbbell className="h-7 w-7 text-muted-foreground" />
                       )}
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg overflow-hidden border-2 border-white">
-                      {(() => {
-                        const muscleGroup = muscleGroups.find(mg => mg.name === exercise.muscle_group);
-                        const color = muscleGroup?.color || '#ff7f00';
-                        const photo_url = muscleGroup?.photo_url;
-                        
-                        return photo_url ? (
-                          <img src={photo_url} alt={exercise.muscle_group} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-xs" style={{ backgroundColor: color }}>
-                            💪
-                          </div>
-                        );
-                      })()}
+                    <div 
+                      className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg overflow-hidden border-2 border-background shadow-sm"
+                      style={{ backgroundColor: `${color}30` }}
+                    >
+                      {muscleGroup?.photo_url ? (
+                        <img src={muscleGroup.photo_url} alt={exercise.muscle_group} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs" style={{ backgroundColor: color }}>
+                          💪
+                        </div>
+                      )}
                     </div>
                   </div>
                   
-                   <div 
-                     className="flex-1 cursor-pointer"
-                     onClick={() => !isCompleted && onExerciseSelect(exercise, workoutExerciseDetails[exercise.id])}
-                   >
-                     <h3 className={`font-medium ${isCompleted ? 'text-success' : 'text-foreground'}`}>
-                       {exercise.name}
-                     </h3>
-                     <p className="text-sm text-muted-foreground">
-                       {isCompleted ? `${exerciseSetCount} Sets Completed` : (() => {
-                         const config = workoutExerciseDetails[exercise.id];
-                         const sets = config?.sets || 3;
-                         return `${sets} SETS • 12-10-8 REPS`;
-                       })()}
-                     </p>
-                     {!isCompleted && exercisePRs[exercise.id] && (
-                       <div className="flex items-center gap-1 mt-1">
-                         <TrendingUp className="h-3 w-3 text-primary" />
-                         <span className="text-xs text-primary font-medium">
-                           PR: {exercisePRs[exercise.id].weight}kg × {exercisePRs[exercise.id].reps}
-                         </span>
-                       </div>
-                     )}
-                   </div>
+                  <div 
+                    className="flex-1 cursor-pointer"
+                    onClick={() => !isCompleted && onExerciseSelect(exercise, workoutExerciseDetails[exercise.id])}
+                  >
+                    <h3 className={`font-semibold transition-colors ${isCompleted ? 'text-green-600' : 'text-foreground'}`}>
+                      {exercise.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                      {isCompleted ? `${exerciseSetCount} Sets Completed` : (() => {
+                        const config = workoutExerciseDetails[exercise.id];
+                        const sets = config?.sets || 3;
+                        return `${sets} Sets • 12-10-8 Reps`;
+                      })()}
+                    </p>
+                    {!isCompleted && exercisePRs[exercise.id] && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <TrendingUp className="h-3 w-3 text-gym" />
+                        <span className="text-xs text-gym font-medium">
+                          PR: {exercisePRs[exercise.id].weight}kg × {exercisePRs[exercise.id].reps}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                   
                   {isCompleted ? (
-                    <CheckCircle className="h-6 w-6 text-success" />
+                    <CheckCircle className="h-6 w-6 text-green-500" />
                   ) : (
                     <div className="flex items-center gap-1">
                       <div className="flex flex-col gap-0.5">
                         <Button 
                           variant="ghost" 
                           size="icon"
-                          className="h-6 w-6"
+                          className="h-6 w-6 hover:bg-gym/10 hover:text-gym"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleMoveExercise(exercise.id, 'up');
@@ -507,7 +511,7 @@ export function WorkoutTimer({
                         <Button 
                           variant="ghost" 
                           size="icon"
-                          className="h-6 w-6"
+                          className="h-6 w-6 hover:bg-gym/10 hover:text-gym"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleMoveExercise(exercise.id, 'down');
@@ -520,6 +524,7 @@ export function WorkoutTimer({
                       <Button 
                         variant="ghost" 
                         size="icon"
+                        className="hover:bg-gym/10 hover:text-gym"
                         onClick={(e) => {
                           e.stopPropagation();
                           setExerciseToSwap(exercise);
@@ -538,13 +543,13 @@ export function WorkoutTimer({
       </div>
 
       {/* Complete Workout Button */}
-      <div className="sticky bottom-4 mt-6 p-4">
+      <div className="fixed bottom-20 md:bottom-4 left-0 right-0 p-4 bg-gradient-to-t from-background via-background/95 to-transparent z-50">
         <Button 
           onClick={handleCompleteWorkout}
           disabled={completedCount < totalExercises}
-          className={`w-full h-14 font-semibold text-lg ${
+          className={`w-full h-14 font-semibold text-lg rounded-xl transition-all duration-300 hover:scale-[1.02] ${
             completedCount >= totalExercises 
-              ? 'bg-success hover:bg-success/90 text-success-foreground' 
+              ? 'bg-green-500 hover:bg-green-600 text-white shadow-xl shadow-green-500/25' 
               : 'bg-muted text-muted-foreground cursor-not-allowed'
           }`}
         >
