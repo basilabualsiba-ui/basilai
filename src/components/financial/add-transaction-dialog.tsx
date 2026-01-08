@@ -372,32 +372,40 @@ export const AddTransactionDialog = ({
   // Currency Selector Component
   const CurrencySelector = () => (
     <Drawer open={showCurrencySelector} onOpenChange={setShowCurrencySelector}>
-      <DrawerContent className="h-[70vh] border-t-4 border-wallet">
-        <DrawerHeader className="border-b border-wallet/20 bg-gradient-to-r from-wallet/10 to-transparent">
-          <DrawerTitle className="text-lg font-semibold text-wallet">Select Currency</DrawerTitle>
-          <DrawerDescription className="sr-only">Select a currency for this transaction</DrawerDescription>
-        </DrawerHeader>
-        <div className="p-4 space-y-3">
+      <DrawerContent className="h-[70vh] bg-background border-t border-border/50 rounded-t-3xl">
+        <div className="flex items-center justify-center py-4">
+          <span className="text-base font-semibold text-foreground">Select Currency</span>
+        </div>
+        <DrawerDescription className="sr-only">Select a currency for this transaction</DrawerDescription>
+        <div className="p-4 space-y-2">
           {currencies.map(currency => (
-            <Card key={currency.code} className={`cursor-pointer transition-colors ${currency.code === selectedCurrency ? 'ring-2 ring-wallet' : ''}`} onClick={() => handleCurrencySelect(currency.code)}>
-              <CardContent className="flex items-center justify-between p-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl font-bold text-wallet">{currency.symbol}</span>
-                    <div>
-                      <h4 className="font-medium text-foreground">{currency.code}</h4>
-                      <p className="text-sm text-muted-foreground">{currency.name}</p>
-                    </div>
-                  </div>
+            <button 
+              key={currency.code} 
+              className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${
+                currency.code === selectedCurrency 
+                  ? 'bg-primary/10 ring-1 ring-primary/30' 
+                  : 'bg-muted/30 hover:bg-muted/50'
+              }`} 
+              onClick={() => handleCurrencySelect(currency.code)}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-lg font-bold text-primary">{currency.symbol}</span>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">
-                    1 {currency.code} = {getRate(currency.code, 'ILS').toFixed(4)} ₪
-                  </p>
+                <div className="text-left">
+                  <p className="font-medium text-foreground">{currency.code}</p>
+                  <p className="text-xs text-muted-foreground">{currency.name}</p>
                 </div>
-                {currency.code === selectedCurrency && <div className="w-2 h-2 bg-wallet rounded-full" />}
-              </CardContent>
-            </Card>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  1 = {getRate(currency.code, 'ILS').toFixed(2)} ₪
+                </span>
+                {currency.code === selectedCurrency && (
+                  <div className="w-2 h-2 rounded-full bg-primary" />
+                )}
+              </div>
+            </button>
           ))}
         </div>
       </DrawerContent>
@@ -405,306 +413,413 @@ export const AddTransactionDialog = ({
   );
 
   // Note Drawer Component
-  const NoteDrawer = () => <Drawer open={showNoteDrawer} onOpenChange={setShowNoteDrawer}>
-      <DrawerContent className="h-[60vh] border-t-4 border-wallet">
-        <DrawerHeader className="border-b border-wallet/20 bg-gradient-to-r from-wallet/10 to-transparent">
-          <DrawerTitle className="text-lg font-semibold text-wallet">Add Note</DrawerTitle>
-          <DrawerDescription className="sr-only">Add a note to this transaction</DrawerDescription>
-        </DrawerHeader>
-        <div className="p-4 space-y-4">
-          <Textarea value={formData.description} onChange={e => setFormData(prev => ({
-          ...prev,
-          description: e.target.value
-        }))} placeholder="Add a note..." className="resize-none focus:border-wallet focus:ring-wallet" rows={6} />
-          <Button onClick={() => setShowNoteDrawer(false)} className="w-full bg-wallet hover:bg-wallet/90 text-white">
+  const NoteDrawer = () => (
+    <Drawer open={showNoteDrawer} onOpenChange={setShowNoteDrawer}>
+      <DrawerContent className="h-[50vh] bg-background border-t border-border/50 rounded-t-3xl">
+        <div className="flex items-center justify-center py-4">
+          <span className="text-base font-semibold text-foreground">Add Note</span>
+        </div>
+        <DrawerDescription className="sr-only">Add a note to this transaction</DrawerDescription>
+        <div className="p-4 space-y-4 flex-1 flex flex-col">
+          <Textarea 
+            value={formData.description} 
+            onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))} 
+            placeholder="What was this for?" 
+            className="flex-1 resize-none rounded-2xl bg-muted/30 border-0 focus:ring-1 focus:ring-primary/30" 
+          />
+          <Button 
+            onClick={() => setShowNoteDrawer(false)} 
+            className="w-full h-12 rounded-2xl bg-primary hover:bg-primary/90"
+          >
             Save Note
           </Button>
         </div>
       </DrawerContent>
-    </Drawer>;
+    </Drawer>
+  );
 
   // Date Picker Drawer Component
-  const DatePickerDrawer = () => <Drawer open={showDatePicker} onOpenChange={setShowDatePicker}>
-      <DrawerContent className="h-[60vh] border-t-4 border-wallet">
-        <DrawerHeader className="border-b border-wallet/20 bg-gradient-to-r from-wallet/10 to-transparent">
-          <DrawerTitle className="text-lg font-semibold text-wallet">Select Date & Time</DrawerTitle>
-          <DrawerDescription className="sr-only">Select date and time for this transaction</DrawerDescription>
-        </DrawerHeader>
+  const DatePickerDrawer = () => (
+    <Drawer open={showDatePicker} onOpenChange={setShowDatePicker}>
+      <DrawerContent className="h-[55vh] bg-background border-t border-border/50 rounded-t-3xl">
+        <div className="flex items-center justify-center py-4">
+          <span className="text-base font-semibold text-foreground">Select Date & Time</span>
+        </div>
+        <DrawerDescription className="sr-only">Select date and time for this transaction</DrawerDescription>
         <div className="p-4 space-y-4">
-          <div>
-            <Label htmlFor="datetime">Date & Time</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <div className="mt-2 p-3 border border-wallet/30 rounded-md bg-background cursor-pointer hover:bg-wallet/5 transition-colors">
-                  <span className="text-foreground">
-                    {new Date(formData.date).toLocaleDateString(undefined, {
-                      day: '2-digit',
-                      month: '2-digit', 
-                      year: 'numeric'
-                    })} {new Date(formData.date).toLocaleTimeString(undefined, {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: true
-                    })}
-                  </span>
-                </div>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={new Date(formData.date)}
-                  onSelect={(date) => {
-                    if (date) {
-                      const currentDate = new Date(formData.date);
-                      const newDate = new Date(date);
-                      newDate.setHours(currentDate.getHours());
-                      newDate.setMinutes(currentDate.getMinutes());
-                      const year = newDate.getFullYear();
-                      const month = String(newDate.getMonth() + 1).padStart(2, '0');
-                      const day = String(newDate.getDate()).padStart(2, '0');
-                      const hours = String(newDate.getHours()).padStart(2, '0');
-                      const minutes = String(newDate.getMinutes()).padStart(2, '0');
-                      const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
-                      setFormData(prev => ({
-                        ...prev,
-                        date: localDateTimeString
-                      }));
-                    }
-                  }}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-                <div className="p-3 border-t">
-                  <div className="space-y-2">
-                    <Label>Time</Label>
-                    <div className="flex gap-2">
-                      <Select
-                        value={new Date(formData.date).getHours().toString()}
-                        onValueChange={(hour) => {
-                          const currentDate = new Date(formData.date);
-                          currentDate.setHours(parseInt(hour));
-                          const year = currentDate.getFullYear();
-                          const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-                          const day = String(currentDate.getDate()).padStart(2, '0');
-                          const hours = String(currentDate.getHours()).padStart(2, '0');
-                          const minutes = String(currentDate.getMinutes()).padStart(2, '0');
-                          const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
-                          setFormData(prev => ({
-                            ...prev,
-                            date: localDateTimeString
-                          }));
-                        }}
-                      >
-                        <SelectTrigger className="w-20">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 24 }, (_, i) => (
-                            <SelectItem key={i} value={i.toString()}>
-                              {i.toString().padStart(2, '0')}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <span className="flex items-center">:</span>
-                      <Select
-                        value={new Date(formData.date).getMinutes().toString()}
-                        onValueChange={(minute) => {
-                          const currentDate = new Date(formData.date);
-                          currentDate.setMinutes(parseInt(minute));
-                          const year = currentDate.getFullYear();
-                          const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-                          const day = String(currentDate.getDate()).padStart(2, '0');
-                          const hours = String(currentDate.getHours()).padStart(2, '0');
-                          const minutes = String(currentDate.getMinutes()).padStart(2, '0');
-                          const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
-                          setFormData(prev => ({
-                            ...prev,
-                            date: localDateTimeString
-                          }));
-                        }}
-                      >
-                        <SelectTrigger className="w-20">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 60 }, (_, i) => (
-                            <SelectItem key={i} value={i.toString()}>
-                              {i.toString().padStart(2, '0')}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="w-full p-4 rounded-2xl bg-muted/30 hover:bg-muted/50 transition-colors text-left">
+                <p className="text-xs text-muted-foreground mb-1">Date & Time</p>
+                <p className="text-foreground font-medium">
+                  {new Date(formData.date).toLocaleDateString(undefined, {
+                    weekday: 'short',
+                    day: '2-digit',
+                    month: 'short', 
+                    year: 'numeric'
+                  })} at {new Date(formData.date).toLocaleTimeString(undefined, {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                  })}
+                </p>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <CalendarComponent
+                mode="single"
+                selected={new Date(formData.date)}
+                onSelect={(date) => {
+                  if (date) {
+                    const currentDate = new Date(formData.date);
+                    const newDate = new Date(date);
+                    newDate.setHours(currentDate.getHours());
+                    newDate.setMinutes(currentDate.getMinutes());
+                    const year = newDate.getFullYear();
+                    const month = String(newDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(newDate.getDate()).padStart(2, '0');
+                    const hours = String(newDate.getHours()).padStart(2, '0');
+                    const minutes = String(newDate.getMinutes()).padStart(2, '0');
+                    const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
+                    setFormData(prev => ({ ...prev, date: localDateTimeString }));
+                  }
+                }}
+                initialFocus
+                className="p-3 pointer-events-auto"
+              />
+              <div className="p-3 border-t">
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Time</Label>
+                  <div className="flex gap-2">
+                    <Select
+                      value={new Date(formData.date).getHours().toString()}
+                      onValueChange={(hour) => {
+                        const currentDate = new Date(formData.date);
+                        currentDate.setHours(parseInt(hour));
+                        const year = currentDate.getFullYear();
+                        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                        const day = String(currentDate.getDate()).padStart(2, '0');
+                        const hours = String(currentDate.getHours()).padStart(2, '0');
+                        const minutes = String(currentDate.getMinutes()).padStart(2, '0');
+                        const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
+                        setFormData(prev => ({ ...prev, date: localDateTimeString }));
+                      }}
+                    >
+                      <SelectTrigger className="w-20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 24 }, (_, i) => (
+                          <SelectItem key={i} value={i.toString()}>
+                            {i.toString().padStart(2, '0')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span className="flex items-center">:</span>
+                    <Select
+                      value={new Date(formData.date).getMinutes().toString()}
+                      onValueChange={(minute) => {
+                        const currentDate = new Date(formData.date);
+                        currentDate.setMinutes(parseInt(minute));
+                        const year = currentDate.getFullYear();
+                        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                        const day = String(currentDate.getDate()).padStart(2, '0');
+                        const hours = String(currentDate.getHours()).padStart(2, '0');
+                        const minutes = String(currentDate.getMinutes()).padStart(2, '0');
+                        const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
+                        setFormData(prev => ({ ...prev, date: localDateTimeString }));
+                      }}
+                    >
+                      <SelectTrigger className="w-20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 60 }, (_, i) => (
+                          <SelectItem key={i} value={i.toString()}>
+                            {i.toString().padStart(2, '0')}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-          <Button onClick={() => setShowDatePicker(false)} className="w-full bg-wallet hover:bg-wallet/90 text-white">
-            Save Date
+              </div>
+            </PopoverContent>
+          </Popover>
+          <Button 
+            onClick={() => setShowDatePicker(false)} 
+            className="w-full h-12 rounded-2xl bg-primary hover:bg-primary/90"
+          >
+            Done
           </Button>
         </div>
       </DrawerContent>
-    </Drawer>;
+    </Drawer>
+  );
 
   // Account Selector Component
-  const AccountSelector = () => <Drawer open={showAccountSelector} onOpenChange={setShowAccountSelector}>
-      <DrawerContent className="h-[80vh] border-t-4 border-wallet">
-        <DrawerHeader className="border-b border-wallet/20 bg-gradient-to-r from-wallet/10 to-transparent">
-          <DrawerTitle className="text-lg font-semibold text-wallet">Select Account</DrawerTitle>
-          <DrawerDescription className="sr-only">Select an account for this transaction</DrawerDescription>
-        </DrawerHeader>
-        <div className="p-4 space-y-3">
+  const AccountSelector = () => (
+    <Drawer open={showAccountSelector} onOpenChange={setShowAccountSelector}>
+      <DrawerContent className="h-[70vh] bg-background border-t border-border/50 rounded-t-3xl">
+        <div className="flex items-center justify-center py-4">
+          <span className="text-base font-semibold text-foreground">Select Account</span>
+        </div>
+        <DrawerDescription className="sr-only">Select an account for this transaction</DrawerDescription>
+        <div className="p-4 space-y-2">
           {accounts.map(account => {
-          const IconComponent = getAccountIcon(account.icon);
-          return <Card key={account.id} className={`cursor-pointer transition-colors ${account.id === formData.accountId ? 'ring-2 ring-wallet' : ''}`} onClick={() => handleAccountSelect(account.id)}>
-                <CardContent className="flex items-center gap-3 p-4">
-                  {account.icon && account.icon.startsWith('http') ? (
-                    <div className="w-12 h-12 rounded-full overflow-hidden shadow-sm">
-                      <IconComponent className="w-full h-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className={`p-3 rounded-full bg-wallet/10`}>
-                      <IconComponent className={`h-6 w-6 text-wallet`} />
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <h4 className="font-medium text-foreground">{account.name}</h4>
-                    <p className="text-lg font-bold text-wallet">{getCurrencySymbol(account.currency)}{account.amount.toLocaleString()}</p>
+            const IconComponent = getAccountIcon(account.icon);
+            return (
+              <button 
+                key={account.id} 
+                className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all ${
+                  account.id === formData.accountId 
+                    ? 'bg-primary/10 ring-1 ring-primary/30' 
+                    : 'bg-muted/30 hover:bg-muted/50'
+                }`} 
+                onClick={() => handleAccountSelect(account.id)}
+              >
+                {account.icon && account.icon.startsWith('http') ? (
+                  <div className="w-12 h-12 rounded-full overflow-hidden">
+                    <IconComponent className="w-full h-full object-cover" />
                   </div>
-                  {account.id === formData.accountId && <div className="w-2 h-2 bg-wallet rounded-full" />}
-                </CardContent>
-              </Card>;
-        })}
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <IconComponent className="h-6 w-6 text-primary" />
+                  </div>
+                )}
+                <div className="flex-1 text-left">
+                  <p className="font-medium text-foreground">{account.name}</p>
+                  <p className="text-lg font-bold text-primary">
+                    {getCurrencySymbol(account.currency)}{account.amount.toLocaleString()}
+                  </p>
+                </div>
+                {account.id === formData.accountId && (
+                  <div className="w-2 h-2 rounded-full bg-primary" />
+                )}
+              </button>
+            );
+          })}
         </div>
       </DrawerContent>
-    </Drawer>;
+    </Drawer>
+  );
   return <>
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerTrigger asChild>
           {trigger}
         </DrawerTrigger>
-        <DrawerContent className="h-[90vh] border-t-4 border-wallet">
-          <DrawerHeader className="border-b border-wallet/20 bg-gradient-to-r from-wallet/10 to-transparent">
-            <div className="flex items-center justify-between">
-              <X className="h-6 w-6 cursor-pointer text-wallet" onClick={() => setOpen(false)} />
-              <DrawerTitle className="text-lg font-semibold text-wallet">
-                {editTransaction ? 'Edit Transaction' : categories.find(c => c.id === formData.categoryId)?.name || 'Add Transaction'}
-              </DrawerTitle>
-              <div className="w-6" />
-            </div>
-            <DrawerDescription className="sr-only">
-              {editTransaction ? 'Edit an existing transaction' : 'Add a new financial transaction'}
-            </DrawerDescription>
-          </DrawerHeader>
+        <DrawerContent className="h-[90vh] bg-background border-t border-border/50 rounded-t-3xl">
+          {/* Minimal Header */}
+          <div className="flex items-center justify-between px-5 py-4">
+            <button 
+              onClick={() => setOpen(false)}
+              className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-muted/50 transition-colors"
+            >
+              <X className="h-5 w-5 text-muted-foreground" />
+            </button>
+            <span className="text-base font-semibold text-primary">
+              {editTransaction ? 'Edit Transaction' : categories.find(c => c.id === formData.categoryId)?.name || 'New Transaction'}
+            </span>
+            <div className="w-10" />
+          </div>
+          <DrawerDescription className="sr-only">
+            {editTransaction ? 'Edit an existing transaction' : 'Add a new financial transaction'}
+          </DrawerDescription>
           
           <div className="flex-1 flex flex-col" onClick={() => setShowContextMenu(false)}>
-            {/* Amount Display */}
-            <div className="text-center py-4">
-              <div className="text-6xl font-light text-foreground mb-2">
-                {currencies.find(c => c.code === selectedCurrency)?.symbol || '₪'}{displayExpression || '0'}
+            {/* Amount Display - Clean and Minimal */}
+            <div className="flex-1 flex flex-col items-center justify-center px-6">
+              <div className="text-7xl font-extralight tracking-tight text-foreground mb-1">
+                <span className="text-4xl opacity-60 mr-1">{currencies.find(c => c.code === selectedCurrency)?.symbol || '₪'}</span>
+                {displayExpression || '0'}
               </div>
-              {calculatorMemory && operator && <div className="text-sm text-muted-foreground">
+              {calculatorMemory && operator && (
+                <div className="text-sm text-muted-foreground/60 mt-2">
                   {calculatorMemory} {operator} {displayExpression}
-                </div>}
+                </div>
+              )}
             </div>
 
-            {/* Subcategory Bubbles */}
-            {formData.categoryId && <div className="px-4 mb-4">
-                <div className="flex flex-wrap gap-2">
-                  {categories.find(c => c.id === formData.categoryId)?.subcategories?.map(subcategory => <SubcategoryButton key={subcategory.id} subcategory={subcategory} isSelected={formData.subcategoryId === subcategory.id} onSelect={() => setFormData(prev => ({
-                ...prev,
-                subcategoryId: subcategory.id
-              }))} onEdit={() => setEditingSubcategory(subcategory)} />)}
-                  {showNewSubcategoryInput ? <Input value={newSubcategoryName} onChange={e => setNewSubcategoryName(e.target.value)} onKeyDown={handleSubcategoryKeyPress} onBlur={() => {
-                if (!newSubcategoryName.trim()) {
-                  setShowNewSubcategoryInput(false);
-                }
-               }} placeholder="New subcategory" className="h-7 text-xs w-32" autoFocus /> : <button onClick={() => setShowNewSubcategoryInput(true)} className="px-3 py-1 rounded-full text-xs font-medium transition-colors bg-muted text-muted-foreground hover:bg-muted/80 border-2 border-dashed border-muted-foreground/30 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center" style={{ touchAction: 'manipulation' }}>
-                      <Plus className="h-3 w-3" />
-                    </button>}
-                </div>
-              </div>}
-
-            {/* Calculator */}
-            <div className="p-4 border-t border-border bg-muted/20 space-y-3 mt-auto">
-              {/* Function Buttons - Only show Tag, Note, Cash, Today */}
-              <div className="grid grid-cols-4 gap-2">
-                <Button variant="ghost" className="h-12 flex flex-col items-center justify-center text-xs" onClick={() => {/* Tag functionality */}}>
-                  <span className="text-blue-500">🏷️</span>
-                  <span>Tag</span>
-                </Button>
-                <Button variant="ghost" className="h-12 flex flex-col items-center justify-center text-xs" onClick={() => setShowNoteDrawer(true)}>
-                  <span className="text-blue-500">📝</span>
-                  <span>Note</span>
-                </Button>
-                <Button variant="ghost" className="h-12 flex flex-col items-center justify-center text-xs gap-0.5 px-1" onClick={() => setShowAccountSelector(true)}>
-                  {selectedAccount ? (
-                    <>
-                      {selectedAccount.icon?.startsWith('http') ? (
-                        <img src={selectedAccount.icon} alt={selectedAccount.name} className="w-4 h-4 object-cover rounded flex-shrink-0" />
-                      ) : (
-                        (() => {
-                          const IconComponent = getAccountIcon(selectedAccount.icon || 'Wallet');
-                          return <IconComponent className="w-4 h-4 text-green-500 flex-shrink-0" />;
-                        })()
-                      )}
-                      <span className="text-xs leading-none text-center break-words w-full px-0.5" style={{ fontSize: '10px', lineHeight: '1.1' }}>
-                        {selectedAccount.name}
-                      </span>
-                    </>
+            {/* Subcategory Bubbles - Horizontal Scroll */}
+            {formData.categoryId && (
+              <div className="px-4 pb-4">
+                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                  {categories.find(c => c.id === formData.categoryId)?.subcategories?.map(subcategory => (
+                    <SubcategoryButton 
+                      key={subcategory.id} 
+                      subcategory={subcategory} 
+                      isSelected={formData.subcategoryId === subcategory.id} 
+                      onSelect={() => setFormData(prev => ({
+                        ...prev,
+                        subcategoryId: subcategory.id
+                      }))} 
+                      onEdit={() => setEditingSubcategory(subcategory)} 
+                    />
+                  ))}
+                  {showNewSubcategoryInput ? (
+                    <Input 
+                      value={newSubcategoryName} 
+                      onChange={e => setNewSubcategoryName(e.target.value)} 
+                      onKeyDown={handleSubcategoryKeyPress} 
+                      onBlur={() => {
+                        if (!newSubcategoryName.trim()) {
+                          setShowNewSubcategoryInput(false);
+                        }
+                      }} 
+                      placeholder="New..." 
+                      className="h-8 text-xs w-24 rounded-full border-dashed" 
+                      autoFocus 
+                    />
                   ) : (
-                    <>
-                      <span className="text-green-500">💵</span>
-                      <span>Cash</span>
-                    </>
+                    <button 
+                      onClick={() => setShowNewSubcategoryInput(true)} 
+                      className="flex-shrink-0 w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center hover:bg-muted transition-colors"
+                    >
+                      <Plus className="h-4 w-4 text-muted-foreground" />
+                    </button>
                   )}
-                </Button>
-                <Button variant="ghost" className="h-12 flex flex-col items-center justify-center text-xs" onClick={() => setShowDatePicker(true)}>
-                  <span className="text-blue-500">📅</span>
-                  <span>Today</span>
-                </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Modern Calculator Section */}
+            <div className="bg-muted/30 rounded-t-3xl pt-4 pb-6 px-4 space-y-4">
+              {/* Quick Actions Row */}
+              <div className="grid grid-cols-4 gap-3">
+                <button 
+                  className="flex flex-col items-center gap-1 py-3 rounded-2xl bg-background/60 hover:bg-background transition-all"
+                  onClick={() => {/* Tag functionality */}}
+                >
+                  <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center">
+                    <span className="text-sm">🏷️</span>
+                  </div>
+                  <span className="text-[10px] font-medium text-muted-foreground">Tag</span>
+                </button>
+                
+                <button 
+                  className="flex flex-col items-center gap-1 py-3 rounded-2xl bg-background/60 hover:bg-background transition-all"
+                  onClick={() => setShowNoteDrawer(true)}
+                >
+                  <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+                    <span className="text-sm">📝</span>
+                  </div>
+                  <span className="text-[10px] font-medium text-muted-foreground">Note</span>
+                </button>
+                
+                <button 
+                  className="flex flex-col items-center gap-1 py-3 rounded-2xl bg-background/60 hover:bg-background transition-all"
+                  onClick={() => setShowAccountSelector(true)}
+                >
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center overflow-hidden">
+                    {selectedAccount?.icon?.startsWith('http') ? (
+                      <img src={selectedAccount.icon} alt={selectedAccount.name} className="w-full h-full object-cover" />
+                    ) : (
+                      (() => {
+                        const IconComponent = getAccountIcon(selectedAccount?.icon || 'Wallet');
+                        return <IconComponent className="w-4 h-4 text-emerald-500" />;
+                      })()
+                    )}
+                  </div>
+                  <span className="text-[10px] font-medium text-muted-foreground truncate max-w-[60px]">
+                    {selectedAccount?.name || 'Account'}
+                  </span>
+                </button>
+                
+                <button 
+                  className="flex flex-col items-center gap-1 py-3 rounded-2xl bg-background/60 hover:bg-background transition-all"
+                  onClick={() => setShowDatePicker(true)}
+                >
+                  <div className="w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center">
+                    <span className="text-sm">📅</span>
+                  </div>
+                  <span className="text-[10px] font-medium text-muted-foreground">Today</span>
+                </button>
               </div>
               
-              {/* Number Pad */}
-              <div className="grid grid-cols-4 gap-3">
-                {[7, 8, 9].map(key => <Button key={key} variant="ghost" className="h-14 text-xl font-medium" onClick={() => handleCalculatorInput(key.toString())}>
+              {/* Number Pad - Modern Grid */}
+              <div className="grid grid-cols-4 gap-2">
+                {/* Row 1 */}
+                {[7, 8, 9].map(key => (
+                  <button 
+                    key={key} 
+                    className="h-14 rounded-2xl bg-background/80 hover:bg-background text-xl font-medium text-foreground transition-all active:scale-95"
+                    onClick={() => handleCalculatorInput(key.toString())}
+                  >
                     {key}
-                  </Button>)}
-                <Button variant="outline" className="h-14 text-xl font-medium" onClick={() => handleCalculatorInput('backspace')}>
-                  <Delete className="h-5 w-5" />
-                </Button>
+                  </button>
+                ))}
+                <button 
+                  className="h-14 rounded-2xl bg-background/80 hover:bg-background flex items-center justify-center transition-all active:scale-95"
+                  onClick={() => handleCalculatorInput('backspace')}
+                >
+                  <Delete className="h-5 w-5 text-muted-foreground" />
+                </button>
                 
-                {[4, 5, 6].map(key => <Button key={key} variant="ghost" className="h-14 text-xl font-medium" onClick={() => handleCalculatorInput(key.toString())}>
+                {/* Row 2 */}
+                {[4, 5, 6].map(key => (
+                  <button 
+                    key={key} 
+                    className="h-14 rounded-2xl bg-background/80 hover:bg-background text-xl font-medium text-foreground transition-all active:scale-95"
+                    onClick={() => handleCalculatorInput(key.toString())}
+                  >
                     {key}
-                  </Button>)}
-                <Button variant="ghost" className="h-14 text-xl font-medium" onClick={() => handleCalculatorInput('-')}>
-                  -
-                </Button>
+                  </button>
+                ))}
+                <button 
+                  className="h-14 rounded-2xl bg-background/80 hover:bg-background text-xl font-medium text-muted-foreground transition-all active:scale-95"
+                  onClick={() => handleCalculatorInput('-')}
+                >
+                  −
+                </button>
                 
-                {[1, 2, 3].map(key => <Button key={key} variant="ghost" className="h-14 text-xl font-medium" onClick={() => handleCalculatorInput(key.toString())}>
+                {/* Row 3 */}
+                {[1, 2, 3].map(key => (
+                  <button 
+                    key={key} 
+                    className="h-14 rounded-2xl bg-background/80 hover:bg-background text-xl font-medium text-foreground transition-all active:scale-95"
+                    onClick={() => handleCalculatorInput(key.toString())}
+                  >
                     {key}
-                  </Button>)}
-                <Button variant="ghost" className="h-14 text-xl font-medium" onClick={() => handleCalculatorInput('+')}>
+                  </button>
+                ))}
+                <button 
+                  className="h-14 rounded-2xl bg-background/80 hover:bg-background text-xl font-medium text-muted-foreground transition-all active:scale-95"
+                  onClick={() => handleCalculatorInput('+')}
+                >
                   +
-                </Button>
+                </button>
                 
-                <Button variant="ghost" className="h-14 text-xl font-medium" onClick={() => setShowCurrencySelector(true)}>
+                {/* Row 4 */}
+                <button 
+                  className="h-14 rounded-2xl bg-background/80 hover:bg-background text-lg font-semibold text-primary transition-all active:scale-95"
+                  onClick={() => setShowCurrencySelector(true)}
+                >
                   {currencies.find(c => c.code === selectedCurrency)?.symbol || '₪'}
-                </Button>
-                <Button variant="ghost" className="h-14 text-xl font-medium" onClick={() => handleCalculatorInput('0')}>
+                </button>
+                <button 
+                  className="h-14 rounded-2xl bg-background/80 hover:bg-background text-xl font-medium text-foreground transition-all active:scale-95"
+                  onClick={() => handleCalculatorInput('0')}
+                >
                   0
-                </Button>
-                <Button variant="ghost" className="h-14 text-xl font-medium" onClick={() => handleCalculatorInput('.')}>
+                </button>
+                <button 
+                  className="h-14 rounded-2xl bg-background/80 hover:bg-background text-xl font-medium text-foreground transition-all active:scale-95"
+                  onClick={() => handleCalculatorInput('.')}
+                >
                   .
-                </Button>
-                
-                <Button className="h-14 bg-wallet hover:bg-wallet/90 text-white font-semibold text-2xl" onClick={operator ? () => handleCalculatorInput('=') : handleSubmit} disabled={!displayExpression || !formData.accountId}>
+                </button>
+                <button 
+                  className={`h-14 rounded-2xl font-semibold text-lg transition-all active:scale-95 ${
+                    displayExpression && formData.accountId 
+                      ? 'bg-primary text-primary-foreground' 
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                  onClick={operator ? () => handleCalculatorInput('=') : handleSubmit} 
+                  disabled={!displayExpression || !formData.accountId}
+                >
                   {operator ? '=' : '✓'}
-                </Button>
-                
-                
+                </button>
               </div>
             </div>
           </div>
