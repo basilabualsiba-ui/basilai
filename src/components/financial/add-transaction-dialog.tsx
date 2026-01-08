@@ -609,16 +609,16 @@ export const AddTransactionDialog = ({
         <DrawerTrigger asChild>
           {trigger}
         </DrawerTrigger>
-        <DrawerContent className="h-[90vh] bg-background border-t border-border/50 rounded-t-3xl">
+        <DrawerContent className="h-[90vh] bg-background border-t border-wallet/30 rounded-t-3xl scrollbar-wallet">
           {/* Minimal Header */}
           <div className="flex items-center justify-between px-5 py-4">
             <button 
               onClick={() => setOpen(false)}
-              className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-muted/50 transition-colors"
+              className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-wallet/10 transition-colors"
             >
               <X className="h-5 w-5 text-muted-foreground" />
             </button>
-            <span className="text-base font-semibold text-primary">
+            <span className="text-base font-semibold text-wallet">
               {editTransaction ? 'Edit Transaction' : categories.find(c => c.id === formData.categoryId)?.name || 'New Transaction'}
             </span>
             <div className="w-10" />
@@ -630,7 +630,7 @@ export const AddTransactionDialog = ({
           <div className="flex-1 flex flex-col" onClick={() => setShowContextMenu(false)}>
             {/* Amount Display - Clean and Minimal */}
             <div className="flex-1 flex flex-col items-center justify-center px-6">
-              <div className="text-7xl font-extralight tracking-tight text-foreground mb-1">
+              <div className="text-7xl font-extralight tracking-tight text-wallet mb-1">
                 <span className="text-4xl opacity-60 mr-1">{currencies.find(c => c.code === selectedCurrency)?.symbol || '₪'}</span>
                 {displayExpression || '0'}
               </div>
@@ -792,7 +792,7 @@ export const AddTransactionDialog = ({
                 
                 {/* Row 4 */}
                 <button 
-                  className="h-14 rounded-2xl bg-background/80 hover:bg-background text-lg font-semibold text-primary transition-all active:scale-95"
+                  className="h-14 rounded-2xl bg-background/80 hover:bg-background text-lg font-semibold text-wallet transition-all active:scale-95"
                   onClick={() => setShowCurrencySelector(true)}
                 >
                   {currencies.find(c => c.code === selectedCurrency)?.symbol || '₪'}
@@ -812,7 +812,7 @@ export const AddTransactionDialog = ({
                 <button 
                   className={`h-14 rounded-2xl font-semibold text-lg transition-all active:scale-95 ${
                     displayExpression && formData.accountId 
-                      ? 'bg-primary text-primary-foreground' 
+                      ? 'bg-wallet text-wallet-foreground' 
                       : 'bg-muted text-muted-foreground'
                   }`}
                   onClick={operator ? () => handleCalculatorInput('=') : handleSubmit} 

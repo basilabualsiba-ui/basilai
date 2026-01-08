@@ -177,14 +177,15 @@ export function AlternativesManager() {
           if (!open) resetDialog();
         }}>
           <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
+            <Button className="flex items-center gap-2 bg-gym hover:bg-gym/90 text-gym-foreground">
               <Plus className="h-4 w-4" />
               Create Group
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto border-gym/30 bg-gradient-to-br from-background via-background to-gym/5">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="flex items-center gap-2 text-gym">
+                <Repeat className="h-5 w-5" />
                 {editingGroup ? 'Edit Alternative Group' : 'Create Alternative Group'}
               </DialogTitle>
               <DialogDescription>
@@ -197,7 +198,7 @@ export function AlternativesManager() {
               <div>
                 <Label className="text-base font-semibold mb-3 block">1. Select Muscle Group</Label>
                 <Select value={selectedMuscleGroup} onValueChange={setSelectedMuscleGroup}>
-                  <SelectTrigger>
+                  <SelectTrigger className="border-gym/30 focus:ring-gym/30">
                     <SelectValue placeholder="Choose a muscle group" />
                   </SelectTrigger>
                   <SelectContent>
@@ -220,7 +221,7 @@ export function AlternativesManager() {
                     Select at least 2 exercises to create an alternative group
                   </p>
                   
-                  <div className="space-y-2 max-h-[400px] overflow-y-auto border rounded-lg p-3">
+                  <div className="space-y-2 max-h-[400px] overflow-y-auto border border-gym/20 rounded-xl p-3 bg-gym/5">
                     {filteredExercises.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground">
                         No exercises found for this muscle group
@@ -229,28 +230,28 @@ export function AlternativesManager() {
                       filteredExercises.map((exercise) => (
                         <div
                           key={exercise.id}
-                          className={`flex items-start gap-3 p-3 rounded-lg border transition-colors cursor-pointer hover:bg-muted/50 ${
+                          className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
                             selectedExerciseIds.includes(exercise.id) 
-                              ? 'bg-primary/5 border-primary' 
-                              : 'border-border'
+                              ? 'bg-gym/10 border-gym/50 ring-1 ring-gym/30' 
+                              : 'border-border/50 hover:bg-muted/50 hover:border-gym/30'
                           }`}
                           onClick={() => handleToggleExercise(exercise.id)}
                         >
                           <Checkbox
                             checked={selectedExerciseIds.includes(exercise.id)}
                             onCheckedChange={() => handleToggleExercise(exercise.id)}
-                            className="mt-1"
+                            className="mt-1 border-gym/50 data-[state=checked]:bg-gym data-[state=checked]:border-gym"
                           />
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-foreground">{exercise.name}</p>
                             <div className="flex flex-wrap gap-1 mt-1">
                               {exercise.equipment && (
-                                <Badge variant="secondary" className="text-xs">
+                                <Badge variant="secondary" className="text-xs bg-gym/10 text-gym border-gym/30">
                                   {exercise.equipment}
                                 </Badge>
                               )}
                               {exercise.difficulty_level && (
-                                <Badge variant="outline" className="text-xs">
+                                <Badge variant="outline" className="text-xs border-gym/30">
                                   {exercise.difficulty_level}
                                 </Badge>
                               )}
@@ -265,11 +266,11 @@ export function AlternativesManager() {
 
               {/* Action Buttons */}
               {selectedMuscleGroup && (
-                <div className="flex gap-2 pt-4 border-t">
+                <div className="flex gap-2 pt-4 border-t border-gym/20">
                   <Button
                     onClick={editingGroup ? handleUpdateGroup : handleCreateGroup}
                     disabled={selectedExerciseIds.length < 2}
-                    className="flex-1"
+                    className="flex-1 bg-gym hover:bg-gym/90 text-gym-foreground"
                   >
                     <Repeat className="h-4 w-4 mr-2" />
                     {editingGroup ? 'Update Group' : 'Create Group'}
@@ -280,6 +281,7 @@ export function AlternativesManager() {
                       setIsAddDialogOpen(false);
                       resetDialog();
                     }}
+                    className="border-gym/30 hover:bg-gym/10"
                   >
                     Cancel
                   </Button>
@@ -292,9 +294,11 @@ export function AlternativesManager() {
 
       {/* Alternative Groups List */}
       {alternativeGroups.length === 0 ? (
-        <Card>
+        <Card className="border-gym/20 bg-gradient-to-br from-background to-gym/5">
           <CardContent className="text-center py-12">
-            <Repeat className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <div className="w-16 h-16 rounded-full bg-gym/10 flex items-center justify-center mx-auto mb-4">
+              <Repeat className="h-8 w-8 text-gym" />
+            </div>
             <h3 className="text-lg font-medium text-foreground mb-2">No alternative groups</h3>
             <p className="text-muted-foreground mb-4">
               Create groups of alternative exercises to quickly swap them during workouts
@@ -304,17 +308,21 @@ export function AlternativesManager() {
       ) : (
         <div className="grid gap-4">
           {alternativeGroups.map((group, groupIndex) => (
-            <Card key={groupIndex}>
-              <CardHeader>
+            <Card key={groupIndex} className="border-gym/20 bg-gradient-to-br from-background to-gym/5 overflow-hidden">
+              <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <CardTitle className="text-lg flex items-center gap-2 mb-2">
-                      <Repeat className="h-5 w-5 text-primary" />
-                      Alternative Group {groupIndex + 1}
+                      <div className="w-8 h-8 rounded-full bg-gym/10 flex items-center justify-center">
+                        <Repeat className="h-4 w-4 text-gym" />
+                      </div>
+                      <span className="text-gym">Alternative Group {groupIndex + 1}</span>
                     </CardTitle>
-                    <CardDescription>
-                      <Badge variant="outline">{group.exercises[0]?.muscle_group}</Badge>
-                      <span className="ml-2 text-xs">
+                    <CardDescription className="flex items-center gap-2">
+                      <Badge className="bg-gym/10 text-gym border-gym/30 hover:bg-gym/20">
+                        {group.exercises[0]?.muscle_group}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
                         {group.exercises.length} exercises
                       </span>
                     </CardDescription>
@@ -324,13 +332,14 @@ export function AlternativesManager() {
                       size="sm"
                       variant="ghost"
                       onClick={() => handleEditGroup(group)}
+                      className="h-8 w-8 p-0 hover:bg-gym/10 hover:text-gym"
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                       onClick={() => handleDeleteGroup(group)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -343,21 +352,21 @@ export function AlternativesManager() {
                   {group.exercises.map((exercise, index) => (
                     <div
                       key={exercise.id}
-                      className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg"
+                      className="flex items-center gap-3 p-3 bg-gym/5 rounded-xl border border-gym/10"
                     >
-                      <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-semibold text-primary">{index + 1}</span>
+                      <div className="flex-shrink-0 w-8 h-8 bg-gym/20 rounded-full flex items-center justify-center">
+                        <span className="text-sm font-semibold text-gym">{index + 1}</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-foreground">{exercise.name}</p>
                         <div className="flex gap-2 mt-1">
                           {exercise.equipment && (
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge variant="secondary" className="text-xs bg-gym/10 text-gym/80">
                               {exercise.equipment}
                             </Badge>
                           )}
                           {exercise.difficulty_level && (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-xs border-gym/30">
                               {exercise.difficulty_level}
                             </Badge>
                           )}
