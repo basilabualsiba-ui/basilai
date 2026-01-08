@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Edit, Trash2, Calendar, Clock, Target, CheckCircle } from 'lucide-react';
+import { Edit, Trash2, Calendar, Clock, Target, CheckCircle, Dumbbell } from 'lucide-react';
 import { format, isAfter, isBefore, startOfDay } from 'date-fns';
 import { EditWorkoutPlanDialog } from './edit-workout-plan-dialog';
 
@@ -48,23 +48,28 @@ export function WorkoutPlanManager() {
     <div className="space-y-6">
       <div className="grid gap-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Your Workout Plans</h3>
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <Dumbbell className="h-5 w-5 text-gym" />
+            Your Workout Plans
+          </h3>
           <div className="flex gap-2 text-sm">
-            <Badge variant="outline" className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
+            <Badge className="flex items-center gap-1 bg-gym/10 text-gym border-gym/30 hover:bg-gym/20">
+              <div className="w-2 h-2 rounded-full bg-gym"></div>
               Active ({activePlans.length})
             </Badge>
-            <Badge variant="outline" className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+            <Badge variant="outline" className="flex items-center gap-1 border-gym/30">
+              <div className="w-2 h-2 rounded-full bg-muted-foreground"></div>
               Total ({workoutPlans.length})
             </Badge>
           </div>
         </div>
 
         {workoutPlans.length === 0 ? (
-          <Card>
+          <Card className="border-gym/20 bg-gradient-to-br from-background to-gym/5">
             <CardContent className="p-6 text-center">
-              <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <div className="w-16 h-16 rounded-full bg-gym/10 flex items-center justify-center mx-auto mb-4">
+                <Target className="h-8 w-8 text-gym" />
+              </div>
               <h3 className="text-lg font-semibold mb-2">No workout plans yet</h3>
               <p className="text-muted-foreground">Create your first workout plan to get started</p>
             </CardContent>
@@ -77,22 +82,32 @@ export function WorkoutPlanManager() {
               const canEdit = !isCompleted;
 
               return (
-                <Card key={plan.id} className={`transition-all duration-200 ${
-                  isActive ? 'border-primary/50 bg-primary/5' : ''
-                } ${isCompleted ? 'opacity-75' : ''}`}>
+                <Card 
+                  key={plan.id} 
+                  className={`transition-all duration-200 overflow-hidden ${
+                    isActive 
+                      ? 'border-gym/40 bg-gradient-to-br from-gym/5 to-transparent ring-1 ring-gym/20' 
+                      : 'border-gym/20'
+                  } ${isCompleted ? 'opacity-75' : ''}`}
+                >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <CardTitle className="text-base">{plan.name}</CardTitle>
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-gym/10 flex items-center justify-center">
+                              <Dumbbell className="h-3.5 w-3.5 text-gym" />
+                            </div>
+                            {plan.name}
+                          </CardTitle>
                           <div className="flex gap-1">
                             {isActive && (
-                              <Badge variant="default" className="text-xs">
+                              <Badge className="text-xs bg-gym text-gym-foreground">
                                 Active
                               </Badge>
                             )}
                             {isCompleted && (
-                              <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                              <Badge variant="secondary" className="text-xs flex items-center gap-1 bg-success/10 text-success border-success/30">
                                 <CheckCircle className="h-3 w-3" />
                                 Completed
                               </Badge>
@@ -100,15 +115,15 @@ export function WorkoutPlanManager() {
                           </div>
                         </div>
                         {plan.description && (
-                          <p className="text-sm text-muted-foreground mb-2">{plan.description}</p>
+                          <p className="text-sm text-muted-foreground mb-2 ml-9">{plan.description}</p>
                         )}
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground ml-9">
                           <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
+                            <Calendar className="h-3 w-3 text-gym/70" />
                             {format(new Date(plan.start_date), 'MMM d')} - {plan.end_date ? format(new Date(plan.end_date), 'MMM d, yyyy') : 'Ongoing'}
                           </div>
                           <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
+                            <Clock className="h-3 w-3 text-gym/70" />
                             Created {format(new Date(plan.created_at), 'MMM d, yyyy')}
                           </div>
                         </div>
@@ -119,7 +134,7 @@ export function WorkoutPlanManager() {
                             variant="ghost"
                             size="sm"
                             onClick={() => setEditingPlan(plan)}
-                            className="h-8 w-8 p-0"
+                            className="h-8 w-8 p-0 hover:bg-gym/10 hover:text-gym"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -127,7 +142,7 @@ export function WorkoutPlanManager() {
                             variant="ghost"
                             size="sm"
                             onClick={() => setShowDeleteDialog(plan.id)}
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -153,14 +168,14 @@ export function WorkoutPlanManager() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!showDeleteDialog} onOpenChange={(open) => !open && setShowDeleteDialog(null)}>
-        <DialogContent>
+        <DialogContent className="border-destructive/30">
           <DialogHeader>
-            <DialogTitle>Delete Workout Plan</DialogTitle>
+            <DialogTitle className="text-destructive">Delete Workout Plan</DialogTitle>
             <DialogDescription>
               Are you sure you want to delete this workout plan? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-4 border-t">
             <Button variant="outline" onClick={() => setShowDeleteDialog(null)}>
               Cancel
             </Button>

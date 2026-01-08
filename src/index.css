@@ -203,31 +203,66 @@
   /* Custom scrollbar styling to match app theme */
   * {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--primary)) hsl(var(--muted));
+    scrollbar-color: hsl(var(--primary) / 0.5) hsl(var(--muted));
   }
 
   *::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   *::-webkit-scrollbar-track {
-    background: hsl(var(--muted));
-    border-radius: 4px;
+    background: hsl(var(--muted) / 0.5);
+    border-radius: 100px;
   }
 
   *::-webkit-scrollbar-thumb {
-    background: hsl(var(--primary));
-    border-radius: 4px;
-    border: 1px solid hsl(var(--muted));
+    background: hsl(var(--primary) / 0.4);
+    border-radius: 100px;
   }
 
   *::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--accent));
+    background: hsl(var(--primary) / 0.6);
   }
 
   *::-webkit-scrollbar-corner {
-    background: hsl(var(--muted));
+    background: transparent;
+  }
+
+  /* Wallet themed scrollbar for financial dialogs */
+  .scrollbar-wallet {
+    scrollbar-color: hsl(var(--wallet) / 0.5) hsl(var(--muted));
+  }
+  
+  .scrollbar-wallet::-webkit-scrollbar-thumb {
+    background: hsl(var(--wallet) / 0.4);
+  }
+  
+  .scrollbar-wallet::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--wallet) / 0.6);
+  }
+
+  /* Gym themed scrollbar */
+  .scrollbar-gym {
+    scrollbar-color: hsl(var(--gym) / 0.5) hsl(var(--muted));
+  }
+  
+  .scrollbar-gym::-webkit-scrollbar-thumb {
+    background: hsl(var(--gym) / 0.4);
+  }
+  
+  .scrollbar-gym::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--gym) / 0.6);
+  }
+
+  /* Hide scrollbar utility */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 
   /* Custom checkered background for transparency preview */

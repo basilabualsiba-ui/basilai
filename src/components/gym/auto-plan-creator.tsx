@@ -306,15 +306,18 @@ export function AutoPlanCreator() {
       if (!open) resetForm();
     }}>
       <DialogTrigger asChild>
-        <Button className="flex items-center gap-2">
+        <Button className="flex items-center gap-2 bg-gym hover:bg-gym/90 text-gym-foreground">
           <Plus className="h-4 w-4" />
           <span className="hidden sm:inline">Add Workout Plan</span>
           <span className="sm:hidden">Add</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-gym/30 bg-gradient-to-br from-background via-background to-gym/5">
         <DialogHeader>
-          <DialogTitle>Add Workout Plan</DialogTitle>
+          <DialogTitle className="flex items-center gap-2 text-gym">
+            <Target className="h-5 w-5" />
+            Add Workout Plan
+          </DialogTitle>
           <DialogDescription>
             Create a plan that automatically schedules a workout for specific days across a date range
           </DialogDescription>
@@ -332,9 +335,9 @@ export function AutoPlanCreator() {
             />
           </div>
 
-          <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
+          <div className="flex items-center justify-between p-4 border border-gym/20 rounded-xl bg-gym/5">
             <div className="space-y-0.5">
-              <Label htmlFor="one-time">One-Time Workout</Label>
+              <Label htmlFor="one-time" className="font-medium">One-Time Workout</Label>
               <p className="text-sm text-muted-foreground">
                 Create a workout plan for a single day only
               </p>
@@ -343,6 +346,7 @@ export function AutoPlanCreator() {
               id="one-time"
               checked={todayOnly}
               onCheckedChange={setTodayOnly}
+              className="data-[state=checked]:bg-gym"
             />
           </div>
 
@@ -501,7 +505,7 @@ export function AutoPlanCreator() {
               />
             </div>
             
-            <div className="space-y-2 max-h-48 overflow-y-auto border rounded-md p-3">
+            <div className="space-y-2 max-h-48 overflow-y-auto border border-gym/20 rounded-xl p-3 bg-gym/5">
               {workouts.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">
                   No workouts available. Create some workouts first.
@@ -512,20 +516,30 @@ export function AutoPlanCreator() {
                 </p>
               ) : (
                 filteredWorkouts.map((workout) => (
-                  <div key={workout.id} className="flex items-start space-x-2">
+                  <div 
+                    key={workout.id} 
+                    className={`flex items-start space-x-3 p-3 rounded-xl cursor-pointer transition-all ${
+                      formData.selectedWorkout === workout.id 
+                        ? 'bg-gym/10 border border-gym/40 ring-1 ring-gym/30' 
+                        : 'border border-transparent hover:bg-gym/5 hover:border-gym/20'
+                    }`}
+                    onClick={() => setFormData(prev => ({ ...prev, selectedWorkout: workout.id }))}
+                  >
                     <input
                       type="radio"
                       id={workout.id}
                       name="selectedWorkout"
                       checked={formData.selectedWorkout === workout.id}
                       onChange={() => setFormData(prev => ({ ...prev, selectedWorkout: workout.id }))}
-                      className="mt-1"
+                      className="mt-1 accent-[hsl(var(--gym))]"
                     />
                     <label
                       htmlFor={workout.id}
                       className="text-sm font-medium flex-1 cursor-pointer flex items-center gap-2"
                     >
-                      <Target className="h-4 w-4 text-primary" />
+                      <div className="w-8 h-8 rounded-full bg-gym/20 flex items-center justify-center flex-shrink-0">
+                        <Target className="h-4 w-4 text-gym" />
+                      </div>
                       <div className="flex-1">
                         <div className="font-medium">{workout.name}</div>
                         <div className="text-xs text-muted-foreground">
@@ -578,13 +592,14 @@ export function AutoPlanCreator() {
             </Card>
           )}
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+          <div className="flex justify-end gap-2 pt-4 border-t border-gym/20">
+            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="border-gym/30 hover:bg-gym/10">
               Cancel
             </Button>
             <Button 
               type="submit" 
               disabled={todayOnly ? !formData.selectedWorkout : selectedDayOccurrences === 0}
+              className="bg-gym hover:bg-gym/90 text-gym-foreground"
             >
               Create a Plan
             </Button>
