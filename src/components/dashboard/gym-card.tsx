@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { CircularProgress } from "@/components/ui/circular-progress";
 import { useGym } from "@/contexts/GymContext";
-import { format } from "date-fns";
 
 export function GymCard() {
   const navigate = useNavigate();
@@ -65,8 +64,7 @@ export function GymCard() {
 
   const handleStartWorkout = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const today = format(new Date(), 'yyyy-MM-dd');
-    navigate(`/workout-day?date=${today}`);
+    navigate('/gym', { state: { activeTab: 'workout' } });
   };
 
   return (

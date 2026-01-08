@@ -288,7 +288,7 @@ export const StatsOverview = () => {
     const today = new Date().toISOString().split('T')[0];
     
     if (activity.activityType === 'exercise') {
-      navigate(`/workout-day?date=${today}`);
+      navigate('/gym?action=start');
     } else if (activity.type === 'activity') {
       setIsUpdating(true);
       try {

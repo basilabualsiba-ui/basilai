@@ -5,7 +5,6 @@ import { ArrowLeft, Dumbbell, Calendar, Target, BarChart3, Flame, Play } from "l
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSound } from '@/hooks/useSound';
-import { format } from 'date-fns';
 
 // Gym components
 import { ExercisesList } from '@/components/gym/exercises-list';
@@ -48,8 +47,8 @@ const Gym = () => {
 
   const handleStartWorkout = () => {
     click();
-    const today = format(new Date(), 'yyyy-MM-dd');
-    navigate(`/workout-day?date=${today}`);
+    setActiveTab('workout');
+    navigate('/gym?action=start');
   };
 
   return (

@@ -145,7 +145,7 @@ export const DailySchedulePanel = () => {
 
   const handleExerciseClick = (item: ScheduleItem) => {
     if (item.activityType === 'exercise') {
-      navigate(`/workout-day?date=${selectedDate}`);
+      navigate('/gym?action=start');
     }
   };
 
