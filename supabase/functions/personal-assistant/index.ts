@@ -13,7 +13,40 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
+// Helper function to get Israel date/time
+const getIsraelDate = () => {
+  const now = new Date();
+  const israelTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
+  return israelTime.toISOString().split('T')[0];
+};
+
+const getIsraelDateTime = () => {
+  return new Date().toLocaleString('en-US', { 
+    timeZone: 'Asia/Jerusalem',
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+const getIsraelTime = () => {
+  return new Date().toLocaleString('en-US', { 
+    timeZone: 'Asia/Jerusalem',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+};
+
 const systemPrompt = `You are BASIL's AI - Basil's personal AI assistant. You have access to his personal database and can help manage his life.
+
+CURRENT DATE & TIME (Israel): ${getIsraelDateTime()}
+CURRENT DATE: ${getIsraelDate()}
+CURRENT TIME: ${getIsraelTime()}
+TIMEZONE: Asia/Jerusalem (Israel)
 
 IMPORTANT RULES:
 1. You ONLY know information from the database - never make up data
@@ -22,14 +55,41 @@ IMPORTANT RULES:
 4. Use the tools provided to query and modify data
 5. For financial amounts, the currency is typically ILS (Israeli Shekel)
 6. Be friendly and personal - you know Basil
+7. ALWAYS use Israel timezone for all date/time operations
+8. When user says "today" or "now", use the Israel date/time above
 
-LEARNING & MEMORY:
+LEARNING & MEMORY (CRITICAL):
 - You have access to a user_preferences table where you store learned behaviors
-- ALWAYS check preferences first before taking actions using get_preferences tool
-- When the user teaches you something new (like "coffee means 25 ILS expense"), save it using save_preference
-- When corrected, update the preference to reflect the new behavior
-- Shortcuts are things like: "coffee" = add 25 expense, "gym" = log workout, etc.
-- Defaults are things like: preferred account, default category for certain expenses, etc.
+- ALWAYS call get_preferences at the START of each conversation to check for shortcuts and defaults
+- When the user teaches you something new (like "coffee means 25 ILS expense"), IMMEDIATELY save it using save_preference
+- When corrected, ALWAYS ask: "Should I remember this for next time?" and save if yes
+- After ANY correction, save the new behavior as a preference
+- Shortcuts are things like: "coffee" = add 25 expense, "حشاش" = food expense at حشاش subcategory
+- Defaults are things like: preferred account, default category for certain expenses
+
+SUBCATEGORIES (IMPORTANT):
+- Categories have subcategories which represent specific places/vendors/items
+- Examples: "حشاش" (Hashash) is a subcategory, "عرايس حشاش" is a subcategory
+- When adding transactions, ALWAYS use get_accounts_and_categories first to see available subcategories
+- Match user input to subcategory names - if user says "حشاش", find the matching subcategory
+- Include subcategory_id when adding transactions if a subcategory matches
+
+INTERACTIVE OPTIONS:
+When there are multiple choices to present (accounts, categories, subcategories), format your response with:
+[OPTIONS]
+option1_label|option1_description
+option2_label|option2_description
+[/OPTIONS]
+
+Example: If asking which account to use:
+Which account should I use?
+[OPTIONS]
+Cash|Use cash account
+Credit Card|Use credit card
+Bank|Use bank account
+[/OPTIONS]
+
+The UI will render these as clickable bubbles for the user to select.
 
 FINANCIAL QUERIES - You can help with:
 - "How much did I spend on [category] this month/week/yesterday?"
@@ -42,23 +102,25 @@ FINANCIAL QUERIES - You can help with:
 ADDING TRANSACTIONS WORKFLOW:
 When the user asks to add an expense/income, follow this process:
 1. FIRST check preferences for any shortcuts or defaults that match
-2. Extract what you understand from their message (amount, type, category, account)
-3. If ANYTHING is unclear or missing and no preference exists, ask the user to provide it
-4. Before executing, ALWAYS confirm: "Let me confirm: You want to add [expense/income] of [amount] to [account] under [category]? Should I proceed?"
-5. Only execute after user confirms with "yes" or similar
-6. If user says no or corrects you, ask what to change AND save the correction as a new preference
+2. Call get_accounts_and_categories to see available accounts, categories, AND subcategories
+3. Extract what you understand from their message (amount, type, category, subcategory, account)
+4. If user mentions a place name, look for it in subcategories first
+5. If ANYTHING is unclear or missing and no preference exists, present options using [OPTIONS] format
+6. Before executing, ALWAYS confirm: "Let me confirm: You want to add [expense/income] of [amount] to [account] under [category] > [subcategory]? Should I proceed?"
+7. Only execute after user confirms with "yes" or similar
+8. If user says no or corrects you, ask what to change AND save the correction as a new preference
 
 LEARNING SHORTCUTS:
 When the user says something like:
 - "When I say coffee, add 25 expense to cash" → Save as shortcut: key="coffee", value={amount:25, type:"expense", account:"cash"}
 - "Default my food expenses to credit card" → Save as default: key="food_account", value={account_id:"..."}
-- After corrections, ask: "Should I remember this for next time?" and save if yes
+- After corrections, ALWAYS ask: "Should I remember this for next time?" and save if yes
 
 Available data in the database:
 - accounts: Financial accounts (name, amount, currency, type)
-- transactions: Income and expenses (amount, date, description, type, category_id, account_id)
+- transactions: Income and expenses (amount, date, description, type, category_id, subcategory_id, account_id)
 - categories: Transaction categories (name, type, icon)
-- subcategories: Sub-categories linked to categories
+- subcategories: Sub-categories linked to categories (name, category_id, location) - like حشاش, مطاعم, etc.
 - supplements: Supplement inventory (name, remaining_doses, total_doses, dose_unit, warning_threshold)
 - supplement_logs: Daily supplement intake logs (supplement_id, doses_taken, logged_date)
 - workout_sessions: Gym sessions (scheduled_date, completed_at, with_trainer, muscle_groups)
@@ -139,7 +201,8 @@ const tools = [
           description: { type: "string", description: "Description of the transaction" },
           account_id: { type: "string", description: "Account UUID to use" },
           category_id: { type: "string", description: "Category UUID (optional)" },
-          date: { type: "string", description: "Date in YYYY-MM-DD format (optional, defaults to today)" }
+          subcategory_id: { type: "string", description: "Subcategory UUID (optional) - use this for specific places like حشاش" },
+          date: { type: "string", description: "Date in YYYY-MM-DD format (optional, defaults to today in Israel timezone)" }
         },
         required: ["amount", "type", "description", "account_id"]
       }
@@ -228,10 +291,24 @@ const tools = [
     type: "function",
     function: {
       name: "get_accounts_and_categories",
-      description: "Get list of available accounts and categories for adding transactions",
+      description: "Get list of available accounts, categories, AND subcategories for adding transactions. ALWAYS call this when user wants to add a transaction to see available subcategories like حشاش.",
       parameters: {
         type: "object",
         properties: {}
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_subcategories",
+      description: "Search for subcategories by name. Use this to find specific places/vendors like حشاش, restaurants, etc.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Subcategory name to search (partial match, supports Arabic)" }
+        },
+        required: ["name"]
       }
     }
   },
@@ -310,19 +387,20 @@ async function executeToolCall(name: string, args: any): Promise<string> {
       }
       
       case "get_spending_analysis": {
-        const today = new Date();
+        const today = getIsraelDate();
         let dateFrom = args.date_from;
-        let dateTo = args.date_to || today.toISOString().split('T')[0];
+        let dateTo = args.date_to || today;
         
         // Default to current month if no date specified
         if (!dateFrom) {
-          dateFrom = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+          const israelNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
+          dateFrom = new Date(israelNow.getFullYear(), israelNow.getMonth(), 1).toISOString().split('T')[0];
         }
 
         // Get all expense transactions with category info
         let query = supabase
           .from('transactions')
-          .select('*, categories(name, icon)')
+          .select('*, categories(name, icon), subcategories(name)')
           .eq('type', 'expense')
           .gte('date', dateFrom)
           .lte('date', dateTo);
@@ -413,26 +491,57 @@ async function executeToolCall(name: string, args: any): Promise<string> {
       }
       
       case "get_accounts_and_categories": {
-        const [accounts, categories] = await Promise.all([
+        const [accounts, categories, subcategories] = await Promise.all([
           supabase.from('accounts').select('id, name, type, amount, currency'),
-          supabase.from('categories').select('id, name, type, icon')
+          supabase.from('categories').select('id, name, type, icon'),
+          supabase.from('subcategories').select('id, name, category_id, location')
         ]);
+        
+        // Map subcategories to their parent categories
+        const subcategoriesByCategory: { [key: string]: any[] } = {};
+        subcategories.data?.forEach(sub => {
+          if (!subcategoriesByCategory[sub.category_id]) {
+            subcategoriesByCategory[sub.category_id] = [];
+          }
+          subcategoriesByCategory[sub.category_id].push(sub);
+        });
+        
+        // Enhance categories with their subcategories
+        const categoriesWithSubs = categories.data?.map(cat => ({
+          ...cat,
+          subcategories: subcategoriesByCategory[cat.id] || []
+        }));
         
         return JSON.stringify({
           accounts: accounts.data || [],
-          categories: categories.data || [],
-          instructions: "Use these IDs when adding transactions. Ask the user which account and category to use if not specified."
+          categories: categoriesWithSubs || [],
+          all_subcategories: subcategories.data || [],
+          instructions: "Use these IDs when adding transactions. If user mentions a place name like 'حشاش', use the matching subcategory_id. Ask the user which account and category to use if not specified, presenting options with [OPTIONS] format."
+        });
+      }
+      
+      case "search_subcategories": {
+        const { data, error } = await supabase
+          .from('subcategories')
+          .select('id, name, category_id, location, categories(name)')
+          .ilike('name', `%${args.name}%`);
+        
+        if (error) return JSON.stringify({ error: error.message });
+        return JSON.stringify({
+          subcategories: data || [],
+          message: data?.length ? `Found ${data.length} subcategory(ies) matching "${args.name}"` : `No subcategories found matching "${args.name}"`
         });
       }
       
       case "add_transaction": {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getIsraelDate();
         const { data, error } = await supabase.from('transactions').insert({
           amount: args.amount,
           type: args.type,
           description: args.description,
           account_id: args.account_id,
           category_id: args.category_id || null,
+          subcategory_id: args.subcategory_id || null,
           date: args.date || today
         }).select();
         
@@ -462,7 +571,7 @@ async function executeToolCall(name: string, args: any): Promise<string> {
       }
       
       case "log_supplement": {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getIsraelDate();
         const { data, error } = await supabase.from('supplement_logs').insert({
           supplement_id: args.supplement_id,
           doses_taken: args.doses_taken,
@@ -521,10 +630,10 @@ async function executeToolCall(name: string, args: any): Promise<string> {
       }
       
       case "get_daily_summary": {
-        const date = args.date || new Date().toISOString().split('T')[0];
+        const date = args.date || getIsraelDate();
         
         const [transactions, supplements, workouts, prayers] = await Promise.all([
-          supabase.from('transactions').select('*').eq('date', date),
+          supabase.from('transactions').select('*, categories(name), subcategories(name)').eq('date', date),
           supabase.from('supplement_logs').select('*, supplements(name)').eq('logged_date', date),
           supabase.from('workout_sessions').select('*').eq('scheduled_date', date),
           supabase.from('prayer_completions').select('*').eq('completion_date', date)
@@ -535,10 +644,18 @@ async function executeToolCall(name: string, args: any): Promise<string> {
         
         return JSON.stringify({
           date,
+          current_time_israel: getIsraelTime(),
           finances: {
             expenses: totalExpenses,
             income: totalIncome,
-            transactions: transactions.data?.length || 0
+            transactions: transactions.data?.length || 0,
+            details: transactions.data?.map(t => ({
+              amount: t.amount,
+              type: t.type,
+              category: t.categories?.name,
+              subcategory: t.subcategories?.name,
+              description: t.description
+            }))
           },
           supplements: supplements.data || [],
           workouts: workouts.data || [],
@@ -652,13 +769,19 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, timezone, currentTime } = await req.json();
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log("Starting assistant request with messages:", messages.length);
+    console.log("Starting assistant request with messages:", messages.length, "timezone:", timezone);
+
+    // Build dynamic system prompt with current time
+    const dynamicSystemPrompt = systemPrompt
+      .replace('${getIsraelDateTime()}', getIsraelDateTime())
+      .replace('${getIsraelDate()}', getIsraelDate())
+      .replace('${getIsraelTime()}', getIsraelTime());
 
     // Initial request with tools
     let response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -670,7 +793,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: dynamicSystemPrompt },
           ...messages
         ],
         tools,
@@ -701,7 +824,7 @@ serve(async (req) => {
     
     // Handle tool calls in a loop
     const conversationMessages = [
-      { role: "system", content: systemPrompt },
+      { role: "system", content: dynamicSystemPrompt },
       ...messages,
       assistantMessage
     ];

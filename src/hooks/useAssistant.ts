@@ -33,6 +33,9 @@ export function useAssistant() {
             role: m.role,
             content: m.content,
           })),
+          // Send timezone info to the assistant
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          currentTime: new Date().toISOString(),
         },
       });
 
