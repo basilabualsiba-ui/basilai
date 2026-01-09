@@ -18,6 +18,11 @@ export function ChatInterface() {
     }
   }, [messages]);
 
+  // Handle option selection from bubbles
+  const handleSelectOption = (option: string) => {
+    sendMessage(option);
+  };
+
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Chat Header */}
@@ -57,7 +62,7 @@ export function ChatInterface() {
                 Hi Basil! How can I help?
               </h3>
               <p className="text-sm text-muted-foreground">
-                I can help you track expenses, check workouts, manage supplements, and much more.
+                I can help you track expenses, check workouts, manage supplements, and much more. I also remember your preferences!
               </p>
             </div>
             <QuickSuggestions onSelect={sendMessage} />
@@ -70,6 +75,7 @@ export function ChatInterface() {
                 role={message.role}
                 content={message.content}
                 timestamp={message.timestamp}
+                onSelectOption={handleSelectOption}
               />
             ))}
             {isLoading && (
