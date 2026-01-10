@@ -41,7 +41,7 @@ const getIsraelTime = () => {
   });
 };
 
-const getSystemPrompt = () => `You are BASIL's AI - Basil's personal AI assistant. You have access to his personal database and can help manage his life.
+const getSystemPrompt = () => `You are BASIL's AI - Basil's personal AI assistant. You have access to his ENTIRE personal database and can help manage his life.
 
 CURRENT DATE & TIME (Israel): ${getIsraelDateTime()}
 CURRENT DATE: ${getIsraelDate()}
@@ -64,15 +64,15 @@ LEARNING & MEMORY (CRITICAL):
 - When the user teaches you something new (like "coffee means 25 ILS expense"), IMMEDIATELY save it using save_preference
 - When corrected, ALWAYS ask: "Should I remember this for next time?" and save if yes
 - After ANY correction, save the new behavior as a preference
-- Shortcuts are things like: "coffee" = add 25 expense, "حشاش" = food expense at حشاش subcategory
-- Defaults are things like: preferred account, default category for certain expenses
+- Shortcuts are things like: "coffee" = add 25 expense, "حشاش" = add expense under طلعات > حشاش
 
-SUBCATEGORIES (IMPORTANT):
+SUBCATEGORIES (VERY IMPORTANT):
 - Categories have subcategories which represent specific places/vendors/items
-- Examples: "حشاش" (Hashash) is a subcategory, "عرايس حشاش" is a subcategory
-- When adding transactions, ALWAYS use get_accounts_and_categories first to see available subcategories
-- Match user input to subcategory names - if user says "حشاش", find the matching subcategory
-- Include subcategory_id when adding transactions if a subcategory matches
+- Structure: Category (e.g., "طلعات") → Subcategory (e.g., "حشاش", "جزرة", "بستاشيو")
+- ALWAYS use get_full_financial_data first to see the COMPLETE structure
+- When user mentions a place like "حشاش", it's a SUBCATEGORY under "طلعات" category
+- Use the subcategory_id AND category_id when adding transactions
+- If user asks "how much on حشاش", search in subcategories, not categories!
 
 INTERACTIVE OPTIONS:
 When there are multiple choices to present (accounts, categories, subcategories), format your response with:
@@ -81,60 +81,46 @@ option1_label|option1_description
 option2_label|option2_description
 [/OPTIONS]
 
-Example: If asking which account to use:
-Which account should I use?
-[OPTIONS]
-Cash|Use cash account
-Credit Card|Use credit card
-Bank|Use bank account
-[/OPTIONS]
-
 The UI will render these as clickable bubbles for the user to select.
 
-FINANCIAL QUERIES - You can help with:
-- "How much did I spend on [category] this month/week/yesterday?"
-- "What's my total spending for [time period]?"
-- "Which category am I spending the most on?"
-- "Where should I spend less?"
-- "Compare my spending between categories"
-- "Show me my transactions from [date]"
+FINANCIAL QUERIES:
+- "How much did I spend on [subcategory] this month?" → use get_transactions_by_subcategory
+- "What's my total spending for [time period]?" → use get_spending_analysis
+- "Show me my transactions from [date]" → use query_database
+- When asked about specific places (حشاش, جزرة, etc.), search by SUBCATEGORY not category
 
-ADDING TRANSACTIONS WORKFLOW:
-When the user asks to add an expense/income, follow this process:
-1. FIRST check preferences for any shortcuts or defaults that match
-2. Call get_accounts_and_categories to see available accounts, categories, AND subcategories
-3. Extract what you understand from their message (amount, type, category, subcategory, account)
-4. If user mentions a place name, look for it in subcategories first
-5. If ANYTHING is unclear or missing and no preference exists, present options using [OPTIONS] format
-6. Before executing, ALWAYS confirm: "Let me confirm: You want to add [expense/income] of [amount] to [account] under [category] > [subcategory]? Should I proceed?"
-7. Only execute after user confirms with "yes" or similar
-8. If user says no or corrects you, ask what to change AND save the correction as a new preference
+GYM DATA ACCESS:
+- Use get_gym_overview for workout stats, recent sessions, exercise history
+- workout_sessions: completed workouts with duration, muscle groups
+- exercises: all available exercises with muscle groups and equipment
+- exercise_sets: detailed sets with weights and reps
+- workout_plans: scheduled workout plans
 
-LEARNING SHORTCUTS:
-When the user says something like:
-- "When I say coffee, add 25 expense to cash" → Save as shortcut: key="coffee", value={amount:25, type:"expense", account:"cash"}
-- "Default my food expenses to credit card" → Save as default: key="food_account", value={account_id:"..."}
-- After corrections, ALWAYS ask: "Should I remember this for next time?" and save if yes
+DREAMS & GOALS:
+- Use get_dreams_overview for all dreams/goals with progress
+- dreams: goals with status, progress_percentage, target_date
+- dream_steps: steps to achieve each dream
+
+SUPPLEMENTS:
+- Use get_supplements_overview for supplement inventory and logs
+- supplements: inventory with remaining doses
+- supplement_logs: daily intake tracking
+
+PRAYERS:
+- prayer_times: daily prayer times
+- prayer_completions: tracked completed prayers
+
+BODY STATS:
+- user_body_stats: weight/height tracking over time
 
 Available data in the database:
 - accounts: Financial accounts (name, amount, currency, type)
 - transactions: Income and expenses (amount, date, description, type, category_id, subcategory_id, account_id)
 - categories: Transaction categories (name, type, icon)
-- subcategories: Sub-categories linked to categories (name, category_id, location) - like حشاش, مطاعم, etc.
-- supplements: Supplement inventory (name, remaining_doses, total_doses, dose_unit, warning_threshold)
-- supplement_logs: Daily supplement intake logs (supplement_id, doses_taken, logged_date)
-- workout_sessions: Gym sessions (scheduled_date, completed_at, with_trainer, muscle_groups)
-- exercises: Exercise library (name, muscle_group, equipment)
-- exercise_sets: Sets performed (session_id, exercise_id, weight, reps)
-- dreams: Goals and dreams (title, description, status, progress_percentage, target_date)
-- dream_steps: Steps to achieve dreams
-- prayer_times: Daily prayer times (fajr, dhuhr, asr, maghrib, isha)
-- prayer_completions: Completed prayers
-- daily_activities: Scheduled activities
-- user_body_stats: Weight tracking (weight, height, recorded_at)
-- user_preferences: Your learned behaviors and shortcuts
+- subcategories: Sub-categories linked to categories (name, category_id, location) - like حشاش, جزرة, etc.
+- supplements, supplement_logs, workout_sessions, exercises, exercise_sets, dreams, dream_steps, prayer_times, prayer_completions, daily_activities, user_body_stats, user_preferences
 
-When asked about data, use query_database tool. When asked to add/update/delete, use the appropriate tool after confirming.`;
+When asked about data, use the specialized tools first (get_full_financial_data, get_gym_overview, etc.) for complete context.`;
 
 const tools = [
   {
@@ -170,21 +156,96 @@ const tools = [
   {
     type: "function",
     function: {
-      name: "get_spending_analysis",
-      description: "Analyze spending by category, date range, or overall. Use this for questions like 'how much did I spend on food', 'where am I spending the most', 'spending yesterday'",
+      name: "get_full_financial_data",
+      description: "Get COMPLETE financial overview including accounts, categories with their subcategories, and recent transactions. ALWAYS use this first for any financial question.",
+      parameters: {
+        type: "object",
+        properties: {}
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_transactions_by_subcategory",
+      description: "Get all transactions for a specific subcategory (like حشاش, جزرة, etc.). Use this when user asks about spending on specific places.",
       parameters: {
         type: "object",
         properties: {
-          category_name: { type: "string", description: "Category name to filter (optional, e.g., 'Food', 'Transport')" },
+          subcategory_name: { type: "string", description: "Subcategory name to search (e.g., 'حشاش', 'جزرة')" },
+          date_from: { type: "string", description: "Start date YYYY-MM-DD" },
+          date_to: { type: "string", description: "End date YYYY-MM-DD" }
+        },
+        required: ["subcategory_name"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_spending_analysis",
+      description: "Analyze spending by category, date range, or overall. Use this for general spending questions, NOT for specific subcategories.",
+      parameters: {
+        type: "object",
+        properties: {
+          category_name: { type: "string", description: "Category name to filter (optional, e.g., 'food', 'طلعات')" },
           date_from: { type: "string", description: "Start date in YYYY-MM-DD format (optional)" },
           date_to: { type: "string", description: "End date in YYYY-MM-DD format (optional)" },
           analysis_type: { 
             type: "string", 
-            enum: ["by_category", "by_date", "total", "compare"],
-            description: "Type of analysis: by_category (group by category), by_date (group by date), total (sum), compare (category comparison)"
+            enum: ["by_category", "by_subcategory", "by_date", "total", "compare"],
+            description: "Type of analysis: by_category (group by category), by_subcategory (group by subcategory), by_date (group by date), total (sum), compare (comparison)"
           }
         },
         required: ["analysis_type"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_gym_overview",
+      description: "Get complete gym data: recent workout sessions, exercise history, workout plans, and stats.",
+      parameters: {
+        type: "object",
+        properties: {
+          days_back: { type: "number", description: "How many days back to look (default 30)" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_dreams_overview",
+      description: "Get all dreams/goals with their progress, steps, and status.",
+      parameters: {
+        type: "object",
+        properties: {}
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_supplements_overview",
+      description: "Get supplement inventory and recent logs.",
+      parameters: {
+        type: "object",
+        properties: {}
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_body_stats",
+      description: "Get weight and body stats history.",
+      parameters: {
+        type: "object",
+        properties: {
+          limit: { type: "number", description: "Number of recent entries (default 30)" }
+        }
       }
     }
   },
@@ -290,31 +351,6 @@ const tools = [
   {
     type: "function",
     function: {
-      name: "get_accounts_and_categories",
-      description: "Get list of available accounts, categories, AND subcategories for adding transactions. ALWAYS call this when user wants to add a transaction to see available subcategories like حشاش.",
-      parameters: {
-        type: "object",
-        properties: {}
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
-      name: "search_subcategories",
-      description: "Search for subcategories by name. Use this to find specific places/vendors like حشاش, restaurants, etc.",
-      parameters: {
-        type: "object",
-        properties: {
-          name: { type: "string", description: "Subcategory name to search (partial match, supports Arabic)" }
-        },
-        required: ["name"]
-      }
-    }
-  },
-  {
-    type: "function",
-    function: {
       name: "get_preferences",
       description: "Get all saved user preferences, shortcuts, and defaults. ALWAYS call this at the start to check for any relevant shortcuts or defaults before taking actions.",
       parameters: {
@@ -386,6 +422,94 @@ async function executeToolCall(name: string, args: any): Promise<string> {
         return JSON.stringify(data);
       }
       
+      case "get_full_financial_data": {
+        const [accounts, categories, subcategories, recentTransactions] = await Promise.all([
+          supabase.from('accounts').select('*'),
+          supabase.from('categories').select('*'),
+          supabase.from('subcategories').select('*, categories(name)'),
+          supabase.from('transactions')
+            .select('*, categories(name), subcategories(name)')
+            .order('date', { ascending: false })
+            .limit(50)
+        ]);
+        
+        // Build category->subcategory map
+        const categoryMap = categories.data?.map(cat => ({
+          ...cat,
+          subcategories: subcategories.data?.filter(s => s.category_id === cat.id) || []
+        }));
+        
+        return JSON.stringify({
+          accounts: accounts.data || [],
+          categories: categoryMap || [],
+          all_subcategories: subcategories.data || [],
+          recent_transactions: recentTransactions.data || [],
+          summary: {
+            total_accounts: accounts.data?.length || 0,
+            total_categories: categories.data?.length || 0,
+            total_subcategories: subcategories.data?.length || 0
+          },
+          instructions: "Use category_id AND subcategory_id when adding transactions. Subcategories are specific places - e.g., 'حشاش' is under 'طلعات' category."
+        });
+      }
+      
+      case "get_transactions_by_subcategory": {
+        const today = getIsraelDate();
+        const israelNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
+        const monthStart = new Date(israelNow.getFullYear(), israelNow.getMonth(), 1).toISOString().split('T')[0];
+        
+        const dateFrom = args.date_from || monthStart;
+        const dateTo = args.date_to || today;
+        
+        // First find the subcategory
+        const { data: subcats } = await supabase
+          .from('subcategories')
+          .select('id, name, category_id, categories(name)')
+          .ilike('name', `%${args.subcategory_name}%`);
+        
+        if (!subcats || subcats.length === 0) {
+          return JSON.stringify({
+            error: `No subcategory found matching "${args.subcategory_name}"`,
+            suggestion: "Use get_full_financial_data to see all available subcategories"
+          });
+        }
+        
+        const subcatIds = subcats.map(s => s.id);
+        
+        // Get transactions for these subcategories
+        const { data: transactions, error } = await supabase
+          .from('transactions')
+          .select('*, categories(name), subcategories(name)')
+          .in('subcategory_id', subcatIds)
+          .gte('date', dateFrom)
+          .lte('date', dateTo)
+          .order('date', { ascending: false });
+        
+        if (error) return JSON.stringify({ error: error.message });
+        
+        const total = transactions?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+        
+        return JSON.stringify({
+          subcategory: args.subcategory_name,
+          matching_subcategories: subcats.map(s => ({
+            id: s.id,
+            name: s.name,
+            parent_category: s.categories?.name
+          })),
+          period: `${dateFrom} to ${dateTo}`,
+          total_spent: total.toFixed(2),
+          transaction_count: transactions?.length || 0,
+          transactions: transactions?.map(t => ({
+            amount: t.amount,
+            date: t.date,
+            description: t.description,
+            category: t.categories?.name,
+            subcategory: t.subcategories?.name
+          })) || [],
+          currency: 'ILS'
+        });
+      }
+      
       case "get_spending_analysis": {
         const today = getIsraelDate();
         let dateFrom = args.date_from;
@@ -397,7 +521,7 @@ async function executeToolCall(name: string, args: any): Promise<string> {
           dateFrom = new Date(israelNow.getFullYear(), israelNow.getMonth(), 1).toISOString().split('T')[0];
         }
 
-        // Get all expense transactions with category info
+        // Get all expense transactions with category and subcategory info
         let query = supabase
           .from('transactions')
           .select('*, categories(name, icon), subcategories(name)')
@@ -421,24 +545,59 @@ async function executeToolCall(name: string, args: any): Promise<string> {
         const { data: transactions, error } = await query;
         if (error) return JSON.stringify({ error: error.message });
         
-        if (args.analysis_type === 'by_category') {
-          // Group by category
-          const byCategory: { [key: string]: number } = {};
+        if (args.analysis_type === 'by_subcategory') {
+          // Group by subcategory
+          const bySubcategory: { [key: string]: { amount: number, category: string } } = {};
+          transactions?.forEach(t => {
+            const subName = t.subcategories?.name || 'No Subcategory';
+            const catName = t.categories?.name || 'Uncategorized';
+            if (!bySubcategory[subName]) {
+              bySubcategory[subName] = { amount: 0, category: catName };
+            }
+            bySubcategory[subName].amount += Number(t.amount);
+          });
+          
+          const sorted = Object.entries(bySubcategory)
+            .sort(([,a], [,b]) => b.amount - a.amount)
+            .map(([subcategory, data]) => ({ 
+              subcategory, 
+              category: data.category,
+              amount: data.amount.toFixed(2) 
+            }));
+          
+          return JSON.stringify({
+            period: `${dateFrom} to ${dateTo}`,
+            total_spent: transactions?.reduce((sum, t) => sum + Number(t.amount), 0).toFixed(2),
+            by_subcategory: sorted
+          });
+        } else if (args.analysis_type === 'by_category') {
+          // Group by category with subcategory breakdown
+          const byCategory: { [key: string]: { total: number, subcategories: { [key: string]: number } } } = {};
           transactions?.forEach(t => {
             const catName = t.categories?.name || 'Uncategorized';
-            byCategory[catName] = (byCategory[catName] || 0) + Number(t.amount);
+            const subName = t.subcategories?.name || 'Other';
+            if (!byCategory[catName]) {
+              byCategory[catName] = { total: 0, subcategories: {} };
+            }
+            byCategory[catName].total += Number(t.amount);
+            byCategory[catName].subcategories[subName] = (byCategory[catName].subcategories[subName] || 0) + Number(t.amount);
           });
           
           const sorted = Object.entries(byCategory)
-            .sort(([,a], [,b]) => b - a)
-            .map(([category, amount]) => ({ category, amount: amount.toFixed(2) }));
+            .sort(([,a], [,b]) => b.total - a.total)
+            .map(([category, data]) => ({ 
+              category, 
+              amount: data.total.toFixed(2),
+              subcategories: Object.entries(data.subcategories)
+                .sort(([,a], [,b]) => b - a)
+                .map(([name, amt]) => ({ name, amount: amt.toFixed(2) }))
+            }));
           
           return JSON.stringify({
             period: `${dateFrom} to ${dateTo}`,
             total_spent: transactions?.reduce((sum, t) => sum + Number(t.amount), 0).toFixed(2),
             by_category: sorted,
-            highest_category: sorted[0]?.category || 'None',
-            suggestion: sorted.length > 0 ? `You're spending the most on ${sorted[0].category} (₪${sorted[0].amount}). Consider reviewing these expenses.` : 'No expenses in this period.'
+            highest_category: sorted[0]?.category || 'None'
           });
         } else if (args.analysis_type === 'by_date') {
           // Group by date
@@ -473,10 +632,7 @@ async function executeToolCall(name: string, args: any): Promise<string> {
           return JSON.stringify({
             period: `${dateFrom} to ${dateTo}`,
             total_spent: total.toFixed(2),
-            comparison,
-            insight: comparison.length > 1 
-              ? `Top spending: ${comparison[0].category} (${comparison[0].percentage}). Lowest: ${comparison[comparison.length-1].category} (${comparison[comparison.length-1].percentage})`
-              : 'Not enough data to compare'
+            comparison
           });
         } else {
           // Total
@@ -490,46 +646,132 @@ async function executeToolCall(name: string, args: any): Promise<string> {
         }
       }
       
-      case "get_accounts_and_categories": {
-        const [accounts, categories, subcategories] = await Promise.all([
-          supabase.from('accounts').select('id, name, type, amount, currency'),
-          supabase.from('categories').select('id, name, type, icon'),
-          supabase.from('subcategories').select('id, name, category_id, location')
+      case "get_gym_overview": {
+        const daysBack = args.days_back || 30;
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - daysBack);
+        const startDateStr = startDate.toISOString().split('T')[0];
+        
+        const [sessions, exercises, exerciseSets, plans, muscleGroups] = await Promise.all([
+          supabase.from('workout_sessions')
+            .select('*')
+            .gte('scheduled_date', startDateStr)
+            .order('scheduled_date', { ascending: false }),
+          supabase.from('exercises').select('*'),
+          supabase.from('exercise_sets')
+            .select('*, exercises(name, muscle_group)')
+            .order('created_at', { ascending: false })
+            .limit(100),
+          supabase.from('workout_plans').select('*, workout_plan_days(*)'),
+          supabase.from('muscle_groups').select('*')
         ]);
         
-        // Map subcategories to their parent categories
-        const subcategoriesByCategory: { [key: string]: any[] } = {};
-        subcategories.data?.forEach(sub => {
-          if (!subcategoriesByCategory[sub.category_id]) {
-            subcategoriesByCategory[sub.category_id] = [];
-          }
-          subcategoriesByCategory[sub.category_id].push(sub);
+        const completedSessions = sessions.data?.filter(s => s.completed_at) || [];
+        const totalDuration = completedSessions.reduce((sum, s) => sum + (s.total_duration_minutes || 0), 0);
+        
+        // Calculate muscle group frequency
+        const muscleGroupCounts: { [key: string]: number } = {};
+        completedSessions.forEach(s => {
+          s.muscle_groups?.forEach((mg: string) => {
+            muscleGroupCounts[mg] = (muscleGroupCounts[mg] || 0) + 1;
+          });
         });
         
-        // Enhance categories with their subcategories
-        const categoriesWithSubs = categories.data?.map(cat => ({
-          ...cat,
-          subcategories: subcategoriesByCategory[cat.id] || []
-        }));
-        
         return JSON.stringify({
-          accounts: accounts.data || [],
-          categories: categoriesWithSubs || [],
-          all_subcategories: subcategories.data || [],
-          instructions: "Use these IDs when adding transactions. If user mentions a place name like 'حشاش', use the matching subcategory_id. Ask the user which account and category to use if not specified, presenting options with [OPTIONS] format."
+          period: `Last ${daysBack} days`,
+          stats: {
+            total_sessions: sessions.data?.length || 0,
+            completed_sessions: completedSessions.length,
+            total_duration_minutes: totalDuration,
+            average_duration: completedSessions.length > 0 ? Math.round(totalDuration / completedSessions.length) : 0,
+            with_trainer_count: completedSessions.filter(s => s.with_trainer).length
+          },
+          muscle_group_frequency: muscleGroupCounts,
+          recent_sessions: completedSessions.slice(0, 10).map(s => ({
+            date: s.scheduled_date,
+            duration: s.total_duration_minutes,
+            muscle_groups: s.muscle_groups,
+            with_trainer: s.with_trainer
+          })),
+          exercises_count: exercises.data?.length || 0,
+          active_plans: plans.data?.filter(p => p.is_active) || [],
+          muscle_groups: muscleGroups.data || []
         });
       }
       
-      case "search_subcategories": {
+      case "get_dreams_overview": {
+        const [dreams, dreamSteps] = await Promise.all([
+          supabase.from('dreams').select('*').order('created_at', { ascending: false }),
+          supabase.from('dream_steps').select('*')
+        ]);
+        
+        const dreamsWithSteps = dreams.data?.map(dream => ({
+          ...dream,
+          steps: dreamSteps.data?.filter(s => s.dream_id === dream.id) || []
+        }));
+        
+        const byStatus: { [key: string]: number } = {};
+        dreams.data?.forEach(d => {
+          byStatus[d.status] = (byStatus[d.status] || 0) + 1;
+        });
+        
+        return JSON.stringify({
+          total_dreams: dreams.data?.length || 0,
+          by_status: byStatus,
+          dreams: dreamsWithSteps || [],
+          total_estimated_cost: dreams.data?.reduce((sum, d) => sum + (d.estimated_cost || 0), 0) || 0
+        });
+      }
+      
+      case "get_supplements_overview": {
+        const today = getIsraelDate();
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        
+        const [supplements, recentLogs] = await Promise.all([
+          supabase.from('supplements').select('*'),
+          supabase.from('supplement_logs')
+            .select('*, supplements(name)')
+            .gte('logged_date', weekAgo.toISOString().split('T')[0])
+            .order('logged_date', { ascending: false })
+        ]);
+        
+        const lowStock = supplements.data?.filter(s => s.remaining_doses <= s.warning_threshold) || [];
+        
+        return JSON.stringify({
+          total_supplements: supplements.data?.length || 0,
+          supplements: supplements.data || [],
+          low_stock_alerts: lowStock.map(s => ({
+            name: s.name,
+            remaining: s.remaining_doses,
+            threshold: s.warning_threshold
+          })),
+          recent_logs: recentLogs.data || [],
+          today_date: today
+        });
+      }
+      
+      case "get_body_stats": {
+        const limit = args.limit || 30;
+        
         const { data, error } = await supabase
-          .from('subcategories')
-          .select('id, name, category_id, location, categories(name)')
-          .ilike('name', `%${args.name}%`);
+          .from('user_body_stats')
+          .select('*')
+          .order('recorded_at', { ascending: false })
+          .limit(limit);
         
         if (error) return JSON.stringify({ error: error.message });
+        
+        const latest = data?.[0];
+        const oldest = data?.[data.length - 1];
+        const weightChange = latest && oldest ? (latest.weight - oldest.weight).toFixed(1) : 0;
+        
         return JSON.stringify({
-          subcategories: data || [],
-          message: data?.length ? `Found ${data.length} subcategory(ies) matching "${args.name}"` : `No subcategories found matching "${args.name}"`
+          entries: data || [],
+          latest: latest || null,
+          oldest_in_range: oldest || null,
+          weight_change: weightChange,
+          entry_count: data?.length || 0
         });
       }
       
@@ -549,23 +791,17 @@ async function executeToolCall(name: string, args: any): Promise<string> {
         
         // Update account balance
         const adjustment = args.type === 'expense' ? -args.amount : args.amount;
-        await supabase.rpc('update_account_balance', { 
-          account_uuid: args.account_id, 
-          amount_change: adjustment 
-        }).catch(() => {
-          // If RPC doesn't exist, update directly
-          return supabase.from('accounts')
-            .select('amount')
-            .eq('id', args.account_id)
-            .single()
-            .then(({ data: acc }) => {
-              if (acc) {
-                return supabase.from('accounts')
-                  .update({ amount: acc.amount + adjustment })
-                  .eq('id', args.account_id);
-              }
-            });
-        });
+        await supabase.from('accounts')
+          .select('amount')
+          .eq('id', args.account_id)
+          .single()
+          .then(({ data: acc }) => {
+            if (acc) {
+              return supabase.from('accounts')
+                .update({ amount: acc.amount + adjustment })
+                .eq('id', args.account_id);
+            }
+          });
         
         return JSON.stringify({ success: true, transaction: data, message: `Successfully added ${args.type} of ₪${args.amount}` });
       }
