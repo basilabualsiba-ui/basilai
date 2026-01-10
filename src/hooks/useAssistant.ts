@@ -27,7 +27,7 @@ export function useAssistant() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('personal-assistant', {
+      const response = await supabase.functions.invoke('personal-assistant', {
         body: {
           messages: [...messages, userMessage].map(m => ({
             role: m.role,
@@ -39,18 +39,21 @@ export function useAssistant() {
         },
       });
 
-      if (error) {
-        throw error;
+      // Handle function invocation errors
+      if (response.error) {
+        console.error('Function invoke error:', response.error);
+        throw new Error(response.error.message || 'Function invocation failed');
       }
 
-      if (data?.error) {
-        throw new Error(data.error);
+      // Handle errors returned in data
+      if (response.data?.error) {
+        throw new Error(response.data.error);
       }
 
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: data.message || "I'm not sure how to respond to that.",
+        content: response.data?.message || "I'm not sure how to respond to that.",
         timestamp: new Date(),
       };
 
