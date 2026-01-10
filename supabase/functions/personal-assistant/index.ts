@@ -41,7 +41,7 @@ const getIsraelTime = () => {
   });
 };
 
-const systemPrompt = `You are BASIL's AI - Basil's personal AI assistant. You have access to his personal database and can help manage his life.
+const getSystemPrompt = () => `You are BASIL's AI - Basil's personal AI assistant. You have access to his personal database and can help manage his life.
 
 CURRENT DATE & TIME (Israel): ${getIsraelDateTime()}
 CURRENT DATE: ${getIsraelDate()}
@@ -777,11 +777,8 @@ serve(async (req) => {
 
     console.log("Starting assistant request with messages:", messages.length, "timezone:", timezone);
 
-    // Build dynamic system prompt with current time
-    const dynamicSystemPrompt = systemPrompt
-      .replace('${getIsraelDateTime()}', getIsraelDateTime())
-      .replace('${getIsraelDate()}', getIsraelDate())
-      .replace('${getIsraelTime()}', getIsraelTime());
+    // Get fresh system prompt with current time
+    const currentSystemPrompt = getSystemPrompt();
 
     // Initial request with tools
     let response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -793,7 +790,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: dynamicSystemPrompt },
+          { role: "system", content: currentSystemPrompt },
           ...messages
         ],
         tools,
@@ -824,7 +821,7 @@ serve(async (req) => {
     
     // Handle tool calls in a loop
     const conversationMessages = [
-      { role: "system", content: dynamicSystemPrompt },
+      { role: "system", content: currentSystemPrompt },
       ...messages,
       assistantMessage
     ];
