@@ -116,6 +116,39 @@ export type Database = {
         }
         Relationships: []
       }
+      assistant_interactions: {
+        Row: {
+          action_taken: string | null
+          created_at: string
+          feedback: string | null
+          id: string
+          params_used: Json | null
+          parsed_intent: string | null
+          user_message: string
+          was_successful: boolean | null
+        }
+        Insert: {
+          action_taken?: string | null
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          params_used?: Json | null
+          parsed_intent?: string | null
+          user_message: string
+          was_successful?: boolean | null
+        }
+        Update: {
+          action_taken?: string | null
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          params_used?: Json | null
+          parsed_intent?: string | null
+          user_message?: string
+          was_successful?: boolean | null
+        }
+        Relationships: []
+      }
       budgets: {
         Row: {
           amount: number
@@ -582,6 +615,72 @@ export type Database = {
           id?: string
           image_url?: string
           name?: string
+        }
+        Relationships: []
+      }
+      intent_keywords: {
+        Row: {
+          action_template: Json | null
+          created_at: string
+          id: string
+          intent_type: string
+          keywords: string[]
+          priority: number | null
+        }
+        Insert: {
+          action_template?: Json | null
+          created_at?: string
+          id?: string
+          intent_type: string
+          keywords: string[]
+          priority?: number | null
+        }
+        Update: {
+          action_template?: Json | null
+          created_at?: string
+          id?: string
+          intent_type?: string
+          keywords?: string[]
+          priority?: number | null
+        }
+        Relationships: []
+      }
+      learned_patterns: {
+        Row: {
+          action_config: Json
+          created_at: string
+          default_params: Json | null
+          id: string
+          intent_type: string
+          last_used_at: string | null
+          required_params: Json | null
+          trigger_phrases: string[]
+          updated_at: string
+          usage_count: number | null
+        }
+        Insert: {
+          action_config: Json
+          created_at?: string
+          default_params?: Json | null
+          id?: string
+          intent_type: string
+          last_used_at?: string | null
+          required_params?: Json | null
+          trigger_phrases: string[]
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Update: {
+          action_config?: Json
+          created_at?: string
+          default_params?: Json | null
+          id?: string
+          intent_type?: string
+          last_used_at?: string | null
+          required_params?: Json | null
+          trigger_phrases?: string[]
+          updated_at?: string
+          usage_count?: number | null
         }
         Relationships: []
       }
