@@ -75,6 +75,7 @@ export function ChatInterface() {
                 role={message.role}
                 content={message.content}
                 timestamp={message.timestamp}
+                source={message.source}
                 onSelectOption={handleSelectOption}
               />
             ))}

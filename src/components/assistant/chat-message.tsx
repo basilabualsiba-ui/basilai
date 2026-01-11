@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Bot, User } from "lucide-react";
+import { Bot, User, Zap, Database, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 
@@ -7,6 +7,7 @@ interface ChatMessageProps {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  source?: 'local' | 'cached' | 'ai';
   onSelectOption?: (option: string) => void;
 }
 
@@ -42,9 +43,33 @@ function parseOptions(content: string): { text: string; options: ParsedOption[] 
   return { text, options };
 }
 
-export function ChatMessage({ role, content, timestamp, onSelectOption }: ChatMessageProps) {
+export function ChatMessage({ role, content, timestamp, source, onSelectOption }: ChatMessageProps) {
   const isUser = role === 'user';
   const { text, options } = isUser ? { text: content, options: [] } : parseOptions(content);
+
+  const getSourceIcon = () => {
+    if (isUser || !source) return null;
+    switch (source) {
+      case 'local':
+        return <Zap className="w-3 h-3 text-yellow-500" />;
+      case 'cached':
+        return <Database className="w-3 h-3 text-blue-500" />;
+      case 'ai':
+        return <Sparkles className="w-3 h-3 text-purple-500" />;
+      default:
+        return null;
+    }
+  };
+
+  const getSourceLabel = () => {
+    if (isUser || !source) return null;
+    switch (source) {
+      case 'local': return 'فوري';
+      case 'cached': return 'محفوظ';
+      case 'ai': return 'ذكاء';
+      default: return null;
+    }
+  };
 
   return (
     <div className={cn(
@@ -96,12 +121,18 @@ export function ChatMessage({ role, content, timestamp, onSelectOption }: ChatMe
             </div>
           )}
         </div>
-        <p className={cn(
-          "text-xs text-muted-foreground px-2",
-          isUser ? "text-right" : "text-left"
+        <div className={cn(
+          "flex items-center gap-1.5 px-2",
+          isUser ? "justify-end" : "justify-start"
         )}>
-          {format(timestamp, 'HH:mm')}
-        </p>
+          {getSourceIcon()}
+          {getSourceLabel() && (
+            <span className="text-[10px] text-muted-foreground/70">{getSourceLabel()}</span>
+          )}
+          <p className="text-xs text-muted-foreground">
+            {format(timestamp, 'HH:mm')}
+          </p>
+        </div>
       </div>
     </div>
   );

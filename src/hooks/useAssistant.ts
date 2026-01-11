@@ -1,17 +1,24 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { assistantProcessor } from '@/services/AssistantCommandProcessor';
 
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  source?: 'local' | 'cached' | 'ai';
 }
 
 export function useAssistant() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Initialize the command processor on mount
+  useEffect(() => {
+    assistantProcessor.initialize();
+  }, []);
 
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isLoading) return;
@@ -27,13 +34,31 @@ export function useAssistant() {
     setIsLoading(true);
 
     try {
+      // Step 1: Try local processing FIRST (offline-capable)
+      const localResult = await assistantProcessor.process(content.trim());
+
+      if (localResult.handled && localResult.response) {
+        // Respond instantly without API call! ⚡
+        const assistantMessage: Message = {
+          id: crypto.randomUUID(),
+          role: 'assistant',
+          content: localResult.response,
+          timestamp: new Date(),
+          source: localResult.source,
+        };
+        
+        setMessages(prev => [...prev, assistantMessage]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Step 2: Fall back to AI only for complex queries
       const response = await supabase.functions.invoke('personal-assistant', {
         body: {
           messages: [...messages, userMessage].map(m => ({
             role: m.role,
             content: m.content,
           })),
-          // Send timezone info to the assistant
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           currentTime: new Date().toISOString(),
         },
@@ -55,17 +80,18 @@ export function useAssistant() {
         role: 'assistant',
         content: response.data?.message || "I'm not sure how to respond to that.",
         timestamp: new Date(),
+        source: 'ai',
       };
 
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error: any) {
       console.error('Assistant error:', error);
       
-      let errorMessage = "Sorry, I encountered an error. Please try again.";
+      let errorMessage = "عذراً، حدث خطأ. حاول مرة أخرى.";
       if (error.message?.includes('429') || error.message?.includes('Rate limit')) {
-        errorMessage = "I'm receiving too many requests. Please wait a moment.";
+        errorMessage = "أنا مشغولة جداً الآن. انتظر لحظة.";
       } else if (error.message?.includes('402')) {
-        errorMessage = "Usage limit reached. Please check your credits.";
+        errorMessage = "انتهى الرصيد. تحقق من الاشتراك.";
       }
       
       toast.error(errorMessage);
@@ -75,6 +101,7 @@ export function useAssistant() {
         role: 'assistant',
         content: errorMessage,
         timestamp: new Date(),
+        source: 'local',
       };
       
       setMessages(prev => [...prev, errorAssistantMessage]);
@@ -87,10 +114,16 @@ export function useAssistant() {
     setMessages([]);
   }, []);
 
+  // Force refresh cache (useful after data changes)
+  const refreshCache = useCallback(async () => {
+    await assistantProcessor.forceRefreshCache();
+  }, []);
+
   return {
     messages,
     isLoading,
     sendMessage,
     clearMessages,
+    refreshCache,
   };
 }
