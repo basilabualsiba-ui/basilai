@@ -74,6 +74,48 @@ export type Database = {
         }
         Relationships: []
       }
+      assistant_commands: {
+        Row: {
+          action_config: Json | null
+          action_type: string
+          category: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          priority: number | null
+          requires_context: Json | null
+          response_template: string
+          trigger_patterns: string[]
+          updated_at: string
+        }
+        Insert: {
+          action_config?: Json | null
+          action_type?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          requires_context?: Json | null
+          response_template: string
+          trigger_patterns: string[]
+          updated_at?: string
+        }
+        Update: {
+          action_config?: Json | null
+          action_type?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          requires_context?: Json | null
+          response_template?: string
+          trigger_patterns?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       budgets: {
         Row: {
           amount: number
