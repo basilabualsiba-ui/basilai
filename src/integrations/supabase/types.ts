@@ -1029,6 +1029,129 @@ export type Database = {
         }
         Relationships: []
       }
+      roz_knowledge: {
+        Row: {
+          action_config: Json | null
+          created_at: string
+          failure_count: number | null
+          id: string
+          last_used_at: string | null
+          learned_from_ai: boolean | null
+          query_examples: string[] | null
+          query_pattern: string
+          response_template: string | null
+          response_type: string
+          sql_template: string | null
+          success_count: number | null
+          tables_used: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          action_config?: Json | null
+          created_at?: string
+          failure_count?: number | null
+          id?: string
+          last_used_at?: string | null
+          learned_from_ai?: boolean | null
+          query_examples?: string[] | null
+          query_pattern: string
+          response_template?: string | null
+          response_type?: string
+          sql_template?: string | null
+          success_count?: number | null
+          tables_used?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          action_config?: Json | null
+          created_at?: string
+          failure_count?: number | null
+          id?: string
+          last_used_at?: string | null
+          learned_from_ai?: boolean | null
+          query_examples?: string[] | null
+          query_pattern?: string
+          response_template?: string | null
+          response_type?: string
+          sql_template?: string | null
+          success_count?: number | null
+          tables_used?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      roz_personality: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean | null
+          trait_key: string
+          trait_type: string
+          trait_value: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          trait_key: string
+          trait_type: string
+          trait_value: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          trait_key?: string
+          trait_type?: string
+          trait_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      roz_user_memory: {
+        Row: {
+          confidence: number | null
+          context: string | null
+          created_at: string
+          id: string
+          last_referenced: string | null
+          memory_key: string
+          memory_type: string
+          memory_value: Json
+          reference_count: number | null
+          source: string | null
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number | null
+          context?: string | null
+          created_at?: string
+          id?: string
+          last_referenced?: string | null
+          memory_key: string
+          memory_type: string
+          memory_value: Json
+          reference_count?: number | null
+          source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number | null
+          context?: string | null
+          created_at?: string
+          id?: string
+          last_referenced?: string | null
+          memory_key?: string
+          memory_type?: string
+          memory_value?: Json
+          reference_count?: number | null
+          source?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subcategories: {
         Row: {
           category_id: string

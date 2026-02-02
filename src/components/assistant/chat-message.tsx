@@ -1,7 +1,8 @@
 import { cn } from "@/lib/utils";
-import { Bot, User, Zap, Database, Sparkles } from "lucide-react";
+import { User, Zap, Database, Sparkles, Volume2 } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { RozAvatar } from "./roz-avatar";
 
 interface ChatMessageProps {
   role: 'user' | 'assistant';
@@ -9,6 +10,8 @@ interface ChatMessageProps {
   timestamp: Date;
   source?: 'local' | 'cached' | 'ai';
   onSelectOption?: (option: string) => void;
+  onSpeak?: (content: string) => void;
+  isSpeaking?: boolean;
 }
 
 interface ParsedOption {
@@ -32,7 +35,6 @@ function parseOptions(content: string): { text: string; options: ParsedOption[] 
     .map(line => line.trim())
     .filter(line => line.length > 0)
     .map(line => {
-      // Handle format: "label|description" or just "label"
       const parts = line.split('|');
       const label = parts[0].trim();
       const description = parts[1]?.trim() || '';
@@ -43,17 +45,50 @@ function parseOptions(content: string): { text: string; options: ParsedOption[] 
   return { text, options };
 }
 
-export function ChatMessage({ role, content, timestamp, source, onSelectOption }: ChatMessageProps) {
+// Parse bullet options from markdown-style lists
+function parseBulletOptions(content: string): { text: string; options: string[] } {
+  const lines = content.split('\n');
+  const options: string[] = [];
+  const textLines: string[] = [];
+  
+  for (const line of lines) {
+    const bulletMatch = line.match(/^[•\-\*]\s*(.+)$/);
+    if (bulletMatch) {
+      const option = bulletMatch[1].trim();
+      // Skip if it looks like a data line (contains : or numbers)
+      if (!option.includes(':') && !option.match(/\d+\s*₪/)) {
+        options.push(option);
+      } else {
+        textLines.push(line);
+      }
+    } else {
+      textLines.push(line);
+    }
+  }
+  
+  return { text: textLines.join('\n'), options };
+}
+
+export function ChatMessage({ role, content, timestamp, source, onSelectOption, onSpeak, isSpeaking }: ChatMessageProps) {
   const isUser = role === 'user';
-  const { text, options } = isUser ? { text: content, options: [] } : parseOptions(content);
+  
+  // Parse options from content
+  const { text: parsedText, options: tagOptions } = isUser ? { text: content, options: [] } : parseOptions(content);
+  const { text: finalText, options: bulletOptions } = isUser ? { text: parsedText, options: [] } : parseBulletOptions(parsedText);
+  
+  // Combine both types of options
+  const allOptions = [
+    ...tagOptions.map(o => o.label),
+    ...bulletOptions
+  ];
 
   const getSourceIcon = () => {
     if (isUser || !source) return null;
     switch (source) {
       case 'local':
-        return <Zap className="w-3 h-3 text-yellow-500" />;
+        return <Zap className="w-3 h-3 text-amber-500" />;
       case 'cached':
-        return <Database className="w-3 h-3 text-blue-500" />;
+        return <Database className="w-3 h-3 text-sky-500" />;
       case 'ai':
         return <Sparkles className="w-3 h-3 text-purple-500" />;
       default:
@@ -64,7 +99,7 @@ export function ChatMessage({ role, content, timestamp, source, onSelectOption }
   const getSourceLabel = () => {
     if (isUser || !source) return null;
     switch (source) {
-      case 'local': return 'فوري';
+      case 'local': return 'فوري ⚡';
       case 'cached': return 'محفوظ';
       case 'ai': return 'ذكاء';
       default: return null;
@@ -77,52 +112,48 @@ export function ChatMessage({ role, content, timestamp, source, onSelectOption }
       isUser ? "flex-row-reverse" : "flex-row"
     )}>
       {/* Avatar */}
-      <div className={cn(
-        "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
-        isUser 
-          ? "bg-primary text-primary-foreground" 
-          : "bg-secondary border border-border"
-      )}>
-        {isUser ? (
+      {isUser ? (
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
           <User className="w-4 h-4" />
-        ) : (
-          <Bot className="w-4 h-4 text-primary" />
-        )}
-      </div>
+        </div>
+      ) : (
+        <RozAvatar size="sm" isSpeaking={isSpeaking} />
+      )}
 
       {/* Message Bubble */}
       <div className={cn(
-        "max-w-[80%] space-y-1",
+        "max-w-[85%] space-y-1",
         isUser ? "items-end" : "items-start"
       )}>
         <div className={cn(
           "px-4 py-3 rounded-2xl",
           isUser 
-            ? "bg-primary text-primary-foreground rounded-tr-sm" 
-            : "bg-card border border-border rounded-tl-sm"
+            ? "bg-primary text-primary-foreground rounded-tl-sm" 
+            : "bg-card border border-rose-200/30 rounded-tr-sm shadow-sm"
         )}>
-          <p className="text-sm whitespace-pre-wrap leading-relaxed">{text}</p>
+          <p className="text-sm whitespace-pre-wrap leading-relaxed">{finalText}</p>
           
           {/* Interactive Option Bubbles */}
-          {options.length > 0 && (
+          {allOptions.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-border/50">
-              {options.map((option, i) => (
+              {allOptions.map((option, i) => (
                 <Button
                   key={i}
                   variant="outline"
                   size="sm"
-                  onClick={() => onSelectOption?.(option.label)}
-                  className="bg-primary/10 border-primary/30 hover:bg-primary/20 hover:border-primary/50 text-foreground transition-all"
-                  title={option.description}
+                  onClick={() => onSelectOption?.(option)}
+                  className="bg-rose-500/10 border-rose-500/30 hover:bg-rose-500/20 hover:border-rose-500/50 text-foreground transition-all"
                 >
-                  {option.label}
+                  {option}
                 </Button>
               ))}
             </div>
           )}
         </div>
+        
+        {/* Footer with source and time */}
         <div className={cn(
-          "flex items-center gap-1.5 px-2",
+          "flex items-center gap-2 px-2",
           isUser ? "justify-end" : "justify-start"
         )}>
           {getSourceIcon()}
@@ -132,6 +163,18 @@ export function ChatMessage({ role, content, timestamp, source, onSelectOption }
           <p className="text-xs text-muted-foreground">
             {format(timestamp, 'HH:mm')}
           </p>
+          
+          {/* Speak button for assistant messages */}
+          {!isUser && onSpeak && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 text-muted-foreground hover:text-rose-500"
+              onClick={() => onSpeak(content)}
+            >
+              <Volume2 className="h-3 w-3" />
+            </Button>
+          )}
         </div>
       </div>
     </div>
