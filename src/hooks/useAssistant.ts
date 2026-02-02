@@ -75,23 +75,32 @@ export function useAssistant() {
         throw new Error(response.data.error);
       }
 
+      const aiResponse = response.data?.message || "مش فاهمة شو بدك. حاولي تاني.";
+
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: response.data?.message || "I'm not sure how to respond to that.",
+        content: `🌹 ${aiResponse}`,
         timestamp: new Date(),
         source: 'ai',
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Step 3: LEARN from AI response! 🧠
+      if (localResult.shouldLearn && localResult.originalQuery) {
+        await assistantProcessor.learnFromAIResponse(localResult.originalQuery, aiResponse);
+        console.log('🌹 روز تعلمت من AI!');
+      }
+
     } catch (error: any) {
       console.error('Assistant error:', error);
       
-      let errorMessage = "عذراً، حدث خطأ. حاول مرة أخرى.";
+      let errorMessage = "🌹 عذراً، في مشكلة. حاولي تاني.";
       if (error.message?.includes('429') || error.message?.includes('Rate limit')) {
-        errorMessage = "أنا مشغولة جداً الآن. انتظر لحظة.";
+        errorMessage = "🌹 مشغولة شوي. استنى لحظة.";
       } else if (error.message?.includes('402')) {
-        errorMessage = "انتهى الرصيد. تحقق من الاشتراك.";
+        errorMessage = "🌹 انتهى الرصيد. تحققي من الاشتراك.";
       }
       
       toast.error(errorMessage);

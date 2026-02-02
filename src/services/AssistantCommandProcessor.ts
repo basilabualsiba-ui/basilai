@@ -29,12 +29,81 @@ interface IntentKeyword {
   priority: number;
 }
 
+interface RozKnowledge {
+  id: string;
+  query_pattern: string;
+  query_examples: string[];
+  response_type: string;
+  action_config: any;
+  response_template: string;
+  sql_template?: string;
+  tables_used: string[];
+  success_count: number;
+}
+
+interface RozPersonality {
+  trait_type: string;
+  trait_key: string;
+  trait_value: any;
+}
+
+interface RozUserMemory {
+  id: string;
+  memory_type: string;
+  memory_key: string;
+  memory_value: any;
+  context?: string;
+}
+
+// Full database cache interface
 interface CachedData {
-  accounts: any[]; transactions: any[]; categories: any[]; subcategories: any[]; budgets: any[];
-  workoutSessions: any[]; workoutPlans: any[]; workoutPlanDays: any[];
-  prayerTimes: any | null; prayerCompletions: any[]; dailyActivities: any[]; activityCompletions: any[];
-  dreams: any[]; dreamSteps: any[]; supplements: any[]; supplementLogs: any[]; bodyStats: any[];
-  meals: any[]; mealPlans: any[]; mealPlanMeals: any[]; lastFetch: number;
+  // Financial
+  accounts: any[];
+  transactions: any[];
+  categories: any[];
+  subcategories: any[];
+  budgets: any[];
+  currencyRatios: any[];
+  // Gym
+  workoutSessions: any[];
+  workoutPlans: any[];
+  workoutPlanDays: any[];
+  exercises: any[];
+  exerciseSets: any[];
+  muscleGroups: any[];
+  workouts: any[];
+  workoutExercises: any[];
+  planWorkouts: any[];
+  workoutPlaylists: any[];
+  // Food
+  meals: any[];
+  mealPlans: any[];
+  mealPlanMeals: any[];
+  mealFoods: any[];
+  foodItems: any[];
+  mealConsumptions: any[];
+  // Prayer
+  prayerTimes: any | null;
+  prayerCompletions: any[];
+  // Schedule
+  dailyActivities: any[];
+  activityCompletions: any[];
+  // Dreams
+  dreams: any[];
+  dreamSteps: any[];
+  dreamPhotos: any[];
+  // Supplements
+  supplements: any[];
+  supplementLogs: any[];
+  // Personal
+  bodyStats: any[];
+  userPreferences: any[];
+  // Roz's Brain
+  rozKnowledge: RozKnowledge[];
+  rozPersonality: RozPersonality[];
+  rozUserMemory: RozUserMemory[];
+  // Metadata
+  lastFetch: number;
 }
 
 interface ProcessResult {
@@ -44,6 +113,8 @@ interface ProcessResult {
   needsInput?: boolean;
   options?: string[];
   pendingAction?: any;
+  shouldLearn?: boolean;
+  originalQuery?: string;
 }
 
 interface ConversationContext {
@@ -51,35 +122,55 @@ interface ConversationContext {
   pendingAction?: any;
   pendingParams?: any;
   awaitingInput?: string;
+  lastQuery?: string;
 }
 
 const CACHE_DURATION = 5 * 60 * 1000;
 
+// Roz's personality - loaded from DB but with fallbacks
+const ROZ_DEFAULT_PERSONALITY = {
+  name: 'روز',
+  nameEn: 'Roz',
+  gender: 'female',
+  emoji: '🌹',
+};
+
 // Palestinian Jenin dialect responses
 const DIALECT = {
-  greeting: ["كيفك؟", "شو أخبارك؟", "هلا والله!"],
-  understanding: ["فهمت عليك!", "تمام!", "ماشي!", "زبط!"],
-  asking: ["شو بدك بالضبط؟", "وين بدك؟", "أي فترة؟"],
+  greeting: ["هلا!", "أهلين!", "كيفك؟", "شو أخبارك؟", "هلا والله!"],
+  understanding: ["فهمت عليك!", "تمام!", "ماشي!", "زبط!", "أكيد!"],
+  asking: ["شو بدك بالضبط؟", "وين بدك؟", "أي فترة؟", "وضحلي أكتر"],
+  thinking: ["استنى شوي...", "خليني أشوف...", "لحظة...", "دقيقة..."],
   success: ["خلصت!", "تم!", "هيك أحسن!", "زبط معي!"],
-  notFound: ["مش لاقي شي", "مافي شي", "فاضي"],
-  learning: ["تعلمت!", "حفظت!", "صار عندي!"],
-  error: ["في إشي غلط", "مش مزبوط", "جرب تاني"]
+  notFound: ["مش لاقية شي", "مافي شي", "فاضي", "ما لقيت"],
+  learning: ["تعلمت!", "حفظت!", "صار عندي!", "فهمت!"],
+  error: ["في إشي غلط", "مش مزبوط", "جرب تاني"],
+  goodbye: ["مع السلامة!", "يلا باي!", "الله معك!", "بنشوفك!"],
+  personality: ["أنا روز 🌹", "خدامتك!", "شو بدك مني؟", "حاضرة!"]
 };
 
 class AssistantCommandProcessor {
   private commands: Command[] = [];
   private learnedPatterns: LearnedPattern[] = [];
   private intentKeywords: IntentKeyword[] = [];
-  private cachedData: CachedData = {
-    accounts: [], transactions: [], categories: [], subcategories: [], budgets: [],
-    workoutSessions: [], workoutPlans: [], workoutPlanDays: [],
-    prayerTimes: null, prayerCompletions: [], dailyActivities: [], activityCompletions: [],
-    dreams: [], dreamSteps: [], supplements: [], supplementLogs: [], bodyStats: [],
-    meals: [], mealPlans: [], mealPlanMeals: [], lastFetch: 0
-  };
+  private cachedData: CachedData = this.getEmptyCache();
   private context: ConversationContext = {};
   private initialized = false;
   private initPromise: Promise<void> | null = null;
+  private personality = ROZ_DEFAULT_PERSONALITY;
+
+  private getEmptyCache(): CachedData {
+    return {
+      accounts: [], transactions: [], categories: [], subcategories: [], budgets: [], currencyRatios: [],
+      workoutSessions: [], workoutPlans: [], workoutPlanDays: [], exercises: [], exerciseSets: [],
+      muscleGroups: [], workouts: [], workoutExercises: [], planWorkouts: [], workoutPlaylists: [],
+      meals: [], mealPlans: [], mealPlanMeals: [], mealFoods: [], foodItems: [], mealConsumptions: [],
+      prayerTimes: null, prayerCompletions: [], dailyActivities: [], activityCompletions: [],
+      dreams: [], dreamSteps: [], dreamPhotos: [], supplements: [], supplementLogs: [],
+      bodyStats: [], userPreferences: [], rozKnowledge: [], rozPersonality: [], rozUserMemory: [],
+      lastFetch: 0
+    };
+  }
 
   async initialize(): Promise<void> {
     if (this.initPromise) return this.initPromise;
@@ -95,39 +186,77 @@ class AssistantCommandProcessor {
       const startOfMonth = this.getStartOfMonth();
       const startOfWeek = this.getStartOfWeek();
 
+      // Fetch ALL data in parallel for Roz's full access
       const results = await Promise.all([
+        // Commands & patterns
         supabase.from('assistant_commands').select('*').eq('is_active', true).order('priority', { ascending: false }),
         supabase.from('learned_patterns').select('*').order('usage_count', { ascending: false }),
         supabase.from('intent_keywords').select('*').order('priority', { ascending: false }),
+        // Financial (6)
         supabase.from('accounts').select('*'),
-        supabase.from('transactions').select('*, categories(name, icon), subcategories(name, location), accounts(name)').order('date', { ascending: false }).limit(500),
+        supabase.from('transactions').select('*, categories(name, icon), subcategories(name, location), accounts(name)').order('date', { ascending: false }),
         supabase.from('categories').select('*'),
         supabase.from('subcategories').select('*'),
         supabase.from('budgets').select('*'),
-        supabase.from('workout_sessions').select('*').order('scheduled_date', { ascending: false }).limit(100),
+        supabase.from('currency_ratios').select('*'),
+        // Gym (10)
+        supabase.from('workout_sessions').select('*').order('scheduled_date', { ascending: false }),
         supabase.from('workout_plans').select('*'),
         supabase.from('workout_plan_days').select('*'),
-        supabase.from('prayer_times').select('*').eq('date', today).limit(1),
-        supabase.from('prayer_completions').select('*').gte('completion_date', startOfWeek),
-        supabase.from('daily_activities').select('*'),
-        supabase.from('dreams').select('*').order('created_at', { ascending: false }),
-        supabase.from('dream_steps').select('*'),
-        supabase.from('supplements').select('*'),
-        supabase.from('supplement_logs').select('*').gte('logged_date', startOfMonth),
-        supabase.from('user_body_stats').select('*').order('recorded_at', { ascending: false }).limit(30),
+        supabase.from('exercises').select('*'),
+        supabase.from('exercise_sets').select('*').order('created_at', { ascending: false }).limit(500),
+        supabase.from('muscle_groups').select('*'),
+        supabase.from('workouts').select('*'),
+        supabase.from('workout_exercises').select('*'),
+        supabase.from('plan_workouts').select('*'),
+        supabase.from('workout_playlists').select('*'),
+        // Food (6)
         supabase.from('meals').select('*'),
         supabase.from('meal_plans').select('*'),
-        supabase.from('meal_plan_meals').select('*')
+        supabase.from('meal_plan_meals').select('*'),
+        supabase.from('meal_foods').select('*'),
+        supabase.from('food_items').select('*'),
+        supabase.from('meal_consumptions').select('*').gte('consumed_at', startOfWeek),
+        // Prayer (2)
+        supabase.from('prayer_times').select('*').eq('date', today).limit(1),
+        supabase.from('prayer_completions').select('*').gte('completion_date', startOfWeek),
+        // Schedule (2)
+        supabase.from('daily_activities').select('*'),
+        supabase.from('activity_completions').select('*').gte('completion_date', startOfWeek),
+        // Dreams (3)
+        supabase.from('dreams').select('*').order('created_at', { ascending: false }),
+        supabase.from('dream_steps').select('*'),
+        supabase.from('dream_photos').select('*'),
+        // Supplements (2)
+        supabase.from('supplements').select('*'),
+        supabase.from('supplement_logs').select('*').gte('logged_date', startOfMonth),
+        // Personal
+        supabase.from('user_body_stats').select('*').order('recorded_at', { ascending: false }).limit(100),
+        supabase.from('user_preferences').select('*'),
+        // Roz's Brain (3)
+        supabase.from('roz_knowledge').select('*').order('success_count', { ascending: false }),
+        supabase.from('roz_personality').select('*'),
+        supabase.from('roz_user_memory').select('*').order('reference_count', { ascending: false })
       ]);
 
-      const [commandsRes, patternsRes, keywordsRes, accountsRes, transactionsRes, categoriesRes, subcategoriesRes,
-        budgetsRes, sessionsRes, plansRes, planDaysRes, prayerRes, prayerCompRes, activitiesRes,
-        dreamsRes, stepsRes, suppRes, suppLogsRes, bodyRes, mealsRes, mealPlansRes, mealPlanMealsRes] = results;
+      const [
+        commandsRes, patternsRes, keywordsRes,
+        accountsRes, transactionsRes, categoriesRes, subcategoriesRes, budgetsRes, currencyRes,
+        sessionsRes, plansRes, planDaysRes, exercisesRes, setsRes, muscleRes, workoutsRes, workoutExRes, planWorkoutsRes, playlistsRes,
+        mealsRes, mealPlansRes, mealPlanMealsRes, mealFoodsRes, foodItemsRes, mealConsumptionsRes,
+        prayerRes, prayerCompRes,
+        activitiesRes, activityCompRes,
+        dreamsRes, stepsRes, photosRes,
+        suppRes, suppLogsRes,
+        bodyRes, prefsRes,
+        knowledgeRes, personalityRes, memoryRes
+      ] = results;
 
+      // Map commands
       this.commands = (commandsRes.data || []).map(cmd => ({
         id: cmd.id, trigger_patterns: cmd.trigger_patterns, response_template: cmd.response_template,
         action_type: cmd.action_type as ActionType, action_config: cmd.action_config,
-        category: cmd.category ?? undefined, priority: cmd.priority, is_active: cmd.is_active
+        category: cmd.category ?? undefined, priority: cmd.priority ?? 0, is_active: cmd.is_active ?? true
       }));
 
       this.learnedPatterns = (patternsRes.data || []).map(p => ({
@@ -136,88 +265,469 @@ class AssistantCommandProcessor {
       }));
 
       this.intentKeywords = (keywordsRes.data || []).map(k => ({
-        intent_type: k.intent_type, keywords: k.keywords, action_template: k.action_template, priority: k.priority
+        intent_type: k.intent_type, keywords: k.keywords, action_template: k.action_template, priority: k.priority ?? 0
       }));
 
+      // Cache ALL data
       this.cachedData = {
-        accounts: accountsRes.data || [], transactions: transactionsRes.data || [],
-        categories: categoriesRes.data || [], subcategories: subcategoriesRes.data || [],
-        budgets: budgetsRes.data || [], workoutSessions: sessionsRes.data || [],
-        workoutPlans: plansRes.data || [], workoutPlanDays: planDaysRes.data || [],
-        prayerTimes: prayerRes.data?.[0] || null, prayerCompletions: prayerCompRes.data || [],
-        dailyActivities: activitiesRes.data || [], activityCompletions: [],
-        dreams: dreamsRes.data || [], dreamSteps: stepsRes.data || [],
-        supplements: suppRes.data || [], supplementLogs: suppLogsRes.data || [],
-        bodyStats: bodyRes.data || [], meals: mealsRes.data || [],
-        mealPlans: mealPlansRes.data || [], mealPlanMeals: mealPlanMealsRes.data || [],
+        accounts: accountsRes.data || [],
+        transactions: transactionsRes.data || [],
+        categories: categoriesRes.data || [],
+        subcategories: subcategoriesRes.data || [],
+        budgets: budgetsRes.data || [],
+        currencyRatios: currencyRes.data || [],
+        workoutSessions: sessionsRes.data || [],
+        workoutPlans: plansRes.data || [],
+        workoutPlanDays: planDaysRes.data || [],
+        exercises: exercisesRes.data || [],
+        exerciseSets: setsRes.data || [],
+        muscleGroups: muscleRes.data || [],
+        workouts: workoutsRes.data || [],
+        workoutExercises: workoutExRes.data || [],
+        planWorkouts: planWorkoutsRes.data || [],
+        workoutPlaylists: playlistsRes.data || [],
+        meals: mealsRes.data || [],
+        mealPlans: mealPlansRes.data || [],
+        mealPlanMeals: mealPlanMealsRes.data || [],
+        mealFoods: mealFoodsRes.data || [],
+        foodItems: foodItemsRes.data || [],
+        mealConsumptions: mealConsumptionsRes.data || [],
+        prayerTimes: prayerRes.data?.[0] || null,
+        prayerCompletions: prayerCompRes.data || [],
+        dailyActivities: activitiesRes.data || [],
+        activityCompletions: activityCompRes.data || [],
+        dreams: dreamsRes.data || [],
+        dreamSteps: stepsRes.data || [],
+        dreamPhotos: photosRes.data || [],
+        supplements: suppRes.data || [],
+        supplementLogs: suppLogsRes.data || [],
+        bodyStats: bodyRes.data || [],
+        userPreferences: prefsRes.data || [],
+        rozKnowledge: (knowledgeRes.data || []).map(k => ({
+          id: k.id, query_pattern: k.query_pattern, query_examples: k.query_examples || [],
+          response_type: k.response_type, action_config: k.action_config,
+          response_template: k.response_template || '', sql_template: k.sql_template,
+          tables_used: k.tables_used || [], success_count: k.success_count || 0
+        })),
+        rozPersonality: (personalityRes.data || []).map(p => ({
+          trait_type: p.trait_type, trait_key: p.trait_key, trait_value: p.trait_value
+        })),
+        rozUserMemory: (memoryRes.data || []).map(m => ({
+          id: m.id, memory_type: m.memory_type, memory_key: m.memory_key,
+          memory_value: m.memory_value, context: m.context
+        })),
         lastFetch: Date.now()
       };
+
+      // Load Roz's personality from DB
+      this.loadPersonality();
       
       this.initialized = true;
-      console.log(`AssistantCommandProcessor: ${this.commands.length} commands, ${this.learnedPatterns.length} patterns, ${this.intentKeywords.length} keywords`);
+      console.log(`🌹 روز جاهزة! ${this.commands.length} أوامر, ${this.cachedData.rozKnowledge.length} معرفة, ${this.cachedData.rozUserMemory.length} ذكريات`);
     } catch (error) {
-      console.error('Failed to initialize:', error);
+      console.error('Failed to initialize Roz:', error);
+    }
+  }
+
+  private loadPersonality(): void {
+    const getName = this.cachedData.rozPersonality.find(p => p.trait_type === 'identity' && p.trait_key === 'name');
+    if (getName) {
+      try {
+        this.personality.name = JSON.parse(getName.trait_value);
+      } catch { this.personality.name = getName.trait_value; }
     }
   }
 
   private normalize(text: string): string {
-    return text.toLowerCase().trim().replace(/[؟?!.,،:;]/g, '').replace(/\s+/g, ' ')
-      .replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي');
+    return text.toLowerCase().trim()
+      .replace(/[؟?!.,،:;]/g, '')
+      .replace(/\s+/g, ' ')
+      .replace(/[أإآ]/g, 'ا')
+      .replace(/ة/g, 'ه')
+      .replace(/ى/g, 'ي');
   }
 
   private random<T>(arr: T[]): T {
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
+  private getRozPrefix(): string {
+    return `${this.personality.emoji} `;
+  }
+
   async process(message: string): Promise<ProcessResult> {
     await this.initialize();
     const normalized = this.normalize(message);
+    this.context.lastQuery = message;
 
-    // Log interaction for learning
+    // Log interaction
     this.logInteraction(message);
 
-    // Step 1: Check if we're waiting for user input (follow-up question)
+    // Step 1: Check if awaiting input (follow-up)
     if (this.context.awaitingInput) {
       return this.handleFollowUp(message);
     }
 
-    // Step 2: Check for learning command
+    // Step 2: Check for personality commands (about Roz)
+    const personalityResult = await this.handlePersonalityCommand(normalized, message);
+    if (personalityResult) return personalityResult;
+
+    // Step 3: Check for user memory commands
+    const memoryResult = await this.handleMemoryCommand(normalized, message);
+    if (memoryResult) return memoryResult;
+
+    // Step 4: Check for learning commands
     const learningResult = await this.handleLearningCommand(message);
     if (learningResult) return learningResult;
 
-    // Step 3: Check learned patterns first (user-defined shortcuts)
+    // Step 5: Check Roz's learned knowledge first (AI-learned patterns)
+    const knowledgeResult = await this.matchRozKnowledge(normalized, message);
+    if (knowledgeResult) return knowledgeResult;
+
+    // Step 6: Check learned patterns (user-defined)
     const patternResult = await this.matchLearnedPattern(normalized);
     if (patternResult) return patternResult;
 
-    // Step 4: Smart intent detection - understand what user wants
+    // Step 7: Smart intent detection
     const intentResult = await this.detectIntent(normalized, message);
     if (intentResult) return intentResult;
 
-    // Step 5: Try exact command match
+    // Step 8: Try exact command match
     const command = this.matchCommand(normalized);
     if (command) {
       if (command.action_type === 'response') {
-        return { handled: true, response: command.response_template, source: 'local' };
+        return { handled: true, response: this.getRozPrefix() + command.response_template, source: 'local' };
       }
       if (command.action_type === 'action') {
         const response = await this.executeAction(command);
-        return { handled: true, response, source: 'cached' };
+        return { handled: true, response: this.getRozPrefix() + response, source: 'cached' };
       }
     }
 
-    // Step 6: Dynamic pattern matching
+    // Step 9: Dynamic pattern matching
     const dynamic = this.matchDynamicCommand(normalized);
     if (dynamic) {
       const response = await this.runAction(dynamic.config, dynamic.params);
-      return { handled: true, response, source: 'cached' };
+      return { handled: true, response: this.getRozPrefix() + response, source: 'cached' };
     }
 
-    // Step 7: Math
+    // Step 10: Math
     const mathResult = this.handleMath(message);
-    if (mathResult) return { handled: true, response: mathResult, source: 'local' };
+    if (mathResult) return { handled: true, response: this.getRozPrefix() + mathResult, source: 'local' };
 
-    // Not understood - needs AI
-    return { handled: false, source: 'ai' };
+    // Not understood - needs AI (and will learn from it!)
+    return { 
+      handled: false, 
+      source: 'ai',
+      shouldLearn: true,
+      originalQuery: message
+    };
+  }
+
+  // Learn from AI response
+  async learnFromAIResponse(userQuery: string, aiResponse: string): Promise<void> {
+    try {
+      // Extract pattern from query
+      const pattern = this.extractQueryPattern(userQuery);
+      
+      // Detect action type from response
+      const actionInfo = this.detectActionFromResponse(aiResponse, userQuery);
+      
+      // Check if we already have similar knowledge
+      const existing = this.cachedData.rozKnowledge.find(k => 
+        this.normalize(k.query_pattern) === this.normalize(pattern)
+      );
+
+      if (existing) {
+        // Update existing knowledge
+        await supabase.from('roz_knowledge').update({
+          query_examples: [...new Set([...(existing.query_examples || []), userQuery])],
+          success_count: existing.success_count + 1,
+          last_used_at: new Date().toISOString()
+        }).eq('id', existing.id);
+      } else {
+        // Insert new knowledge
+        await supabase.from('roz_knowledge').insert({
+          query_pattern: pattern,
+          query_examples: [userQuery],
+          response_type: actionInfo.type,
+          action_config: actionInfo.config,
+          response_template: this.createResponseTemplate(aiResponse),
+          tables_used: actionInfo.tables,
+          learned_from_ai: true
+        });
+      }
+
+      // Refresh knowledge cache
+      const { data } = await supabase.from('roz_knowledge').select('*').order('success_count', { ascending: false });
+      if (data) {
+        this.cachedData.rozKnowledge = data.map(k => ({
+          id: k.id, query_pattern: k.query_pattern, query_examples: k.query_examples || [],
+          response_type: k.response_type, action_config: k.action_config,
+          response_template: k.response_template || '', sql_template: k.sql_template,
+          tables_used: k.tables_used || [], success_count: k.success_count || 0
+        }));
+      }
+
+      console.log(`🌹 تعلمت نمط جديد: "${pattern}"`);
+    } catch (error) {
+      console.error('Error learning from AI:', error);
+    }
+  }
+
+  private extractQueryPattern(query: string): string {
+    let pattern = this.normalize(query);
+    
+    // Replace specific values with placeholders
+    // Replace place names
+    for (const sub of this.cachedData.subcategories) {
+      const subNorm = this.normalize(sub.name);
+      if (pattern.includes(subNorm)) {
+        pattern = pattern.replace(subNorm, '{place}');
+        break;
+      }
+    }
+
+    // Replace periods
+    const periods = [
+      { patterns: ['امبارح', 'أمس', 'البارحه'], placeholder: '{period}' },
+      { patterns: ['اليوم', 'هاليوم'], placeholder: '{period}' },
+      { patterns: ['هالأسبوع', 'اسبوع', 'أسبوع'], placeholder: '{period}' },
+      { patterns: ['هالشهر', 'شهر'], placeholder: '{period}' }
+    ];
+
+    for (const p of periods) {
+      for (const pat of p.patterns) {
+        if (pattern.includes(pat)) {
+          pattern = pattern.replace(pat, p.placeholder);
+          break;
+        }
+      }
+    }
+
+    // Replace numbers
+    pattern = pattern.replace(/\d+/g, '{number}');
+
+    return pattern;
+  }
+
+  private detectActionFromResponse(response: string, query: string): { type: string; config: any; tables: string[] } {
+    const queryNorm = this.normalize(query);
+    const respNorm = this.normalize(response);
+
+    // Detect spending queries
+    if (queryNorm.includes('صرف') || queryNorm.includes('مصاريف')) {
+      return {
+        type: 'spending_query',
+        config: { type: 'get_spending_by_place' },
+        tables: ['transactions', 'subcategories', 'categories']
+      };
+    }
+
+    // Detect prayer queries
+    if (queryNorm.includes('صلا') || queryNorm.includes('مواقيت')) {
+      return {
+        type: 'prayer_query',
+        config: { type: 'get_prayer_times' },
+        tables: ['prayer_times']
+      };
+    }
+
+    // Detect gym queries
+    if (queryNorm.includes('تمرين') || queryNorm.includes('جيم')) {
+      return {
+        type: 'gym_query',
+        config: { type: 'get_gym_stats' },
+        tables: ['workout_sessions', 'exercises']
+      };
+    }
+
+    // Detect supplement queries
+    if (queryNorm.includes('مكمل')) {
+      return {
+        type: 'supplement_query',
+        config: { type: 'get_supplements_status' },
+        tables: ['supplements', 'supplement_logs']
+      };
+    }
+
+    // Detect dream queries
+    if (queryNorm.includes('حلم') || queryNorm.includes('أحلام')) {
+      return {
+        type: 'dream_query',
+        config: { type: 'get_dreams_status' },
+        tables: ['dreams', 'dream_steps']
+      };
+    }
+
+    // Default - general response
+    return {
+      type: 'general_response',
+      config: { type: 'template_response' },
+      tables: []
+    };
+  }
+
+  private createResponseTemplate(response: string): string {
+    // Extract template with placeholders
+    let template = response;
+    
+    // Replace specific numbers with placeholders
+    template = template.replace(/\d+(?:,\d+)*(?:\.\d+)?/g, '{value}');
+    
+    return template;
+  }
+
+  private async matchRozKnowledge(normalized: string, original: string): Promise<ProcessResult | null> {
+    for (const knowledge of this.cachedData.rozKnowledge) {
+      const patternNorm = this.normalize(knowledge.query_pattern);
+      
+      // Check if query matches pattern
+      const patternRegex = patternNorm
+        .replace(/\{place\}/g, '(.+?)')
+        .replace(/\{period\}/g, '(امبارح|اليوم|هالأسبوع|هالشهر|أمس|اسبوع|شهر)')
+        .replace(/\{number\}/g, '(\\d+)');
+
+      const regex = new RegExp(patternRegex);
+      const match = normalized.match(regex);
+
+      if (match || patternNorm.includes(normalized) || normalized.includes(patternNorm)) {
+        // Extract entities
+        const entities = this.extractEntities(normalized);
+
+        // Execute the action
+        if (knowledge.action_config?.type) {
+          const response = await this.runAction(knowledge.action_config, entities as any);
+          
+          // Update success count
+          supabase.from('roz_knowledge').update({
+            success_count: knowledge.success_count + 1,
+            last_used_at: new Date().toISOString()
+          }).eq('id', knowledge.id).then();
+
+          return { handled: true, response: this.getRozPrefix() + response, source: 'cached' };
+        }
+
+        // Use template response
+        if (knowledge.response_template) {
+          return { handled: true, response: this.getRozPrefix() + knowledge.response_template, source: 'cached' };
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private async handlePersonalityCommand(normalized: string, original: string): Promise<ProcessResult | null> {
+    // Check if asking about Roz
+    if (normalized.includes('مين انت') || normalized.includes('شو اسمك') || normalized.includes('عرفيني على حالك')) {
+      return {
+        handled: true,
+        response: `${this.getRozPrefix()}أنا ${this.personality.name}! مساعدتك الشخصية بلهجة جنينية 🇵🇸\n\nبقدر أساعدك ب:\n💰 المصاريف والميزانية\n🕌 مواقيت الصلاة\n💪 الجيم والتمارين\n💊 المكملات\n🌟 أحلامك وأهدافك\n🍽️ خطط الأكل\n\nوبتعلم منك كل يوم! ${this.random(DIALECT.personality)}`,
+        source: 'local'
+      };
+    }
+
+    // Check for personality modification commands
+    const personalityPatterns = [
+      /(?:روز\s+)?(?:خليكي|كوني|صيري)\s+(.+)/i,
+      /(?:بدي\s+)?(?:اياكي|إياكي)\s+(.+)/i
+    ];
+
+    for (const pattern of personalityPatterns) {
+      const match = original.match(pattern);
+      if (match?.[1]) {
+        const trait = match[1].trim();
+        
+        // Save personality trait
+        await supabase.from('roz_personality').upsert({
+          trait_type: 'user_requested',
+          trait_key: 'tone_modifier',
+          trait_value: JSON.stringify(trait)
+        }, { onConflict: 'trait_type,trait_key' });
+
+        return {
+          handled: true,
+          response: `${this.getRozPrefix()}${this.random(DIALECT.understanding)} من هلأ رح أكون ${trait} ❤️`,
+          source: 'local'
+        };
+      }
+    }
+
+    return null;
+  }
+
+  private async handleMemoryCommand(normalized: string, original: string): Promise<ProcessResult | null> {
+    // Check for memory save commands
+    const memoryPatterns = [
+      /(?:احفظي?|تذكري?)\s+(?:انو?|إنو?|أنو?)?\s*(.+)/i,
+      /(?:أنا\s+)?(?:بحب|بفضل|بكره|ما بحب)\s+(.+)/i
+    ];
+
+    for (const pattern of memoryPatterns) {
+      const match = original.match(pattern);
+      if (match?.[1]) {
+        const memory = match[1].trim();
+        
+        // Detect memory type
+        let memoryType = 'fact';
+        let context = 'general';
+        
+        if (normalized.includes('بحب') || normalized.includes('بفضل')) {
+          memoryType = 'preference';
+        } else if (normalized.includes('بكره') || normalized.includes('ما بحب')) {
+          memoryType = 'dislike';
+        }
+
+        // Detect context
+        if (normalized.includes('اكل') || normalized.includes('طعام')) context = 'food';
+        else if (normalized.includes('تمرين') || normalized.includes('جيم')) context = 'gym';
+        else if (normalized.includes('مصاري') || normalized.includes('فلوس')) context = 'finance';
+
+        // Save memory
+        await supabase.from('roz_user_memory').insert({
+          memory_type: memoryType,
+          memory_key: memory.substring(0, 50),
+          memory_value: JSON.stringify(memory),
+          context: context,
+          source: 'user_told'
+        });
+
+        return {
+          handled: true,
+          response: `${this.getRozPrefix()}${this.random(DIALECT.learning)} رح أتذكر إنك ${memory} ❤️`,
+          source: 'local'
+        };
+      }
+    }
+
+    // Check for memory recall
+    if (normalized.includes('شو بتعرفي عني') || normalized.includes('شو بتتذكري')) {
+      const memories = this.cachedData.rozUserMemory.slice(0, 5);
+      if (!memories.length) {
+        return {
+          handled: true,
+          response: `${this.getRozPrefix()}لسا ما حكيتلي كتير عن حالك! احكيلي شو بتحب وشو بتكره 😊`,
+          source: 'local'
+        };
+      }
+
+      const memoryList = memories.map(m => {
+        try {
+          return `• ${JSON.parse(m.memory_value)}`;
+        } catch {
+          return `• ${m.memory_value}`;
+        }
+      }).join('\n');
+
+      return {
+        handled: true,
+        response: `${this.getRozPrefix()}هاي اللي بتذكره عنك:\n\n${memoryList}`,
+        source: 'local'
+      };
+    }
+
+    return null;
   }
 
   private async handleFollowUp(message: string): Promise<ProcessResult> {
@@ -229,7 +739,7 @@ class AssistantCommandProcessor {
       return { handled: false, source: 'ai' };
     }
 
-    // Check if user selected an option
+    // Check for period selection
     if (this.context.awaitingInput === 'period') {
       let period = 'month';
       if (normalized.includes('امبارح') || normalized.includes('أمس')) period = 'yesterday';
@@ -242,7 +752,7 @@ class AssistantCommandProcessor {
       this.context.pendingAction = undefined;
 
       const response = await this.runAction(pending.config, pending.params);
-      return { handled: true, response, source: 'cached' };
+      return { handled: true, response: this.getRozPrefix() + response, source: 'cached' };
     }
 
     this.context.awaitingInput = undefined;
@@ -250,7 +760,6 @@ class AssistantCommandProcessor {
   }
 
   private async detectIntent(normalized: string, original: string): Promise<ProcessResult | null> {
-    // Extract entities from the message
     const entities = this.extractEntities(normalized);
     
     // Find matching intent keywords
@@ -272,20 +781,16 @@ class AssistantCommandProcessor {
 
     const intent = bestMatch.intent;
 
-    // Handle different intents
     switch (intent.intent_type) {
       case 'spending_by_place':
-        // Check if we have a place
         if (entities.place) {
-          // Check if we have a period
           if (entities.period) {
             return {
               handled: true,
-              response: await this.getSpendingByPlaceWithPeriod(entities.place, entities.period),
+              response: this.getRozPrefix() + await this.getSpendingByPlaceWithPeriod(entities.place, entities.period),
               source: 'cached'
             };
           } else {
-            // Ask for period
             this.context.awaitingInput = 'period';
             this.context.pendingAction = {
               config: { type: 'get_spending_by_place' },
@@ -293,7 +798,7 @@ class AssistantCommandProcessor {
             };
             return {
               handled: true,
-              response: `${this.random(DIALECT.asking)}\n\n• امبارح\n• هالأسبوع\n• هالشهر`,
+              response: `${this.getRozPrefix()}${this.random(DIALECT.asking)}\n\n• امبارح\n• هالأسبوع\n• هالشهر`,
               source: 'local',
               needsInput: true,
               options: ['امبارح', 'هالأسبوع', 'هالشهر']
@@ -303,7 +808,6 @@ class AssistantCommandProcessor {
         return null;
 
       case 'spending_period':
-        // Just a period mentioned, might be spending query
         if (entities.period && this.context.pendingAction) {
           return this.handleFollowUp(original);
         }
@@ -312,15 +816,14 @@ class AssistantCommandProcessor {
       case 'start_learning':
         return {
           handled: true,
-          response: `${this.random(DIALECT.understanding)}\n\nعلمني بهالشكل:\n"تعلم: لما أقول [كلمة] اعمل [شو تبدي]"\n\nمثال:\n"تعلم: لما أقول حشاش احسب مصاريف الحشاش"`,
+          response: `${this.getRozPrefix()}${this.random(DIALECT.understanding)}\n\nعلميني بهالشكل:\n"تعلم: لما أقول [كلمة] اعمل [شو تبدي]"\n\nمثال:\n"تعلم: لما أقول حشاش احسب مصاريف الحشاش"`,
           source: 'local'
         };
 
       default:
-        // Try to execute the action template
         if (intent.action_template?.type) {
           const response = await this.runAction(intent.action_template);
-          return { handled: true, response, source: 'cached' };
+          return { handled: true, response: this.getRozPrefix() + response, source: 'cached' };
         }
     }
 
@@ -376,7 +879,7 @@ class AssistantCommandProcessor {
                 };
                 return {
                   handled: true,
-                  response: `${this.random(DIALECT.asking)}\n\n${options.map(o => `• ${o}`).join('\n')}`,
+                  response: `${this.getRozPrefix()}${this.random(DIALECT.asking)}\n\n${options.map(o => `• ${o}`).join('\n')}`,
                   source: 'local',
                   needsInput: true,
                   options
@@ -387,7 +890,7 @@ class AssistantCommandProcessor {
 
           // Execute the action
           const response = await this.runAction(pattern.action_config, pattern.default_params);
-          return { handled: true, response, source: 'cached' };
+          return { handled: true, response: this.getRozPrefix() + response, source: 'cached' };
         }
       }
     }
@@ -395,7 +898,6 @@ class AssistantCommandProcessor {
   }
 
   private async handleLearningCommand(message: string): Promise<ProcessResult | null> {
-    // Pattern: "تعلم: لما أقول X اعمل/احسب Y"
     const learnPatterns = [
       /(?:تعلم|احفظ|علمني)[:؛\s]+(?:لما|عندما|اذا)\s+(?:اقول|قلت|أقول)\s+["']?(.+?)["']?\s+(?:اعمل|احسب|قول|افتح|اظهر)\s+["']?(.+?)["']?$/i,
       /(?:تعلم|احفظ)[:؛\s]+["']?(.+?)["']?\s*[=→]\s*["']?(.+?)["']?$/i
@@ -407,11 +909,9 @@ class AssistantCommandProcessor {
         const trigger = match[1].trim();
         const action = match[2].trim();
 
-        // Detect what kind of action this is
         const actionConfig = this.parseActionFromDescription(action);
         
         if (actionConfig.needsParams) {
-          // Save as learned pattern with required params
           const { error } = await supabase.from('learned_patterns').insert({
             trigger_phrases: [trigger],
             intent_type: actionConfig.intent,
@@ -420,17 +920,16 @@ class AssistantCommandProcessor {
           });
 
           if (error) {
-            return { handled: true, response: `${this.random(DIALECT.error)} - مش قادر أحفظ`, source: 'local' };
+            return { handled: true, response: `${this.getRozPrefix()}${this.random(DIALECT.error)} - مش قادرة أحفظ`, source: 'local' };
           }
 
           await this.reloadCommands();
           return {
             handled: true,
-            response: `${this.random(DIALECT.learning)}\n\n**الكلمة:** "${trigger}"\n**الفعل:** ${action}\n\nلما تقول "${trigger}" رح أسألك عن الفترة! 🎯`,
+            response: `${this.getRozPrefix()}${this.random(DIALECT.learning)}\n\n**الكلمة:** "${trigger}"\n**الفعل:** ${action}\n\nلما تقول "${trigger}" رح أسألك عن الفترة! 🎯`,
             source: 'local'
           };
         } else {
-          // Simple response or direct action
           if (actionConfig.config) {
             const { error } = await supabase.from('learned_patterns').insert({
               trigger_phrases: [trigger],
@@ -442,12 +941,11 @@ class AssistantCommandProcessor {
               await this.reloadCommands();
               return {
                 handled: true,
-                response: `${this.random(DIALECT.learning)}\n\n**الكلمة:** "${trigger}"\n**الفعل:** ${action}\n\nجرب قول "${trigger}" هلأ! ✨`,
+                response: `${this.getRozPrefix()}${this.random(DIALECT.learning)}\n\n**الكلمة:** "${trigger}"\n**الفعل:** ${action}\n\nجربي قولي "${trigger}" هلأ! ✨`,
                 source: 'local'
               };
             }
           } else {
-            // Save as simple text response
             const { error } = await supabase.from('assistant_commands').insert({
               trigger_patterns: [trigger],
               response_template: action,
@@ -460,14 +958,14 @@ class AssistantCommandProcessor {
               await this.reloadCommands();
               return {
                 handled: true,
-                response: `${this.random(DIALECT.learning)}\n\n**الكلمة:** "${trigger}"\n**الرد:** "${action}"\n\nجرب هلأ! ✨`,
+                response: `${this.getRozPrefix()}${this.random(DIALECT.learning)}\n\n**الكلمة:** "${trigger}"\n**الرد:** "${action}"\n\nجربي هلأ! ✨`,
                 source: 'local'
               };
             }
           }
         }
 
-        return { handled: true, response: `${this.random(DIALECT.error)}`, source: 'local' };
+        return { handled: true, response: `${this.getRozPrefix()}${this.random(DIALECT.error)}`, source: 'local' };
       }
     }
 
@@ -477,9 +975,7 @@ class AssistantCommandProcessor {
   private parseActionFromDescription(description: string): { intent: string; config: any; needsParams: boolean } {
     const normalized = this.normalize(description);
 
-    // Check for spending queries
     if (normalized.includes('مصاريف') || normalized.includes('صرفيات') || normalized.includes('صرفت')) {
-      // Find place
       for (const sub of this.cachedData.subcategories) {
         if (normalized.includes(this.normalize(sub.name))) {
           return {
@@ -492,22 +988,18 @@ class AssistantCommandProcessor {
       return { intent: 'spending', config: { type: 'get_spending_this_month' }, needsParams: false };
     }
 
-    // Check for prayer
     if (normalized.includes('صلا') || normalized.includes('مواقيت')) {
       return { intent: 'prayer', config: { type: 'get_prayer_times' }, needsParams: false };
     }
 
-    // Check for gym
     if (normalized.includes('تمرين') || normalized.includes('جيم')) {
       return { intent: 'gym', config: { type: 'get_gym_stats' }, needsParams: false };
     }
 
-    // Check for supplements
     if (normalized.includes('مكمل')) {
       return { intent: 'supplements', config: { type: 'get_supplements_status' }, needsParams: false };
     }
 
-    // Default - no recognized action
     return { intent: 'response', config: null, needsParams: false };
   }
 
@@ -532,7 +1024,7 @@ class AssistantCommandProcessor {
     const norm = this.normalize(place);
     const sub = this.cachedData.subcategories.find(s => this.normalize(s.name).includes(norm) || norm.includes(this.normalize(s.name)));
     
-    if (!sub) return `${this.random(DIALECT.notFound)} - مش لاقي "${place}"`;
+    if (!sub) return `${this.random(DIALECT.notFound)} - مش لاقية "${place}"`;
 
     const exp = this.cachedData.transactions.filter(t => 
       t.subcategory_id === sub.id && t.type === 'expense' && t.date >= start && t.date <= end
@@ -545,8 +1037,7 @@ class AssistantCommandProcessor {
     return `📍 **صرفياتك على ${sub.name} ${periodName}:**\n\n${details}${exp.length > 5 ? `\n... و ${exp.length - 5} كمان` : ''}\n\n**المجموع: ${total.toLocaleString()} ₪** ${this.random(DIALECT.success)}`;
   }
 
-  // === All other methods from before ===
-  
+  // Command matching
   private matchCommand(normalized: string): Command | null {
     for (const cmd of this.commands) {
       for (const pattern of cmd.trigger_patterns) {
@@ -602,11 +1093,12 @@ class AssistantCommandProcessor {
       case 'get_food_today': return this.getFoodTodayResponse();
       case 'get_capabilities': return this.getCapabilitiesResponse();
       case 'get_saved_commands': return this.getSavedCommandsResponse();
-      default: return `${this.random(DIALECT.error)} - مش فاهم`;
+      case 'get_trainer_sessions': return this.getTrainerSessionsResponse();
+      default: return `${this.random(DIALECT.error)} - مش فاهمة`;
     }
   }
 
-  // === Response generators ===
+  // Response generators
   private getIsraelTime() {
     const now = new Date();
     return {
@@ -749,17 +1241,27 @@ class AssistantCommandProcessor {
   }
 
   private getCapabilitiesResponse(): string {
-    return `🤖 **شو بقدر أعمل:**\n\n📿 الصلاة\n💰 المصاريف والميزانية\n📅 الجدول\n💪 الجيم\n🌟 الأحلام\n💊 المكملات\n🍽️ الأكل\n\n📚 **علمني:**\nقول: "تعلم: لما أقول [كلمة] اعمل [شو تبدي]"`;
+    return `🌹 **أنا روز! شو بقدر أعمللك:**\n\n📿 مواقيت الصلاة\n💰 المصاريف والميزانية\n📅 جدولك اليومي\n💪 الجيم والتمارين\n🌟 أحلامك وأهدافك\n💊 المكملات\n🍽️ خطط الأكل\n\n📚 **علميني:**\nقولي: "تعلم: لما أقول [كلمة] اعمل [شو تبدي]"\n\n❤️ **احكيلي عن حالك:**\n"احفظي إني بحب..."`;
   }
 
   private getSavedCommandsResponse(): string {
     const learned = this.commands.filter(c => c.category === 'learned');
     const patterns = this.learnedPatterns;
-    if (!learned.length && !patterns.length) return `📚 ما حفظت إشي بعد`;
-    let result = '📚 **الأوامر المحفوظة:**\n\n';
-    if (learned.length) result += learned.map(c => `• "${c.trigger_patterns[0]}" → "${c.response_template}"`).join('\n');
-    if (patterns.length) result += '\n\n**أوامر ذكية:**\n' + patterns.map(p => `• "${p.trigger_phrases[0]}" → ${p.intent_type}`).join('\n');
+    const knowledge = this.cachedData.rozKnowledge;
+    if (!learned.length && !patterns.length && !knowledge.length) return `📚 ما حفظت إشي بعد`;
+    let result = '📚 **اللي بتذكره:**\n\n';
+    if (learned.length) result += '**أوامر بسيطة:**\n' + learned.map(c => `• "${c.trigger_patterns[0]}"`).join('\n') + '\n\n';
+    if (patterns.length) result += '**أوامر ذكية:**\n' + patterns.map(p => `• "${p.trigger_phrases[0]}"`).join('\n') + '\n\n';
+    if (knowledge.length) result += '**تعلمته من AI:**\n' + knowledge.slice(0, 5).map(k => `• ${k.query_pattern}`).join('\n');
     return result;
+  }
+
+  private getTrainerSessionsResponse(): string {
+    const startOfMonth = this.getStartOfMonth();
+    const trainerSessions = this.cachedData.workoutSessions.filter(s => s.with_trainer && s.completed_at && s.scheduled_date >= startOfMonth);
+    const count = trainerSessions.length;
+    const remaining = 8 - count; // Assuming 8 sessions per payment
+    return `🏋️ **جلسات المدرب:**\n\nخلصت **${count}** جلسات هالشهر\nباقي **${Math.max(0, remaining)}** جلسات للدفعة الجاية`;
   }
 
   private handleMath(message: string): string | null {
@@ -775,7 +1277,7 @@ class AssistantCommandProcessor {
     return null;
   }
 
-  // Utility
+  // Utilities
   private getTodayDate = () => new Date().toISOString().split('T')[0];
   private getYesterdayDate = () => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().split('T')[0]; };
   private getStartOfWeek = () => { const d = new Date(); d.setDate(d.getDate() - d.getDay()); return d.toISOString().split('T')[0]; };
@@ -785,6 +1287,7 @@ class AssistantCommandProcessor {
   async reloadCommands(): Promise<void> { this.initialized = false; this.initPromise = null; await this.initialize(); }
   async forceRefreshCache(): Promise<void> { this.cachedData.lastFetch = 0; await this.initialize(); }
   getCachedAccounts() { return this.cachedData.accounts; }
+  getPersonality() { return this.personality; }
 }
 
 export const assistantProcessor = new AssistantCommandProcessor();
