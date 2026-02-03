@@ -1110,6 +1110,33 @@ export type Database = {
         }
         Relationships: []
       }
+      roz_synonyms: {
+        Row: {
+          created_at: string
+          id: string
+          original_phrase: string
+          synonym_phrase: string
+          updated_at: string
+          usage_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          original_phrase: string
+          synonym_phrase: string
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          original_phrase?: string
+          synonym_phrase?: string
+          updated_at?: string
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
       roz_user_memory: {
         Row: {
           confidence: number | null
