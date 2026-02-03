@@ -49,10 +49,16 @@ export function useAssistant() {
         
         setMessages(prev => [...prev, assistantMessage]);
         setIsLoading(false);
+        
+        // If it was an "ask for teaching" response, we don't need AI
+        if (localResult.askForTeaching) {
+          console.log('🌹 روز بتطلب تعليم!');
+        }
         return;
       }
 
       // Step 2: Fall back to AI only for complex queries
+      console.log('🌹 روز بتسأل AI الخارجي...');
       const response = await supabase.functions.invoke('personal-assistant', {
         body: {
           messages: [...messages, userMessage].map(m => ({
@@ -67,6 +73,23 @@ export function useAssistant() {
       // Handle function invocation errors
       if (response.error) {
         console.error('Function invoke error:', response.error);
+        
+        // Check for billing/rate limit errors - try local fallback
+        if (response.error.message?.includes('402') || response.error.message?.includes('429')) {
+          const fallback = await assistantProcessor.getLocalFallback(content.trim());
+          if (fallback) {
+            const fallbackMessage: Message = {
+              id: crypto.randomUUID(),
+              role: 'assistant',
+              content: fallback,
+              timestamp: new Date(),
+              source: 'local',
+            };
+            setMessages(prev => [...prev, fallbackMessage]);
+            setIsLoading(false);
+            return;
+          }
+        }
         throw new Error(response.error.message || 'Function invocation failed');
       }
 

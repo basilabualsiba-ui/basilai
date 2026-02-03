@@ -55,6 +55,14 @@ interface RozUserMemory {
   context?: string;
 }
 
+// Synonym interface
+interface RozSynonym {
+  id: string;
+  original_phrase: string;
+  synonym_phrase: string;
+  usage_count: number;
+}
+
 // Full database cache interface
 interface CachedData {
   // Financial
@@ -102,6 +110,7 @@ interface CachedData {
   rozKnowledge: RozKnowledge[];
   rozPersonality: RozPersonality[];
   rozUserMemory: RozUserMemory[];
+  rozSynonyms: RozSynonym[];
   // Metadata
   lastFetch: number;
 }
@@ -115,6 +124,9 @@ interface ProcessResult {
   pendingAction?: any;
   shouldLearn?: boolean;
   originalQuery?: string;
+  // Teaching mode flags
+  askForTeaching?: boolean;
+  teachingMode?: 'steps' | 'synonym' | 'direct';
 }
 
 interface ConversationContext {
@@ -123,6 +135,10 @@ interface ConversationContext {
   pendingParams?: any;
   awaitingInput?: string;
   lastQuery?: string;
+  // Teaching mode context
+  teachingMode?: 'awaiting_action' | 'awaiting_steps' | 'awaiting_synonym';
+  teachingQuery?: string;
+  teachingSteps?: string[];
 }
 
 const CACHE_DURATION = 5 * 60 * 1000;
@@ -168,6 +184,7 @@ class AssistantCommandProcessor {
       prayerTimes: null, prayerCompletions: [], dailyActivities: [], activityCompletions: [],
       dreams: [], dreamSteps: [], dreamPhotos: [], supplements: [], supplementLogs: [],
       bodyStats: [], userPreferences: [], rozKnowledge: [], rozPersonality: [], rozUserMemory: [],
+      rozSynonyms: [],
       lastFetch: 0
     };
   }
@@ -236,7 +253,9 @@ class AssistantCommandProcessor {
         // Roz's Brain (3)
         supabase.from('roz_knowledge').select('*').order('success_count', { ascending: false }),
         supabase.from('roz_personality').select('*'),
-        supabase.from('roz_user_memory').select('*').order('reference_count', { ascending: false })
+        supabase.from('roz_user_memory').select('*').order('reference_count', { ascending: false }),
+        // Synonyms (1)
+        supabase.from('roz_synonyms').select('*').order('usage_count', { ascending: false })
       ]);
 
       const [
@@ -249,7 +268,7 @@ class AssistantCommandProcessor {
         dreamsRes, stepsRes, photosRes,
         suppRes, suppLogsRes,
         bodyRes, prefsRes,
-        knowledgeRes, personalityRes, memoryRes
+        knowledgeRes, personalityRes, memoryRes, synonymsRes
       ] = results;
 
       // Map commands
@@ -316,6 +335,10 @@ class AssistantCommandProcessor {
           id: m.id, memory_type: m.memory_type, memory_key: m.memory_key,
           memory_value: m.memory_value, context: m.context
         })),
+        rozSynonyms: (synonymsRes.data || []).map(s => ({
+          id: s.id, original_phrase: s.original_phrase, synonym_phrase: s.synonym_phrase,
+          usage_count: s.usage_count || 0
+        })),
         lastFetch: Date.now()
       };
 
@@ -363,37 +386,54 @@ class AssistantCommandProcessor {
     // Log interaction
     this.logInteraction(message);
 
+    // Step 0: Check if in teaching mode (follow-up for teaching)
+    if (this.context.teachingMode) {
+      const teachingResult = await this.handleTeachingFollowUp(message);
+      if (teachingResult) return teachingResult;
+    }
+
     // Step 1: Check if awaiting input (follow-up)
     if (this.context.awaitingInput) {
       return this.handleFollowUp(message);
     }
 
-    // Step 2: Check for personality commands (about Roz)
+    // Step 2: Check for teaching request commands first
+    const teachingRequest = await this.handleTeachingRequest(normalized, message);
+    if (teachingRequest) return teachingRequest;
+
+    // Step 3: Check for personality commands (about Roz)
     const personalityResult = await this.handlePersonalityCommand(normalized, message);
     if (personalityResult) return personalityResult;
 
-    // Step 3: Check for user memory commands
+    // Step 4: Check for user memory commands
     const memoryResult = await this.handleMemoryCommand(normalized, message);
     if (memoryResult) return memoryResult;
 
-    // Step 4: Check for learning commands
+    // Step 5: Check for learning commands
     const learningResult = await this.handleLearningCommand(message);
     if (learningResult) return learningResult;
 
-    // Step 5: Check Roz's learned knowledge first (AI-learned patterns)
-    const knowledgeResult = await this.matchRozKnowledge(normalized, message);
+    // Step 6: Check built-in commands (time, date, etc.)
+    const builtInResult = this.handleBuiltInCommands(normalized);
+    if (builtInResult) return builtInResult;
+
+    // Step 7: Apply synonyms before matching
+    let normalizedWithSynonyms = this.applySynonyms(normalized);
+
+    // Step 8: Check Roz's learned knowledge first (AI-learned patterns)
+    const knowledgeResult = await this.matchRozKnowledge(normalizedWithSynonyms, message);
     if (knowledgeResult) return knowledgeResult;
 
-    // Step 6: Check learned patterns (user-defined)
-    const patternResult = await this.matchLearnedPattern(normalized);
+    // Step 9: Check learned patterns (user-defined)
+    const patternResult = await this.matchLearnedPattern(normalizedWithSynonyms);
     if (patternResult) return patternResult;
 
-    // Step 7: Smart intent detection
-    const intentResult = await this.detectIntent(normalized, message);
+    // Step 10: Smart intent detection
+    const intentResult = await this.detectIntent(normalizedWithSynonyms, message);
     if (intentResult) return intentResult;
 
-    // Step 8: Try exact command match
-    const command = this.matchCommand(normalized);
+    // Step 11: Try command match with scoring
+    const command = this.matchCommand(normalizedWithSynonyms);
     if (command) {
       if (command.action_type === 'response') {
         return { handled: true, response: this.getRozPrefix() + command.response_template, source: 'local' };
@@ -404,24 +444,271 @@ class AssistantCommandProcessor {
       }
     }
 
-    // Step 9: Dynamic pattern matching
-    const dynamic = this.matchDynamicCommand(normalized);
+    // Step 12: Dynamic pattern matching
+    const dynamic = this.matchDynamicCommand(normalizedWithSynonyms);
     if (dynamic) {
       const response = await this.runAction(dynamic.config, dynamic.params);
       return { handled: true, response: this.getRozPrefix() + response, source: 'cached' };
     }
 
-    // Step 10: Math
+    // Step 13: Math
     const mathResult = this.handleMath(message);
     if (mathResult) return { handled: true, response: this.getRozPrefix() + mathResult, source: 'local' };
 
-    // Not understood - needs AI (and will learn from it!)
+    // Not understood - offer teaching options!
     return { 
-      handled: false, 
-      source: 'ai',
+      handled: true,
+      response: `${this.getRozPrefix()}هاي جديدة علي! 🤔\n\n` +
+        `بتقدر تعلمني بواحدة من هالطرق:\n\n` +
+        `📝 **علمني الخطوات:**\n` +
+        `قول: "علميني: ${message}"\n\n` +
+        `🔄 **هاي نفس أمر تاني:**\n` +
+        `قول: "هاي نفس: [الأمر الموجود]"\n\n` +
+        `💡 **أو احكيلي مباشرة:**\n` +
+        `قول: "تعلم: ${message} = [شو أعمل]"`,
+      source: 'local',
+      askForTeaching: true,
       shouldLearn: true,
       originalQuery: message
     };
+  }
+
+  // Apply synonyms to normalize text
+  private applySynonyms(normalized: string): string {
+    let result = normalized;
+    for (const syn of this.cachedData.rozSynonyms) {
+      const origNorm = this.normalize(syn.original_phrase);
+      if (result.includes(origNorm)) {
+        result = result.replace(origNorm, this.normalize(syn.synonym_phrase));
+        // Update usage count async
+        supabase.from('roz_synonyms').update({ 
+          usage_count: syn.usage_count + 1 
+        }).eq('id', syn.id).then();
+      }
+    }
+    return result;
+  }
+
+  // Built-in commands for basic functionality
+  private handleBuiltInCommands(normalized: string): ProcessResult | null {
+    // Time queries
+    if (this.hasAny(normalized, ['الساعه', 'الساعة', 'كم الساعه', 'كم الساعة', 'الوقت', 'شو الوقت'])) {
+      return { handled: true, response: this.getRozPrefix() + `🕐 الساعة هلأ **${this.getIsraelTime().time}**`, source: 'local' };
+    }
+
+    // Date queries
+    if (this.hasAny(normalized, ['شو اليوم', 'التاريخ', 'اي يوم', 'شو التاريخ']) && 
+        !this.hasAny(normalized, ['صرفت', 'مصاريف', 'تمرين'])) {
+      return { handled: true, response: this.getRozPrefix() + `📅 اليوم **${this.getIsraelTime().date}**`, source: 'local' };
+    }
+
+    // Capabilities / help
+    if (this.hasAny(normalized, ['شو بتقدري', 'شو بتعرفي تعملي', 'شو تقدري', 'ساعديني', 'مساعده', 'شو بتقدر', 'شو تعمليلي', 'بتقدري تعملي'])) {
+      return { handled: true, response: this.getRozPrefix() + this.getCapabilitiesResponse(), source: 'local' };
+    }
+
+    // Prayer times
+    if (this.hasAny(normalized, ['مواقيت الصلاه', 'مواقيت الصلاة', 'اوقات الصلاه', 'اوقات الصلاة', 'الصلوات'])) {
+      return { handled: true, response: this.getRozPrefix() + this.getPrayerTimesResponse(), source: 'local' };
+    }
+
+    // Next prayer
+    if (this.hasAny(normalized, ['الصلاه الجايه', 'الصلاة الجاية', 'الصلاة القادمة', 'الصلاه القادمه'])) {
+      return { handled: true, response: this.getRozPrefix() + this.getNextPrayerResponse(), source: 'local' };
+    }
+
+    // Today's spending
+    if (this.hasAny(normalized, ['كم صرفت اليوم', 'مصاريف اليوم', 'صرفيات اليوم'])) {
+      return { handled: true, response: this.getRozPrefix() + this.getSpendingResponse('today'), source: 'cached' };
+    }
+
+    // Yesterday's spending
+    if (this.hasAny(normalized, ['كم صرفت امبارح', 'مصاريف امبارح', 'صرفيات امبارح'])) {
+      return { handled: true, response: this.getRozPrefix() + this.getSpendingResponse('yesterday'), source: 'cached' };
+    }
+
+    // This month's spending
+    if (this.hasAny(normalized, ['كم صرفت هالشهر', 'مصاريف الشهر', 'مصاريف هالشهر'])) {
+      return { handled: true, response: this.getRozPrefix() + this.getSpendingResponse('month'), source: 'cached' };
+    }
+
+    // Today's workout
+    if (this.hasAny(normalized, ['تمرين اليوم', 'شو تمريني', 'تمريني اليوم'])) {
+      return { handled: true, response: this.getRozPrefix() + this.getTodayWorkoutResponse(), source: 'cached' };
+    }
+
+    // Gym stats
+    if (this.hasAny(normalized, ['احصائيات الجيم', 'الجيم', 'كم تمرين'])) {
+      return { handled: true, response: this.getRozPrefix() + this.getGymStatsResponse(), source: 'cached' };
+    }
+
+    // Supplements
+    if (this.hasAny(normalized, ['المكملات', 'مكملاتي', 'حبوبي'])) {
+      return { handled: true, response: this.getRozPrefix() + this.getSupplementsStatusResponse(), source: 'cached' };
+    }
+
+    return null;
+  }
+
+  // Helper function to check if text contains any of the keywords
+  private hasAny(text: string, keywords: string[]): boolean {
+    return keywords.some(k => text.includes(this.normalize(k)));
+  }
+
+  // Handle teaching request commands
+  private async handleTeachingRequest(normalized: string, original: string): Promise<ProcessResult | null> {
+    // Pattern 1: علميني: [query]
+    const teachMeMatch = original.match(/(?:علميني|علمني|عرفيني)[:؛\s]+(.+)/i);
+    if (teachMeMatch) {
+      const query = teachMeMatch[1].trim();
+      this.context.teachingMode = 'awaiting_action';
+      this.context.teachingQuery = query;
+      
+      return {
+        handled: true,
+        response: `${this.getRozPrefix()}تمام! خليني أفهم...\n\nشو بدك أعمل لما تحكي "${query}"?\n\n• احسب مصاريف 💰\n• اعرض معلومات 📊\n• افتح صفحة 📄\n• شي تاني (اكتبلي)`,
+        source: 'local',
+        needsInput: true,
+        options: ['احسب مصاريف', 'اعرض معلومات', 'افتح صفحة'],
+        teachingMode: 'steps'
+      };
+    }
+    
+    // Pattern 2: هاي نفس: [existing command]
+    const synonymMatch = original.match(/(?:هاي نفس|نفس|يعني|زي)[:؛\s]+(.+)/i);
+    if (synonymMatch && this.context.lastQuery) {
+      const existingCommand = synonymMatch[1].trim();
+      const lastQuery = this.context.lastQuery;
+      
+      // Check if existingCommand is valid by trying to process it
+      const tempContext = { ...this.context };
+      this.context = {}; // Temporarily clear context
+      const existingResult = await this.process(existingCommand);
+      this.context = tempContext;
+      
+      if (existingResult.handled && !existingResult.askForTeaching) {
+        // Save synonym
+        await supabase.from('roz_synonyms').insert({
+          original_phrase: lastQuery,
+          synonym_phrase: existingCommand
+        });
+        
+        // Refresh synonyms cache
+        const { data } = await supabase.from('roz_synonyms').select('*').order('usage_count', { ascending: false });
+        if (data) {
+          this.cachedData.rozSynonyms = data.map(s => ({
+            id: s.id, original_phrase: s.original_phrase, synonym_phrase: s.synonym_phrase,
+            usage_count: s.usage_count || 0
+          }));
+        }
+        
+        return {
+          handled: true,
+          response: `${this.getRozPrefix()}${this.random(DIALECT.learning)}\n\n**"${lastQuery}"** = **"${existingCommand}"**\n\nمن هلأ رح أفهمهم نفس الإشي! ✨`,
+          source: 'local',
+          teachingMode: 'synonym'
+        };
+      } else {
+        return {
+          handled: true,
+          response: `${this.getRozPrefix()}مش عارفة "${existingCommand}" كمان! 🤔\n\nجرب تعلمني إياها الأول، أو اختار أمر بعرفه.`,
+          source: 'local'
+        };
+      }
+    }
+    
+    return null;
+  }
+
+  // Handle teaching follow-up
+  private async handleTeachingFollowUp(message: string): Promise<ProcessResult | null> {
+    if (!this.context.teachingMode || !this.context.teachingQuery) {
+      this.context.teachingMode = undefined;
+      return null;
+    }
+    
+    const normalized = this.normalize(message);
+    const query = this.context.teachingQuery;
+    
+    if (this.context.teachingMode === 'awaiting_action') {
+      // User is telling us what action to take
+      const actionConfig = this.parseActionFromDescription(message);
+      
+      if (actionConfig.config) {
+        // Save the learned pattern
+        const { error } = await supabase.from('learned_patterns').insert({
+          trigger_phrases: [query],
+          intent_type: actionConfig.intent,
+          action_config: actionConfig.config,
+          required_params: actionConfig.needsParams ? { period: ['امبارح', 'هالأسبوع', 'هالشهر'] } : null
+        });
+        
+        if (!error) {
+          this.context.teachingMode = undefined;
+          this.context.teachingQuery = undefined;
+          await this.reloadCommands();
+          
+          return {
+            handled: true,
+            response: `${this.getRozPrefix()}${this.random(DIALECT.learning)}\n\n**تعلمت:**\n"${query}" = ${message}\n\nجربي هلأ قولي "${query}"! ✨`,
+            source: 'local'
+          };
+        }
+      }
+      
+      // Try to save as simple response
+      const { error } = await supabase.from('assistant_commands').insert({
+        trigger_patterns: [query],
+        response_template: message,
+        action_type: 'response',
+        category: 'learned',
+        priority: 10
+      });
+      
+      if (!error) {
+        this.context.teachingMode = undefined;
+        this.context.teachingQuery = undefined;
+        await this.reloadCommands();
+        
+        return {
+          handled: true,
+          response: `${this.getRozPrefix()}${this.random(DIALECT.learning)}\n\n**تعلمت:**\nلما تقول "${query}" رح أرد "${message}"\n\nجربي! ✨`,
+          source: 'local'
+        };
+      }
+      
+      // If we can't parse it, ask for clarification
+      return {
+        handled: true,
+        response: `${this.getRozPrefix()}مش فاهمة "${message}"...\n\nممكن توضحلي أكتر؟ مثلاً:\n• "احسب مصاريف اليوم"\n• "اعرض مواقيت الصلاة"\n• "افتح صفحة الجيم"`,
+        source: 'local',
+        needsInput: true
+      };
+    }
+    
+    return null;
+  }
+
+  // Get local fallback for when AI is unavailable
+  async getLocalFallback(message: string): Promise<string | null> {
+    const normalized = this.normalize(message);
+    
+    // Try built-in commands
+    const builtIn = this.handleBuiltInCommands(normalized);
+    if (builtIn) return builtIn.response || null;
+    
+    // Try to give a helpful response based on keywords
+    if (this.hasAny(normalized, ['صرف', 'مصاريف', 'فلوس'])) {
+      return this.getRozPrefix() + this.getSpendingResponse('month');
+    }
+    if (this.hasAny(normalized, ['صلا', 'مواقيت'])) {
+      return this.getRozPrefix() + this.getPrayerTimesResponse();
+    }
+    if (this.hasAny(normalized, ['تمرين', 'جيم'])) {
+      return this.getRozPrefix() + this.getTodayWorkoutResponse();
+    }
+    
+    return null;
   }
 
   // Learn from AI response
@@ -1037,14 +1324,30 @@ class AssistantCommandProcessor {
     return `📍 **صرفياتك على ${sub.name} ${periodName}:**\n\n${details}${exp.length > 5 ? `\n... و ${exp.length - 5} كمان` : ''}\n\n**المجموع: ${total.toLocaleString()} ₪** ${this.random(DIALECT.success)}`;
   }
 
-  // Command matching
+  // Command matching with scoring
   private matchCommand(normalized: string): Command | null {
+    let bestMatch: { command: Command; score: number } | null = null;
+    
     for (const cmd of this.commands) {
       for (const pattern of cmd.trigger_patterns) {
-        if (normalized.includes(this.normalize(pattern)) || this.normalize(pattern).includes(normalized)) return cmd;
+        const patternNorm = this.normalize(pattern);
+        
+        // Exact match - highest priority
+        if (normalized === patternNorm) {
+          return cmd;
+        }
+        
+        // Contains match with scoring
+        if (normalized.includes(patternNorm) || patternNorm.includes(normalized)) {
+          const score = (cmd.priority || 0) + (patternNorm.length / Math.max(normalized.length, 1));
+          if (!bestMatch || score > bestMatch.score) {
+            bestMatch = { command: cmd, score };
+          }
+        }
       }
     }
-    return null;
+    
+    return bestMatch?.command || null;
   }
 
   private matchDynamicCommand(msg: string): { config: any; params: Record<string, string> } | null {

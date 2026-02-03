@@ -59,7 +59,7 @@ const Index = () => {
                 ) : (
                   <>
                     <MessageCircle className="h-4 w-4" />
-                    {!isMobile && "Assistant"}
+                    {!isMobile && "Roz"}
                   </>
                 )}
               </Button>
