@@ -74,6 +74,96 @@ export type Database = {
         }
         Relationships: []
       }
+      assistant_pending_queries: {
+        Row: {
+          created_at: string | null
+          id: string
+          status: string | null
+          suggested_query: Json
+          suggestion_reason: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          suggested_query: Json
+          suggestion_reason?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          status?: string | null
+          suggested_query?: Json
+          suggestion_reason?: string | null
+        }
+        Relationships: []
+      }
+      assistant_queries: {
+        Row: {
+          category: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          output_template: string | null
+          purpose: string
+          query_config: Json
+          query_name: string
+          trigger_patterns: string[]
+          updated_at: string | null
+          usage_count: number | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          output_template?: string | null
+          purpose: string
+          query_config: Json
+          query_name: string
+          trigger_patterns: string[]
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          output_template?: string | null
+          purpose?: string
+          query_config?: Json
+          query_name?: string
+          trigger_patterns?: string[]
+          updated_at?: string | null
+          usage_count?: number | null
+        }
+        Relationships: []
+      }
+      assistant_synonyms: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          id: string
+          synonyms: string[]
+          word: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          synonyms: string[]
+          word: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          synonyms?: string[]
+          word?: string
+        }
+        Relationships: []
+      }
       budgets: {
         Row: {
           amount: number
