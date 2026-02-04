@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Logo } from "@/components/ui/logo";
 import { SettingsDialog } from "@/components/ui/settings-dialog";
 import { Button } from "@/components/ui/button";
@@ -14,9 +15,13 @@ import { SupplementsCard } from "@/components/dashboard/supplements-card";
 import { DreamsCardNew } from "@/components/dashboard/dreams-card-new";
 import { WeightStatsCard } from "@/components/dashboard/weight-stats-card";
 
+// Assistant Components
+import { AssistantChat, AssistantFloatingButton } from "@/components/assistant/AssistantChat";
+
 const Index = () => {
   const isMobile = useIsMobile();
   const { click } = useSound();
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -69,6 +74,19 @@ const Index = () => {
           </BentoGrid>
         </div>
       </main>
+
+      {/* Roz Assistant */}
+      <AssistantFloatingButton 
+        onClick={() => {
+          click();
+          setIsAssistantOpen(true);
+        }} 
+        isOpen={isAssistantOpen} 
+      />
+      <AssistantChat 
+        isOpen={isAssistantOpen} 
+        onClose={() => setIsAssistantOpen(false)} 
+      />
     </div>
   );
 };
