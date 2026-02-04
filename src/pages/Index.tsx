@@ -1,11 +1,9 @@
-import { useState } from "react";
 import { Logo } from "@/components/ui/logo";
 import { SettingsDialog } from "@/components/ui/settings-dialog";
 import { Button } from "@/components/ui/button";
-import { Settings, User, MessageCircle, LayoutDashboard, Sparkles } from "lucide-react";
+import { Settings, User } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSound } from "@/hooks/useSound";
-import { cn } from "@/lib/utils";
 
 // Dashboard Components
 import { BentoGrid } from "@/components/dashboard/bento-grid";
@@ -16,18 +14,9 @@ import { SupplementsCard } from "@/components/dashboard/supplements-card";
 import { DreamsCardNew } from "@/components/dashboard/dreams-card-new";
 import { WeightStatsCard } from "@/components/dashboard/weight-stats-card";
 
-// Chat Component
-import { ChatInterface } from "@/components/assistant/chat-interface";
-
 const Index = () => {
-  const [showChat, setShowChat] = useState(false);
   const isMobile = useIsMobile();
-  const { click, swoosh } = useSound();
-
-  const handleToggleView = () => {
-    swoosh();
-    setShowChat(!showChat);
-  };
+  const { click } = useSound();
 
   return (
     <div className="min-h-screen bg-background">
@@ -39,31 +28,6 @@ const Index = () => {
             <Logo size="md" />
             
             <div className="flex items-center gap-2">
-              {/* Toggle Button with Animation */}
-              <Button
-                variant={showChat ? "default" : "outline"}
-                size="sm"
-                onClick={handleToggleView}
-                className={cn(
-                  "gap-2 rounded-xl transition-all duration-300",
-                  showChat 
-                    ? "bg-gradient-to-r from-primary to-accent hover:opacity-90 shadow-lg shadow-primary/25" 
-                    : "border-border/50 hover:border-primary/30 hover:bg-primary/5"
-                )}
-              >
-                {showChat ? (
-                  <>
-                    <LayoutDashboard className="h-4 w-4" />
-                    {!isMobile && "Dashboard"}
-                  </>
-                ) : (
-                  <>
-                    <MessageCircle className="h-4 w-4" />
-                    {!isMobile && "Roz"}
-                  </>
-                )}
-              </Button>
-
               {/* Enhanced User Profile */}
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-secondary/80 to-secondary/50 border border-border/30 transition-all duration-300 hover:border-primary/30 hover:shadow-sm">
                 {!isMobile && (
@@ -92,33 +56,17 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Main Content - Flip between Dashboard and Chat */}
+      {/* Main Content - Dashboard */}
       <main className="container mx-auto px-4 py-6">
-        <div className={cn(
-          "transition-all duration-500 ease-in-out",
-          showChat ? "opacity-0 hidden" : "opacity-100 animate-fade-in"
-        )}>
-          {/* Dashboard View */}
-          <div className="space-y-4">
-            <BentoGrid>
-              <TodayAgendaCard />
-              <FinanceCard />
-              <GymCard />
-              <SupplementsCard />
-              <WeightStatsCard />
-              <DreamsCardNew />
-            </BentoGrid>
-          </div>
-        </div>
-
-        <div className={cn(
-          "transition-all duration-500 ease-in-out",
-          showChat ? "opacity-100 animate-fade-in" : "opacity-0 hidden"
-        )}>
-          {/* Chat View */}
-          <div className="h-[calc(100vh-120px)] rounded-2xl border border-border/30 overflow-hidden bg-gradient-to-b from-card/80 to-card/50 backdrop-blur-sm shadow-xl">
-            <ChatInterface />
-          </div>
+        <div className="space-y-4">
+          <BentoGrid>
+            <TodayAgendaCard />
+            <FinanceCard />
+            <GymCard />
+            <SupplementsCard />
+            <WeightStatsCard />
+            <DreamsCardNew />
+          </BentoGrid>
         </div>
       </main>
     </div>
