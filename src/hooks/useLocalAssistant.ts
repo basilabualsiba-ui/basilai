@@ -1,25 +1,30 @@
 // Hook for Local Assistant
 
 import { useState, useCallback, useEffect } from 'react';
-import { localAssistant, ProcessResult } from '@/services/LocalAssistant';
-import type { AssistantMessage, SavedQuery, TeachingContext, QuickAction } from '@/types/assistant';
+import { localAssistant, ProcessResult, ActionButton } from '@/services/LocalAssistant';
+import type { AssistantMessage, SavedQuery, TeachingContext, QuickAction, ActionButton as ActionButtonType } from '@/types/assistant';
 import { QUICK_ACTIONS } from '@/types/assistant';
 
+interface MessageWithActions extends AssistantMessage {
+  actionButtons?: ActionButton[];
+}
+
 interface UseLocalAssistantReturn {
-  messages: AssistantMessage[];
+  messages: MessageWithActions[];
   isLoading: boolean;
   isInitialized: boolean;
   teachingContext: TeachingContext | null;
   queries: SavedQuery[];
   quickActions: QuickAction[];
   sendMessage: (message: string) => Promise<void>;
+  sendAction: (action: string, data?: any) => Promise<void>;
   clearMessages: () => void;
   clearTeachingContext: () => void;
   reloadQueries: () => Promise<void>;
 }
 
 export function useLocalAssistant(): UseLocalAssistantReturn {
-  const [messages, setMessages] = useState<AssistantMessage[]>([]);
+  const [messages, setMessages] = useState<MessageWithActions[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [teachingContext, setTeachingContext] = useState<TeachingContext | null>(null);
@@ -37,7 +42,7 @@ export function useLocalAssistant(): UseLocalAssistantReturn {
         setMessages([{
           id: 'welcome',
           type: 'assistant',
-          content: '🌹 أهلاً! أنا روز، مساعدتك المحلية.\n\nاسألني عن:\n• 💰 المصاريف والحسابات\n• 💪 التمارين والوزن\n• 🕌 مواقيت الصلاة\n• 💊 المكملات\n• 🌟 الأهداف\n\nأو استخدم الأزرار السريعة! 👇',
+          content: '🌹 أهلاً! أنا روز، مساعدتك المحلية.\n\n**اسألني عن:**\n• 💰 المصاريف والحسابات\n• 💪 التمارين والوزن\n• 🕌 مواقيت الصلاة\n• 💊 المكملات\n• 🌟 الأهداف\n\n**أو سجل مباشرة:**\n• "صرفت 20 شيكل في الحشاش"\n• "اخدت معاش 5000 شيكل"\n• "وزني 75 كيلو"\n\nأو استخدم الأزرار السريعة! 👇',
           timestamp: new Date(),
         }]);
       } catch (error) {
@@ -52,7 +57,7 @@ export function useLocalAssistant(): UseLocalAssistantReturn {
   const sendMessage = useCallback(async (message: string) => {
     if (!message.trim() || isLoading) return;
 
-    const userMessage: AssistantMessage = {
+    const userMessage: MessageWithActions = {
       id: `user-${Date.now()}`,
       type: 'user',
       content: message,
@@ -65,13 +70,14 @@ export function useLocalAssistant(): UseLocalAssistantReturn {
     try {
       const result = await localAssistant.process(message);
 
-      const assistantMessage: AssistantMessage = {
+      const assistantMessage: MessageWithActions = {
         id: `assistant-${Date.now()}`,
         type: 'assistant',
         content: result.message,
         timestamp: new Date(),
         queryUsed: result.queryUsed,
         data: result.data,
+        actionButtons: result.actionButtons,
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -80,7 +86,7 @@ export function useLocalAssistant(): UseLocalAssistantReturn {
     } catch (error) {
       console.error('Error processing message:', error);
       
-      const errorMessage: AssistantMessage = {
+      const errorMessage: MessageWithActions = {
         id: `error-${Date.now()}`,
         type: 'assistant',
         content: '❌ حصل خطأ. جرب مرة تانية.',
@@ -92,6 +98,15 @@ export function useLocalAssistant(): UseLocalAssistantReturn {
       setIsLoading(false);
     }
   }, [isLoading]);
+
+  // Send an action (button click)
+  const sendAction = useCallback(async (action: string, data?: any) => {
+    if (isLoading) return;
+    
+    // Convert action to message
+    const actionMessage = action === 'confirm' ? 'نعم' : action === 'cancel' ? 'لا' : action;
+    await sendMessage(actionMessage);
+  }, [isLoading, sendMessage]);
 
   // Clear all messages
   const clearMessages = useCallback(() => {
@@ -125,6 +140,7 @@ export function useLocalAssistant(): UseLocalAssistantReturn {
     queries,
     quickActions: QUICK_ACTIONS,
     sendMessage,
+    sendAction,
     clearMessages,
     clearTeachingContext,
     reloadQueries,

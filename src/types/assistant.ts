@@ -93,6 +93,13 @@ export type QuickAction = {
   category: string;
 };
 
+export type ActionButton = {
+  id: string;
+  label: string;
+  action: string;
+  data?: any;
+};
+
 export const QUICK_ACTIONS: QuickAction[] = [
   { id: 'spending', label: 'مصاريف', icon: '💰', query: 'كم صرفت اليوم', category: 'financial' },
   { id: 'balance', label: 'رصيد', icon: '💵', query: 'كم معي فلوس', category: 'financial' },
@@ -103,3 +110,11 @@ export const QUICK_ACTIONS: QuickAction[] = [
   { id: 'dreams', label: 'أهداف', icon: '🌟', query: 'احلامي', category: 'dreams' },
   { id: 'schedule', label: 'جدول', icon: '📅', query: 'جدول اليوم', category: 'schedule' },
 ];
+
+// Teaching mode types
+export type TeachingMode = 
+  | 'awaiting_question'
+  | 'awaiting_action' 
+  | 'awaiting_synonym'
+  | 'awaiting_confirmation'
+  | 'awaiting_place_category';
