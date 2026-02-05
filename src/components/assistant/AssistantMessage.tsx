@@ -1,13 +1,17 @@
 // Assistant Message Component
 
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import type { AssistantMessage as MessageType } from '@/types/assistant';
+import type { ActionButton } from '@/services/LocalAssistant';
 
 interface AssistantMessageProps {
   message: MessageType;
+  actionButtons?: ActionButton[];
+  onActionClick?: (action: string, data?: any) => void;
 }
 
-export function AssistantMessage({ message }: AssistantMessageProps) {
+export function AssistantMessage({ message, actionButtons, onActionClick }: AssistantMessageProps) {
   const isUser = message.type === 'user';
 
   return (
@@ -29,6 +33,23 @@ export function AssistantMessage({ message }: AssistantMessageProps) {
         <div className="text-sm whitespace-pre-wrap">
           {formatMessage(message.content)}
         </div>
+
+        {/* Action buttons */}
+        {actionButtons && actionButtons.length > 0 && !isUser && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {actionButtons.map((btn) => (
+              <Button
+                key={btn.id}
+                size="sm"
+                variant={btn.action === 'confirm' ? 'default' : 'outline'}
+                className="text-xs"
+                onClick={() => onActionClick?.(btn.action, btn.data)}
+              >
+                {btn.label}
+              </Button>
+            ))}
+          </div>
+        )}
 
         {/* Query badge */}
         {message.queryUsed && !isUser && (

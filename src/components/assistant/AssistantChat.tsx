@@ -23,6 +23,7 @@ export function AssistantChat({ isOpen, onClose, className }: AssistantChatProps
     isInitialized,
     quickActions,
     sendMessage,
+    sendAction,
     clearMessages,
   } = useLocalAssistant();
 
@@ -87,8 +88,13 @@ export function AssistantChat({ isOpen, onClose, className }: AssistantChatProps
             </div>
           ) : (
             <>
-              {messages.map((message) => (
-                <AssistantMessage key={message.id} message={message} />
+              {messages.map((message, index) => (
+                <AssistantMessage 
+                  key={message.id} 
+                  message={message}
+                  actionButtons={index === messages.length - 1 ? message.actionButtons : undefined}
+                  onActionClick={sendAction}
+                />
               ))}
               
               {isLoading && (

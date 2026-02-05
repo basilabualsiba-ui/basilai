@@ -6,6 +6,7 @@ import { responseFormatter, ResponseFormatter } from './ResponseFormatter';
 import { variableResolver, VariableResolver } from './VariableResolver';
 import { synonymResolver, SynonymResolver } from './SynonymResolver';
 import { queryLibrary, QueryLibrary } from './QueryLibrary';
+import { teachingEngine, TeachingEngine } from './TeachingEngine';
 import type { AssistantMessage, MatchResult, QueryResult, SavedQuery, TeachingContext } from '@/types/assistant';
 
 export interface ProcessResult {
@@ -15,11 +16,20 @@ export interface ProcessResult {
   needsTeaching?: boolean;
   teachingContext?: TeachingContext;
   suggestions?: string[];
+  actionButtons?: ActionButton[];
+}
+
+export interface ActionButton {
+  id: string;
+  label: string;
+  action: string;
+  data?: any;
 }
 
 export class LocalAssistant {
   private initialized = false;
   private teachingContext: TeachingContext | null = null;
+  private pendingAction: { type: string; data: any } | null = null;
 
   // Initialize the assistant
   public async initialize(): Promise<void> {
@@ -52,9 +62,20 @@ export class LocalAssistant {
       return this.handleSynonymCommand(normalized);
     }
 
+    // Check for confirmation responses
+    if (this.pendingAction) {
+      return await this.handlePendingAction(normalized);
+    }
+
     // Check if we're in teaching mode
     if (this.teachingContext) {
       return await this.handleTeachingFollowUp(normalized);
+    }
+
+    // Try to detect action commands (expenses, income, etc.)
+    const parsedAction = teachingEngine.analyzeInput(normalized);
+    if (parsedAction.confidence >= 0.7) {
+      return await this.handleActionCommand(parsedAction, normalized);
     }
 
     // Try to match a query
@@ -64,8 +85,245 @@ export class LocalAssistant {
       return await this.executeQuery(match);
     }
 
-    // No match - offer teaching
-    return this.offerTeaching(normalized);
+    // No match - try AI analysis then offer teaching
+    return await this.offerSmartTeaching(normalized);
+  }
+
+  // Handle action commands (expenses, income, gym, etc.)
+  private async handleActionCommand(action: ReturnType<typeof teachingEngine.analyzeInput>, originalInput: string): Promise<ProcessResult> {
+    switch (action.type) {
+      case 'expense':
+        return await this.handleExpenseAction(action.data, originalInput);
+      
+      case 'income':
+        return await this.handleIncomeAction(action.data, originalInput);
+      
+      case 'weight':
+        return await this.handleWeightAction(action.data);
+      
+      case 'gym_session':
+        return await this.handleGymAction(action.data);
+      
+      default:
+        return this.offerTeaching(originalInput);
+    }
+  }
+
+  // Handle expense action
+  private async handleExpenseAction(data: any, originalInput: string): Promise<ProcessResult> {
+    const { amount, place, time, timePeriod, date: dateText } = data;
+    
+    if (!amount || !place) {
+      return {
+        message: '🌹 ما فهمت المبلغ أو المكان. جرب قول:\n"صرفت 20 شيكل في الحشاش"',
+      };
+    }
+    
+    // Check if place exists
+    const placeCheck = await teachingEngine.checkPlaceExists(place);
+    const parsedDate = teachingEngine.parseDate(dateText || 'اليوم');
+    const parsedTime = time ? teachingEngine.parseTime(time, timePeriod) : undefined;
+    
+    if (!placeCheck.exists) {
+      // Ask to create the place
+      this.pendingAction = {
+        type: 'create_place_and_expense',
+        data: { amount, place, date: parsedDate, time: parsedTime },
+      };
+      
+      return {
+        message: `🌹 المكان "${place}" مش موجود عندي.\n\nبدك أضيفه؟`,
+        actionButtons: [
+          { id: 'yes', label: '✅ نعم، أضيفه', action: 'confirm' },
+          { id: 'no', label: '❌ لا، إلغاء', action: 'cancel' },
+        ],
+      };
+    }
+    
+    // Record the expense
+    const result = await teachingEngine.recordExpense(
+      amount,
+      placeCheck.id!,
+      parsedDate,
+      parsedTime,
+      originalInput
+    );
+    
+    if (result.success) {
+      const timeStr = parsedTime ? ` الساعة ${parsedTime}` : '';
+      const dateStr = dateText === 'مبارح' || dateText === 'امس' ? ' مبارح' : '';
+      return {
+        message: `✅ تم تسجيل: ${amount} شيكل في ${place}${dateStr}${timeStr}`,
+        data: { transactionId: result.id },
+      };
+    }
+    
+    return {
+      message: '❌ حصل خطأ في تسجيل المصروف. تأكد من وجود حساب مالي.',
+    };
+  }
+
+  // Handle income action
+  private async handleIncomeAction(data: any, originalInput: string): Promise<ProcessResult> {
+    const { amount, source } = data;
+    const parsedDate = teachingEngine.parseDate('اليوم');
+    
+    if (!amount) {
+      return {
+        message: '🌹 ما فهمت المبلغ. جرب قول:\n"اخدت معاش 5000 شيكل"',
+      };
+    }
+    
+    const result = await teachingEngine.recordIncome(
+      amount,
+      source || 'معاش',
+      parsedDate
+    );
+    
+    if (result.success) {
+      return {
+        message: `✅ تم تسجيل دخل: ${amount} شيكل (${source || 'معاش'})`,
+        data: { transactionId: result.id },
+      };
+    }
+    
+    return {
+      message: '❌ حصل خطأ في تسجيل الدخل. تأكد من وجود حساب مالي.',
+    };
+  }
+
+  // Handle weight action
+  private async handleWeightAction(data: any): Promise<ProcessResult> {
+    const { weight } = data;
+    
+    if (!weight) {
+      return {
+        message: '🌹 ما فهمت الوزن. جرب قول:\n"وزني 75 كيلو"',
+      };
+    }
+    
+    const result = await teachingEngine.recordWeight(weight);
+    
+    if (result.success) {
+      return {
+        message: `✅ تم تسجيل الوزن: ${weight} كغ`,
+      };
+    }
+    
+    return {
+      message: '❌ حصل خطأ في تسجيل الوزن.',
+    };
+  }
+
+  // Handle gym action
+  private async handleGymAction(data: any): Promise<ProcessResult> {
+    // For now, just acknowledge - can be extended
+    return {
+      message: `💪 تمام! بدك أسجلك تمرين؟\n\nاختر العضلات:\n• صدر\n• ظهر\n• أكتاف\n• رجل\n• ذراع`,
+      needsTeaching: true,
+    };
+  }
+
+  // Handle pending action confirmation
+  private async handlePendingAction(input: string): Promise<ProcessResult> {
+    const normalized = input.trim().toLowerCase();
+    const action = this.pendingAction;
+    this.pendingAction = null;
+    
+    if (!action) {
+      return this.offerTeaching(input);
+    }
+    
+    // Check for confirmation
+    const isConfirm = normalized.includes('نعم') || normalized.includes('اي') || 
+                      normalized.includes('اه') || normalized.includes('تمام') ||
+                      normalized === '1' || normalized === 'yes';
+    
+    const isCancel = normalized.includes('لا') || normalized.includes('الغ') ||
+                     normalized === '2' || normalized === 'no';
+    
+    if (action.type === 'create_place_and_expense') {
+      if (isConfirm) {
+        const { amount, place, date, time } = action.data;
+        
+        // Create the place
+        const placeResult = await teachingEngine.createPlace(place);
+        
+        if (!placeResult.success) {
+          return {
+            message: '❌ ما قدرت أضيف المكان. تأكد من وجود تصنيف مصاريف.',
+          };
+        }
+        
+        // Record the expense
+        const expenseResult = await teachingEngine.recordExpense(
+          amount,
+          placeResult.id!,
+          date,
+          time
+        );
+        
+        if (expenseResult.success) {
+          return {
+            message: `✅ تم إضافة "${place}" وتسجيل ${amount} شيكل`,
+          };
+        }
+        
+        return {
+          message: `✅ تم إضافة "${place}" لكن حصل خطأ في تسجيل المصروف`,
+        };
+      }
+      
+      if (isCancel) {
+        return {
+          message: '👌 تمام، ما سجلت شي.',
+        };
+      }
+    }
+    
+    return this.offerTeaching(input);
+  }
+
+  // Smart teaching with AI analysis
+  private async offerSmartTeaching(input: string): Promise<ProcessResult> {
+    const similar = queryMatcher.findSimilar(input);
+    const parsedAction = teachingEngine.analyzeInput(input);
+    
+    let message = `🌹 ما فهمت "${input}"\n\n`;
+    
+    // Suggest based on detected intent
+    if (parsedAction.type !== 'unknown' && parsedAction.confidence > 0.3) {
+      message += '**يمكن قصدت:**\n';
+      
+      switch (parsedAction.type) {
+        case 'expense':
+          message += '• تسجيل مصروف - جرب: "صرفت 20 شيكل في [المكان]"\n';
+          break;
+        case 'income':
+          message += '• تسجيل دخل - جرب: "اخدت معاش 5000 شيكل"\n';
+          break;
+        case 'gym_session':
+          message += '• تسجيل تمرين - جرب: "عملت تمرين صدر"\n';
+          break;
+      }
+      message += '\n';
+    }
+    
+    if (similar.length > 0) {
+      message += '**أو قصدك واحدة من هدول؟**\n';
+      message += similar.slice(0, 3).map(q => `• ${q.trigger_patterns[0]}`).join('\n');
+      message += '\n\n';
+    }
+    
+    message += '**علمني:**\n';
+    message += `• قول: "علمني: ${input}"\n`;
+    message += `• أو: "تعلم: ${input} = [سؤال موجود]"`;
+    
+    return {
+      message,
+      needsTeaching: true,
+      suggestions: similar.slice(0, 3).map(q => q.trigger_patterns[0]),
+    };
   }
 
   // Execute a matched query
@@ -336,6 +594,11 @@ export class LocalAssistant {
   public getQueryLibrary(): QueryLibrary {
     return queryLibrary;
   }
+
+  // Get teaching engine for direct access
+  public getTeachingEngine(): TeachingEngine {
+    return teachingEngine;
+  }
 }
 
 export const localAssistant = new LocalAssistant();
@@ -348,4 +611,5 @@ export {
   variableResolver,
   synonymResolver,
   queryLibrary,
+  teachingEngine,
 };
