@@ -40,3 +40,6 @@ verify_jwt = false
 
 [functions.personal-assistant]
 verify_jwt = false
+
+[functions.suggest-query]
+verify_jwt = false

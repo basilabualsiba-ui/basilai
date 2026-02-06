@@ -17,6 +17,7 @@ export interface ProcessResult {
   teachingContext?: TeachingContext;
   suggestions?: string[];
   actionButtons?: ActionButton[];
+  tableData?: { headers: string[]; rows: any[][] };
 }
 
 export interface ActionButton {
@@ -333,12 +334,13 @@ export class LocalAssistant {
     // Resolve all variables for formatting
     const variables = await variableResolver.resolveAllVariables(match.extractedVariables);
     
-    const message = responseFormatter.format(match.query, result, variables);
+    const formatted = responseFormatter.format(match.query, result, variables);
 
     return {
-      message,
+      message: formatted.text,
       data: result.data,
       queryUsed: match.query.query_name,
+      tableData: formatted.tableData,
     };
   }
 

@@ -1,4 +1,4 @@
-// Assistant Message Component
+// Assistant Message Component - supports text, tables, and action buttons
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -15,24 +15,39 @@ export function AssistantMessage({ message, actionButtons, onActionClick }: Assi
   const isUser = message.type === 'user';
 
   return (
-    <div
-      className={cn(
-        'flex w-full',
-        isUser ? 'justify-end' : 'justify-start'
-      )}
-    >
+    <div className={cn('flex w-full', isUser ? 'justify-end' : 'justify-start')}>
       <div
         className={cn(
           'max-w-[85%] rounded-2xl px-4 py-3',
-          isUser
-            ? 'bg-primary text-primary-foreground rounded-br-md'
-            : 'bg-muted text-foreground rounded-bl-md'
+          isUser ? 'bg-primary text-primary-foreground rounded-br-md' : 'bg-muted text-foreground rounded-bl-md'
         )}
       >
-        {/* Message content with markdown-like formatting */}
-        <div className="text-sm whitespace-pre-wrap">
-          {formatMessage(message.content)}
-        </div>
+        {/* Message content */}
+        <div className="text-sm whitespace-pre-wrap">{formatMessage(message.content)}</div>
+
+        {/* Table data */}
+        {message.tableData && (
+          <div className="mt-2 overflow-x-auto">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr>
+                  {message.tableData.headers.map((h, i) => (
+                    <th key={i} className="border border-border/30 p-1 bg-background/20 font-semibold text-right">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {message.tableData.rows.map((row, i) => (
+                  <tr key={i}>
+                    {row.map((cell, j) => (
+                      <td key={j} className="border border-border/30 p-1 max-w-[120px] truncate">{cell ?? '-'}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {/* Action buttons */}
         {actionButtons && actionButtons.length > 0 && !isUser && (
@@ -41,7 +56,7 @@ export function AssistantMessage({ message, actionButtons, onActionClick }: Assi
               <Button
                 key={btn.id}
                 size="sm"
-                variant={btn.action === 'confirm' ? 'default' : 'outline'}
+                variant={btn.action === 'confirm' ? 'default' : btn.action === 'ask_ai' ? 'secondary' : 'outline'}
                 className="text-xs"
                 onClick={() => onActionClick?.(btn.action, btn.data)}
               >
@@ -54,19 +69,12 @@ export function AssistantMessage({ message, actionButtons, onActionClick }: Assi
         {/* Query badge */}
         {message.queryUsed && !isUser && (
           <div className="mt-2 pt-2 border-t border-border/30">
-            <span className="text-xs text-muted-foreground/70">
-              📊 {message.queryUsed}
-            </span>
+            <span className="text-xs text-muted-foreground/70">📊 {message.queryUsed}</span>
           </div>
         )}
 
         {/* Timestamp */}
-        <div
-          className={cn(
-            'text-[10px] mt-1',
-            isUser ? 'text-primary-foreground/60' : 'text-muted-foreground/60'
-          )}
-        >
+        <div className={cn('text-[10px] mt-1', isUser ? 'text-primary-foreground/60' : 'text-muted-foreground/60')}>
           {formatTime(message.timestamp)}
         </div>
       </div>
@@ -74,19 +82,12 @@ export function AssistantMessage({ message, actionButtons, onActionClick }: Assi
   );
 }
 
-// Format message with basic markdown
 function formatMessage(content: string): React.ReactNode {
-  // Split by lines
   const lines = content.split('\n');
-  
   return lines.map((line, i) => {
-    // Bold text
     let formatted = line.replace(/\*\*(.+?)\*\*/g, (_, text) => `⟨b⟩${text}⟨/b⟩`);
-    
-    // Convert back to React elements
     const parts = formatted.split(/⟨\/?b⟩/);
     const elements: React.ReactNode[] = [];
-    
     let isBold = false;
     for (let j = 0; j < parts.length; j++) {
       if (parts[j]) {
@@ -98,7 +99,6 @@ function formatMessage(content: string): React.ReactNode {
       }
       isBold = !isBold;
     }
-    
     return (
       <span key={i}>
         {elements}
@@ -108,10 +108,6 @@ function formatMessage(content: string): React.ReactNode {
   });
 }
 
-// Format timestamp
 function formatTime(date: Date): string {
-  return date.toLocaleTimeString('ar-SA', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
 }

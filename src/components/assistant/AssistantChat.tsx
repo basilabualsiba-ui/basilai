@@ -1,6 +1,7 @@
 // Main Assistant Chat Interface
 
 import { useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { MessageCircle, X, Settings2, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -17,6 +18,7 @@ interface AssistantChatProps {
 }
 
 export function AssistantChat({ isOpen, onClose, className }: AssistantChatProps) {
+  const navigate = useNavigate();
   const {
     messages,
     isLoading,
@@ -56,6 +58,14 @@ export function AssistantChat({ isOpen, onClose, className }: AssistantChatProps
             onClick={clearMessages}
           >
             <Trash2 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => { onClose(); navigate('/assistant-manager'); }}
+          >
+            <Settings2 className="h-4 w-4" />
           </Button>
         </div>
 

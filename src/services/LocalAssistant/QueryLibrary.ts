@@ -23,6 +23,10 @@ export class QueryLibrary {
     this.queries = (data || []).map(q => ({
       ...q,
       query_config: q.query_config as unknown as QueryConfig,
+      output_mode: (q as any).output_mode || 'text',
+      action_type: (q as any).action_type || 'query',
+      filter_code: (q as any).filter_code || null,
+      result_code: (q as any).result_code || null,
     })) as SavedQuery[];
     
     this.loaded = true;
@@ -40,7 +44,7 @@ export class QueryLibrary {
   }
 
   // Add a new query
-  public async addQuery(query: Omit<SavedQuery, 'id' | 'created_at' | 'updated_at' | 'usage_count'>): Promise<SavedQuery | null> {
+  public async addQuery(query: Partial<SavedQuery> & { query_name: string; category: string; purpose: string; trigger_patterns: string[]; query_config: any }): Promise<SavedQuery | null> {
     const { data, error } = await supabase
       .from('assistant_queries')
       .insert({
@@ -49,8 +53,8 @@ export class QueryLibrary {
         purpose: query.purpose,
         trigger_patterns: query.trigger_patterns,
         query_config: query.query_config as any,
-        output_template: query.output_template,
-        is_active: query.is_active,
+        output_template: query.output_template || null,
+        is_active: query.is_active ?? true,
       })
       .select()
       .single();
@@ -63,6 +67,10 @@ export class QueryLibrary {
     const newQuery = {
       ...data,
       query_config: data.query_config as unknown as QueryConfig,
+      output_mode: (data as any).output_mode || 'text',
+      action_type: (data as any).action_type || 'query',
+      filter_code: (data as any).filter_code || null,
+      result_code: (data as any).result_code || null,
     } as SavedQuery;
     
     this.queries.push(newQuery);

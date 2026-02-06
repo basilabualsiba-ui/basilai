@@ -100,40 +100,52 @@ export type Database = {
       }
       assistant_queries: {
         Row: {
+          action_type: string | null
           category: string
           created_at: string | null
+          filter_code: string | null
           id: string
           is_active: boolean | null
+          output_mode: string | null
           output_template: string | null
           purpose: string
           query_config: Json
           query_name: string
+          result_code: string | null
           trigger_patterns: string[]
           updated_at: string | null
           usage_count: number | null
         }
         Insert: {
+          action_type?: string | null
           category: string
           created_at?: string | null
+          filter_code?: string | null
           id?: string
           is_active?: boolean | null
+          output_mode?: string | null
           output_template?: string | null
           purpose: string
           query_config: Json
           query_name: string
+          result_code?: string | null
           trigger_patterns: string[]
           updated_at?: string | null
           usage_count?: number | null
         }
         Update: {
+          action_type?: string | null
           category?: string
           created_at?: string | null
+          filter_code?: string | null
           id?: string
           is_active?: boolean | null
+          output_mode?: string | null
           output_template?: string | null
           purpose?: string
           query_config?: Json
           query_name?: string
+          result_code?: string | null
           trigger_patterns?: string[]
           updated_at?: string | null
           usage_count?: number | null
