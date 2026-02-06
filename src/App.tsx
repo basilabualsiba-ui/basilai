@@ -27,6 +27,7 @@ import WorkoutDay from "./pages/WorkoutDay";
 import Schedule from "./pages/Schedule";
 import Islamic from "./pages/Islamic";
 import Dreams from "./pages/Dreams";
+import AssistantManager from "./pages/AssistantManager";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ function AppContent() {
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/islamic" element={<Islamic />} />
           <Route path="/dreams" element={<Dreams />} />
+          <Route path="/assistant-manager" element={<AssistantManager />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
