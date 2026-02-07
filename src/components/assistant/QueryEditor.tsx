@@ -29,7 +29,7 @@ const OPERATORS = [
 ];
 
 const AGG_TYPES = [
-  { value: '', label: 'بدون' },
+  { value: 'none', label: 'بدون' },
   { value: 'sum', label: 'مجموع' },
   { value: 'count', label: 'عدد' },
   { value: 'avg', label: 'متوسط' },
@@ -50,11 +50,11 @@ export function QueryEditor({ initialQuery, onSave, onCancel }: QueryEditorProps
   const [category, setCategory] = useState(initialQuery?.category || 'financial');
   const [purpose, setPurpose] = useState(initialQuery?.purpose || '');
   const [triggerPatterns, setTriggerPatterns] = useState<string[]>(initialQuery?.trigger_patterns || ['']);
-  const [table, setTable] = useState(initialQuery?.query_config?.table || '');
+  const [table, setTable] = useState(initialQuery?.query_config?.table || undefined as string | undefined);
   const [selectColumns, setSelectColumns] = useState<string[]>(initialQuery?.query_config?.select || ['*']);
   const [filters, setFilters] = useState<QueryFilter[]>(initialQuery?.query_config?.filters || []);
   const [joins, setJoins] = useState<{ table: string; on: string }[]>(initialQuery?.query_config?.joins || []);
-  const [aggType, setAggType] = useState(initialQuery?.query_config?.aggregation?.type || '');
+  const [aggType, setAggType] = useState(initialQuery?.query_config?.aggregation?.type || 'none');
   const [aggColumn, setAggColumn] = useState(initialQuery?.query_config?.aggregation?.column || '');
   const [groupBy, setGroupBy] = useState<string[]>(initialQuery?.query_config?.group_by || []);
   const [orderByCol, setOrderByCol] = useState(initialQuery?.query_config?.order_by?.column || '');
@@ -90,7 +90,7 @@ export function QueryEditor({ initialQuery, onSave, onCancel }: QueryEditorProps
     };
     if (joins.length > 0) config.joins = joins.filter(j => j.table && j.on);
     if (filters.length > 0) config.filters = filters.filter(f => f.column);
-    if (aggType) config.aggregation = { type: aggType as any, column: aggColumn };
+    if (aggType && aggType !== 'none') config.aggregation = { type: aggType as any, column: aggColumn };
     if (groupBy.length > 0) config.group_by = groupBy.filter(Boolean);
     if (orderByCol) config.order_by = { column: orderByCol, ascending: orderAsc };
     if (limit > 0) config.limit = limit;
@@ -248,7 +248,7 @@ export function QueryEditor({ initialQuery, onSave, onCancel }: QueryEditorProps
         <CardContent className="space-y-3">
           <div>
             <Label className="text-xs">الجدول *</Label>
-            <Select value={table} onValueChange={setTable}>
+            <Select value={table || undefined} onValueChange={setTable}>
               <SelectTrigger><SelectValue placeholder="اختر جدول" /></SelectTrigger>
               <SelectContent>
                 {ALL_TABLES.map(t => (
@@ -268,7 +268,7 @@ export function QueryEditor({ initialQuery, onSave, onCancel }: QueryEditorProps
             <Label className="text-xs">الربط (Joins)</Label>
             {joins.map((j, i) => (
               <div key={i} className="flex gap-2 mt-1">
-                <Select value={j.table} onValueChange={v => setJoins(js => js.map((jj, idx) => idx === i ? { ...jj, table: v } : jj))}>
+                <Select value={j.table || undefined} onValueChange={v => setJoins(js => js.map((jj, idx) => idx === i ? { ...jj, table: v } : jj))}>
                   <SelectTrigger className="flex-1"><SelectValue placeholder="جدول" /></SelectTrigger>
                   <SelectContent>{ALL_TABLES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                 </Select>
@@ -305,7 +305,7 @@ export function QueryEditor({ initialQuery, onSave, onCancel }: QueryEditorProps
                 <SelectContent>{AGG_TYPES.map(a => <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            {aggType && (
+            {aggType && aggType !== 'none' && (
               <div>
                 <Label className="text-xs">عمود التجميع</Label>
                 <Input value={aggColumn} onChange={e => setAggColumn(e.target.value)} placeholder="amount" className="font-mono text-sm" />
