@@ -54,6 +54,10 @@ export class QueryLibrary {
         trigger_patterns: query.trigger_patterns,
         query_config: query.query_config as any,
         output_template: query.output_template || null,
+        output_mode: query.output_mode || 'text',
+        action_type: query.action_type || 'query',
+        filter_code: query.filter_code || null,
+        result_code: query.result_code || null,
         is_active: query.is_active ?? true,
       })
       .select()

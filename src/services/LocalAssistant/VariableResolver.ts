@@ -15,6 +15,9 @@ export class VariableResolver {
     // Calculate month start
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     
+    // Calculate last month start
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    
     // Calculate yesterday
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
@@ -24,9 +27,11 @@ export class VariableResolver {
       yesterday: yesterday.toISOString().split('T')[0],
       week_start: weekStart.toISOString().split('T')[0],
       month_start: monthStart.toISOString().split('T')[0],
+      first_of_month: monthStart.toISOString().split('T')[0],
+      first_of_last_month: lastMonthStart.toISOString().split('T')[0],
       current_month: now.getMonth() + 1,
       current_year: now.getFullYear(),
-      today_dow: now.getDay() || 7, // 1-7 (Monday = 1, Sunday = 7)
+      today_dow: now.getDay() || 7,
       current_time: now.toTimeString().split(' ')[0].substring(0, 5),
     };
   }
