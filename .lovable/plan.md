@@ -1,232 +1,173 @@
 
 
-# Query Management Page + Advanced Teaching System
+# Fix Assistant Errors, Add Queries, and Improve Teaching System
 
-## Overview
+## Issues Found
 
-Create a dedicated **Query Management page** (`/assistant-manager`) where you can view, add, edit, and test all assistant queries. Plus upgrade the teaching system with **External AI integration** (via Lovable AI) to auto-generate queries when the assistant doesn't know something, and add support for **custom code filters/formatters** in query configs.
+### 1. Database Column Mismatches (Critical Bugs)
+- **`get_accounts_balances_details`** query references `balance` column but accounts table uses `amount` -- needs to select `amount` instead of `balance`
+- **`spending_yesterday`** query references `transactions.currency` -- this column does not exist in transactions table; the `currency` field is on the `accounts` table, not transactions
 
----
+### 2. Missing Queries (User Requests)
+The user wants many more query types:
+- Top spending places/categories
+- Spending at specific subcategory (e.g., "الحشاش")
+- Monthly comparison (this month vs last month)
+- Savings tracking
+- Average daily spending
+- Gym: bicep/tricep training details, muscle recovery, exercise details with photo/video
+- Gym: last training date per muscle, exercise PR, workout count by muscle
+- Dreams: "احلامي" not working (needs debugging)
 
-## What Gets Built
+### 3. AI Suggestions Quality
+- The `suggest-query` edge function needs a more comprehensive schema (include actual column names and types, not just table names)
+- AI should validate its output and self-correct
+- Send full column details to AI so it generates correct queries
 
-### 1. Query Manager Page (`/assistant-manager`)
+### 4. Pending Queries showing "لا توجد اقتراحات" 
+- The pending queries page works but there are no pending queries -- this is correct behavior but needs a way to generate suggestions
 
-A full page with tabs:
-
-**Tab 1: Saved Queries** - View all queries grouped by category, with ability to:
-- See trigger patterns, query config, output template
-- Edit any field inline
-- Delete queries
-- Test queries live (run and see results)
-- Toggle active/inactive
-
-**Tab 2: Add New Query** - Interactive form:
-- Pick a table from dropdown (populated from actual DB schema)
-- See all columns for that table with types
-- Build filters visually (column, operator, value/variable)
-- Pick aggregation (sum, count, avg, max, min)
-- Set group_by, order_by, limit
-- Add joins to related tables
-- Set trigger patterns (Arabic/English)
-- Set output template with `{variable}` placeholders
-- Choose output mode: "one-line answer" or "table view"
-- Choose action type: "query (read)" or "input (write)"
-- **Code mode**: Write custom filter or result formatter as JavaScript code that gets stored and executed
-- Preview the query before saving
-
-**Tab 3: Database Explorer** - Browse all tables:
-- See all tables with column names, types, and row counts
-- Sort tables by size (row count)
-- Group by category (financial, gym, prayer, etc.)
-- Click a table to see sample data
-- See relationships between tables
-
-**Tab 4: Pending Suggestions** - Review AI-suggested queries:
-- Approve or reject
-- Edit before approving
-
-**Tab 5: Synonyms** - Manage word mappings:
-- View all synonyms
-- Add new synonym groups
-- Delete synonyms
+### 5. Query Editor UX Improvements
+- Add dropdowns for column selection based on selected table
+- Better filter value suggestions
 
 ---
 
-### 2. Enhanced Teaching Flow in Chat
+## Implementation Plan
 
-When the assistant doesn't understand a question:
+### Step 1: Fix Broken Queries in Database
 
-```text
-User: "كم مرة رحت الجيم هالشهر"
-Roz: ما فهمت هالسؤال 🤔
+Fix the two broken seed queries:
+- **`get_accounts_balances_details`**: Change `select: ["name", "balance", "currency"]` to `select: ["name", "amount", "currency"]`
+- **`spending_yesterday`**: Remove `currency` from select since it doesn't exist on transactions; the query should just select `amount` and `subcategories.name`
 
-اختر:
-[📝 علمني يدوي] [🤖 اسأل الذكاء] [⏭️ تخطي]
-```
+This will be done via SQL update statements.
 
-- **علمني يدوي**: Opens simplified inline teaching (pick table, column, operation)
-- **اسأل الذكاء**: Calls external AI via edge function, AI analyzes the DB schema and generates the query config, then asks user to approve before saving
-- **تخطي**: Skip
+### Step 2: Add 20+ New Seed Queries
+
+Add comprehensive queries across all categories:
+
+**Financial (8 new):**
+- `top_spending_places` - Top places by spending amount (table output)
+- `top_spending_categories` - Top categories by spending (table output)
+- `spending_this_month_vs_last` - Compare current month to previous month spending
+- `savings_last_month` - Total savings (income - expenses) last month
+- `average_daily_spending` - Average daily spending this month
+- `spending_at_place_this_month` - Spending at specific subcategory this month
+- `total_income_vs_expenses` - Income vs expenses summary
+- `last_5_transactions` - Recent transactions list
+
+**Gym (8 new):**
+- `exercise_details` - Exercise info with photo, video, instructions by name
+- `muscle_last_trained` - When was a specific muscle last trained
+- `muscle_recovery_status` - All muscles and their recovery status
+- `workouts_by_muscle` - How many times trained a specific muscle
+- `exercise_pr` - Personal record (max weight) for an exercise
+- `bicep_training` - Bicep workout history
+- `tricep_training` - Tricep workout history
+- `total_volume_this_month` - Total weight volume lifted this month
+
+**Dreams (2 new):**
+- Fix `active_dreams` query if broken, add more trigger patterns
+- `completed_dreams` - List of completed goals
+
+**General (2 new):**
+- `my_stats_summary` - Overview of all app data (accounts, workouts, dreams)
+- More trigger pattern synonyms for existing queries
+
+### Step 3: Add Extensive Synonyms
+
+Insert Arabic synonyms into `assistant_synonyms`:
+- Financial: صرفت، دفعت، حطيت، مصروف، مصاري
+- Gym: تمرين، جيم، نادي، رياضة، عضلة
+- Prayer: صلاة، صلوات، مواقيت
+- Time: اليوم، مبارح، هالشهر، هالاسبوع
+- Places: الحشاش، حشاش (matching variations)
+
+### Step 4: Improve AI Suggestion Edge Function
+
+Update `suggest-query` to:
+1. Send full schema with **actual column names and types** (not just table names)
+2. Add instructions to validate column names exist
+3. Add a second validation step in the prompt telling AI to double-check columns
+4. Include examples of correct query configs in the system prompt
+5. Add `result_code` and `filter_code` examples for complex queries
+
+### Step 5: Improve Query Editor UX
+
+- When a table is selected, fetch and show its columns as dropdown options for:
+  - Select columns (multi-select checkboxes)
+  - Filter columns (dropdown)
+  - Order by column (dropdown)
+  - Aggregation column (dropdown)
+  - Join `on` field (dropdown of foreign key columns)
+- Show column types next to names
+
+### Step 6: Fix Dreams Query
+
+Debug why "احلامي" doesn't return results:
+- Check if the `active_dreams` query config correctly matches the `dreams` table columns
+- Ensure `status` column value `in_progress` is correct (verify actual data)
+
+### Step 7: Add Gym Exercise Detail Queries with Rich Output
+
+For queries like "شو هاد التمرين bench press":
+- Query exercises table for name, photo_url, video_url, instructions, muscle_group, equipment, difficulty_level
+- Use `result_code` to format rich output with image/video links
+- Add trigger patterns in Arabic and English
 
 ---
-
-### 3. External AI Teaching (Edge Function)
-
-New edge function `suggest-query` that:
-1. Receives the user's question + full DB schema
-2. Uses Lovable AI (gemini-3-flash-preview) to generate a query_config
-3. Returns the suggested query for user approval
-4. On approval, saves to `assistant_queries`
-
----
-
-### 4. Custom Code Support in Queries
-
-Add two optional fields to `assistant_queries`:
-
-- `filter_code`: Custom JavaScript code for complex filtering that can't be expressed with simple operators (e.g., date ranges, cross-table logic)
-- `result_code`: Custom JavaScript code for formatting results (e.g., calculate percentage, combine fields)
-
-Example:
-```json
-{
-  "filter_code": "return data.filter(row => row.amount > 100 && row.date === variables.today)",
-  "result_code": "const total = data.reduce((s, r) => s + r.amount, 0); return `صرفت ${total} شيكل`"
-}
-```
-
----
-
-### 5. Conversational Context + User Profile
-
-- The assistant remembers the conversation context (last 10 messages) to handle follow-ups like "وهالاسبوع؟" after asking about today's spending
-- Gather basic user stats from DB (total accounts, workout frequency, etc.) to answer general questions like "كيف حالي مع الرياضة"
-
----
-
-## Database Changes
-
-### Migration: Add columns to `assistant_queries`
-
-```sql
-ALTER TABLE public.assistant_queries 
-ADD COLUMN IF NOT EXISTS output_mode TEXT DEFAULT 'text',
-ADD COLUMN IF NOT EXISTS action_type TEXT DEFAULT 'query',
-ADD COLUMN IF NOT EXISTS filter_code TEXT,
-ADD COLUMN IF NOT EXISTS result_code TEXT;
-```
-
-- `output_mode`: 'text' (one line) or 'table' (table view)
-- `action_type`: 'query' (read data) or 'input' (write data)
-- `filter_code`: Optional JS code for custom filtering
-- `result_code`: Optional JS code for custom result formatting
-
----
-
-## New Edge Function: `suggest-query`
-
-Uses Lovable AI to analyze user question against DB schema and generate a query config:
-
-```typescript
-// supabase/functions/suggest-query/index.ts
-// POST { question: string, schema: TableInfo[] }
-// Returns { suggested_query: QueryConfig, explanation: string }
-```
-
-The AI receives the full table schema and the user's question, then returns a structured query config using tool calling.
-
----
-
-## Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/pages/AssistantManager.tsx` | Main query management page |
-| `src/components/assistant/QueryEditor.tsx` | Visual query builder form |
-| `src/components/assistant/DatabaseExplorer.tsx` | Table/column browser |
-| `src/components/assistant/QueryTester.tsx` | Test query and see results |
-| `src/components/assistant/SynonymManager.tsx` | Manage word mappings |
-| `src/components/assistant/PendingQueriesManager.tsx` | Review AI suggestions |
-| `supabase/functions/suggest-query/index.ts` | AI query suggestion edge function |
 
 ## Files to Modify
 
-| File | Change |
-|------|--------|
-| `src/App.tsx` | Add `/assistant-manager` route |
-| `src/types/assistant.ts` | Add `output_mode`, `action_type`, `filter_code`, `result_code` to types |
-| `src/services/LocalAssistant/index.ts` | Add conversational context, AI teaching flow, code execution |
-| `src/services/LocalAssistant/QueryExecutor.ts` | Support `filter_code` and `result_code` execution |
-| `src/services/LocalAssistant/ResponseFormatter.ts` | Support table output mode |
-| `src/components/assistant/AssistantChat.tsx` | Add link to manager page in header |
-| `src/components/assistant/AssistantMessage.tsx` | Support table rendering in messages |
-| `src/hooks/useLocalAssistant.ts` | Add AI teaching functions |
-| `supabase/config.toml` | Add `suggest-query` function config |
-| Migration SQL | Add new columns to `assistant_queries` |
+| File | Changes |
+|------|---------|
+| `supabase/migrations/new_migration.sql` | Fix broken queries, add 20+ new queries, add synonyms |
+| `supabase/functions/suggest-query/index.ts` | Send full column schema, add validation instructions |
+| `src/components/assistant/QueryEditor.tsx` | Add column dropdowns based on selected table |
+| `src/services/LocalAssistant/ResponseFormatter.ts` | Add gym exercise detail formatter with photo/video |
+| `src/services/LocalAssistant/QueryExecutor.ts` | Handle exercise detail rich output |
+| `src/hooks/useLocalAssistant.ts` | Pass schema with columns to AI function |
+| `src/types/assistant.ts` | Add column metadata to TABLE_CATEGORIES |
+| `src/components/assistant/DatabaseExplorer.tsx` | Export schema fetching for reuse |
 
 ---
 
 ## Technical Details
 
-### Query Editor Form Fields
+### Rich Exercise Output Format
+When user asks about an exercise, the response will include:
+```text
+💪 Bench Press
+📋 تمرين ضغط الصدر
+🎯 العضلة: صدر | المعدات: بنش + بار
+📊 الصعوبة: متوسط
+🏆 أعلى وزن: 80 كغ
+📸 [صورة]
+🎬 [فيديو]
+📝 التعليمات: ...
+```
 
-The visual query builder will have:
-1. **Table selector** - Dropdown of all public tables
-2. **Columns selector** - Multi-select of columns (auto-populated from selected table)
-3. **Joins** - Add related tables with foreign key detection
-4. **Filters** - Add rows: column | operator (eq, gt, gte, lt, lte, like, ilike, not_null) | value or {variable}
-5. **Aggregation** - Type (sum/count/avg/max/min) + column
-6. **Group by** - Multi-select columns
-7. **Order by** - Column + direction
-8. **Limit** - Number input
-9. **Trigger patterns** - Text array input
-10. **Output template** - Text with {placeholder} support
-11. **Output mode** - Radio: "One line" or "Table"
-12. **Action type** - Radio: "Query (read)" or "Input (write)"
-13. **Code mode toggle** - Switch to write custom filter_code or result_code
+### Monthly Comparison Logic
+Uses `result_code` to:
+1. Fetch current month expenses
+2. Compare with previous month (via date filter)
+3. Calculate percentage change
+4. Format as "صرفت هالشهر X شيكل (Y% أكثر/أقل من الشهر اللي قبل)"
 
-### Database Explorer
-
-Fetches schema via `information_schema.columns` and shows:
-- Table name, row count, columns with types
-- Sortable by row count
-- Grouped by detected category
-- Click to see 5 sample rows
-
-### AI Teaching Flow
-
-1. User asks unknown question in chat
-2. User clicks "اسأل الذكاء"
-3. Frontend sends question + schema to `suggest-query` edge function
-4. AI generates query config
-5. User sees preview: "الذكاء يقترح: [query details]... موافق؟"
-6. User approves -> saved to `assistant_queries`
-7. Query immediately available
-
-### Conversational Context
-
-Store last query result + last 5 messages in memory. When user says follow-up like "وهالاسبوع؟", detect it's a modification of the last query and adjust the date filter.
-
-### Code Execution Safety
-
-`filter_code` and `result_code` are executed via `new Function()` with limited scope (only `data`, `variables`, `row` parameters). No access to DOM or external APIs.
-
----
-
-## Implementation Order
-
-1. Database migration (add columns)
-2. Update types
-3. Create edge function `suggest-query`
-4. Build Database Explorer component
-5. Build Query Editor form
-6. Build Query Tester
-7. Build Synonym Manager
-8. Build Pending Queries Manager
-9. Assemble AssistantManager page
-10. Add route to App.tsx
-11. Update LocalAssistant service with AI teaching + context + code execution
-12. Update chat UI with AI teaching buttons and table rendering
-13. Update config.toml
+### Schema for AI
+Instead of sending just table names, send:
+```json
+{
+  "name": "transactions",
+  "category": "financial",
+  "columns": [
+    {"name": "id", "type": "uuid"},
+    {"name": "amount", "type": "numeric"},
+    {"name": "type", "type": "text"},
+    {"name": "date", "type": "date"},
+    ...
+  ]
+}
+```
 
