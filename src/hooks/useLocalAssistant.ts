@@ -66,17 +66,34 @@ export function useLocalAssistant(): UseLocalAssistantReturn {
     return msg;
   }, []);
 
+  // Build full schema with columns for AI
+  const buildFullSchema = useCallback(async () => {
+    const knownTables = Object.entries(TABLE_CATEGORIES);
+    const schema: any[] = [];
+    for (const [name, category] of knownTables) {
+      try {
+        const { data } = await supabase.from(name as any).select('*').limit(1);
+        const columns = data && data.length > 0
+          ? Object.entries(data[0]).map(([col, val]) => ({
+              name: col,
+              type: val === null ? 'text' : typeof val === 'number' ? 'number' : typeof val === 'boolean' ? 'boolean' : Array.isArray(val) ? 'array' : 'text',
+            }))
+          : [];
+        schema.push({ name, category, columns });
+      } catch {
+        schema.push({ name, category, columns: [] });
+      }
+    }
+    return schema;
+  }, []);
+
   // Ask external AI for query suggestion
   const askAI = useCallback(async (question: string) => {
     setIsLoading(true);
     addAssistantMessage('🤖 جاري سؤال الذكاء الاصطناعي...');
 
     try {
-      // Build schema info
-      const schema = Object.entries(TABLE_CATEGORIES).map(([name, category]) => ({
-        name,
-        category,
-      }));
+      const schema = await buildFullSchema();
 
       const { data, error } = await supabase.functions.invoke('suggest-query', {
         body: { question, schema },
@@ -87,16 +104,17 @@ export function useLocalAssistant(): UseLocalAssistantReturn {
 
       const suggestion = data.suggestion;
       
-      // Show the suggestion for approval
       addAssistantMessage(
         `🤖 **اقتراح الذكاء:**\n\n` +
         `**الاسم:** ${suggestion.query_name}\n` +
         `**الفئة:** ${suggestion.category}\n` +
         `**الغرض:** ${suggestion.purpose}\n` +
         `**الجدول:** ${suggestion.query_config?.table}\n` +
+        `**الأعمدة:** ${suggestion.query_config?.select?.join(', ') || '*'}\n` +
         (suggestion.explanation ? `\n${suggestion.explanation}` : '') +
         `\n\n**الأنماط:**\n${(suggestion.trigger_patterns || []).map((p: string) => `• ${p}`).join('\n')}` +
-        (suggestion.output_template ? `\n\n**القالب:** ${suggestion.output_template}` : ''),
+        (suggestion.output_template ? `\n\n**القالب:** ${suggestion.output_template}` : '') +
+        (suggestion.result_code ? `\n\n**كود مخصص:** ✅` : ''),
         {
           actionButtons: [
             { id: 'approve', label: '✅ موافق، احفظ', action: 'approve_ai', data: suggestion },
@@ -109,7 +127,7 @@ export function useLocalAssistant(): UseLocalAssistantReturn {
       addAssistantMessage('❌ حصل خطأ في سؤال الذكاء. جرب مرة تانية أو علمني يدوي.');
     }
     setIsLoading(false);
-  }, [addAssistantMessage]);
+  }, [addAssistantMessage, buildFullSchema]);
 
   const sendMessage = useCallback(async (message: string) => {
     if (!message.trim() || isLoading) return;
@@ -184,6 +202,10 @@ export function useLocalAssistant(): UseLocalAssistantReturn {
               trigger_patterns: data.trigger_patterns || [],
               query_config: data.query_config,
               output_template: data.output_template || null,
+              output_mode: data.output_mode || 'text',
+              action_type: data.action_type || 'query',
+              filter_code: data.filter_code || null,
+              result_code: data.result_code || null,
             });
             if (newQuery) {
               await localAssistant.reload();
