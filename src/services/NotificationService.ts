@@ -34,12 +34,12 @@ export class NotificationService {
           await navigator.serviceWorker.ready;
           
           // For iOS PWA - try to get push subscription for background notifications
-          if (registration.pushManager && 'PushManager' in window) {
+          if ((registration as any).pushManager && 'PushManager' in window) {
             try {
-              const subscription = await registration.pushManager.getSubscription();
+              const subscription = await (registration as any).pushManager.getSubscription();
               if (!subscription) {
                 // Try to subscribe for push notifications (required for iOS background notifications)
-                const newSubscription = await registration.pushManager.subscribe({
+                const newSubscription = await (registration as any).pushManager.subscribe({
                   userVisibleOnly: true,
                   applicationServerKey: this.urlB64ToUint8Array('BEl62iUYgUivxIkv69yViEuiBIa40HI80Y6McQ54tsS3BUB3VtyqOdXLTRQr4oVL8cSrMTaykg8hfOo3RruojK0')
                 });

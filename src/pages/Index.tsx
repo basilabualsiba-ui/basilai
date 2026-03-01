@@ -14,14 +14,13 @@ import { GymCard } from "@/components/dashboard/gym-card";
 import { SupplementsCard } from "@/components/dashboard/supplements-card";
 import { DreamsCardNew } from "@/components/dashboard/dreams-card-new";
 import { WeightStatsCard } from "@/components/dashboard/weight-stats-card";
-
-// Assistant Components
-import { AssistantChat, AssistantFloatingButton } from "@/components/assistant/AssistantChat";
+import { WeatherCard } from "@/components/dashboard/weather-card";
+import { CookingCard } from "@/components/dashboard/cooking-card";
+import { ClosetCard } from "@/components/dashboard/closet-card";
 
 const Index = () => {
   const isMobile = useIsMobile();
   const { click } = useSound();
-  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -33,7 +32,6 @@ const Index = () => {
             <Logo size="md" />
             
             <div className="flex items-center gap-2">
-              {/* Enhanced User Profile */}
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-secondary/80 to-secondary/50 border border-border/30 transition-all duration-300 hover:border-primary/30 hover:shadow-sm">
                 {!isMobile && (
                   <span className="text-sm font-medium text-foreground">Basil</span>
@@ -65,28 +63,18 @@ const Index = () => {
       <main className="container mx-auto px-4 py-6">
         <div className="space-y-4">
           <BentoGrid>
+            <WeatherCard />
             <TodayAgendaCard />
             <FinanceCard />
             <GymCard />
+            <CookingCard />
+            <ClosetCard />
             <SupplementsCard />
             <WeightStatsCard />
             <DreamsCardNew />
           </BentoGrid>
         </div>
       </main>
-
-      {/* Roz Assistant */}
-      <AssistantFloatingButton 
-        onClick={() => {
-          click();
-          setIsAssistantOpen(true);
-        }} 
-        isOpen={isAssistantOpen} 
-      />
-      <AssistantChat 
-        isOpen={isAssistantOpen} 
-        onClose={() => setIsAssistantOpen(false)} 
-      />
     </div>
   );
 };

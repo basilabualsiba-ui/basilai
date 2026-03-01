@@ -4,12 +4,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { GymProvider } from "./contexts/GymContext";
-import { FoodProvider } from "./contexts/FoodContext";
 import { FirstTimePermissions } from "@/components/ui/first-time-permissions";
 import { PrayerNotificationProvider } from "./contexts/PrayerContext";
-
 import { ScheduleProvider } from "./contexts/ScheduleContext";
 import { FinancialProvider } from "./contexts/FinancialContext";
 import { CurrencyProvider } from "./contexts/CurrencyContext";
@@ -27,14 +24,15 @@ import WorkoutDay from "./pages/WorkoutDay";
 import Schedule from "./pages/Schedule";
 import Islamic from "./pages/Islamic";
 import Dreams from "./pages/Dreams";
-import AssistantManager from "./pages/AssistantManager";
+import Cooking from "./pages/Cooking";
+import Closet from "./pages/Closet";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 function AppContent() {
   const { scheduleAllNotifications } = useBackgroundNotifications();
-  useDreamProgress(); // Auto-update dream progress based on activities
+  useDreamProgress();
   
   return (
     <BrowserRouter>
@@ -53,7 +51,8 @@ function AppContent() {
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/islamic" element={<Islamic />} />
           <Route path="/dreams" element={<Dreams />} />
-          <Route path="/assistant-manager" element={<AssistantManager />} />
+          <Route path="/cooking" element={<Cooking />} />
+          <Route path="/closet" element={<Closet />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -68,17 +67,15 @@ const App = () => (
       <CurrencyProvider>
         <FinancialProvider>
           <GymProvider>
-            <FoodProvider>
-              <PrayerNotificationProvider>
-                <ScheduleProvider>
-                  <DreamsProvider>
-                    <SupplementProvider>
-                      <AppContent />
-                    </SupplementProvider>
-                  </DreamsProvider>
-                </ScheduleProvider>
-              </PrayerNotificationProvider>
-            </FoodProvider>
+            <PrayerNotificationProvider>
+              <ScheduleProvider>
+                <DreamsProvider>
+                  <SupplementProvider>
+                    <AppContent />
+                  </SupplementProvider>
+                </DreamsProvider>
+              </ScheduleProvider>
+            </PrayerNotificationProvider>
           </GymProvider>
         </FinancialProvider>
       </CurrencyProvider>
