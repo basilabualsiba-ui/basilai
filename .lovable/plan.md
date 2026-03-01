@@ -1,173 +1,238 @@
 
 
-# Fix Assistant Errors, Add Queries, and Improve Teaching System
+# Full App Refactor — Supabase Storage, No AI (Optional AI)
 
-## Issues Found
-
-### 1. Database Column Mismatches (Critical Bugs)
-- **`get_accounts_balances_details`** query references `balance` column but accounts table uses `amount` -- needs to select `amount` instead of `balance`
-- **`spending_yesterday`** query references `transactions.currency` -- this column does not exist in transactions table; the `currency` field is on the `accounts` table, not transactions
-
-### 2. Missing Queries (User Requests)
-The user wants many more query types:
-- Top spending places/categories
-- Spending at specific subcategory (e.g., "الحشاش")
-- Monthly comparison (this month vs last month)
-- Savings tracking
-- Average daily spending
-- Gym: bicep/tricep training details, muscle recovery, exercise details with photo/video
-- Gym: last training date per muscle, exercise PR, workout count by muscle
-- Dreams: "احلامي" not working (needs debugging)
-
-### 3. AI Suggestions Quality
-- The `suggest-query` edge function needs a more comprehensive schema (include actual column names and types, not just table names)
-- AI should validate its output and self-correct
-- Send full column details to AI so it generates correct queries
-
-### 4. Pending Queries showing "لا توجد اقتراحات" 
-- The pending queries page works but there are no pending queries -- this is correct behavior but needs a way to generate suggestions
-
-### 5. Query Editor UX Improvements
-- Add dropdowns for column selection based on selected table
-- Better filter value suggestions
+This is a massive refactor. The key change from the previous plan: all new features store data in **Supabase** (not localStorage), and AI is **optional** (off by default, user can enable).
 
 ---
 
-## Implementation Plan
+## Phase 1: Delete Assistant + Old Food
 
-### Step 1: Fix Broken Queries in Database
+### Delete (files to remove)
+- `src/components/assistant/` (9 files)
+- `src/services/LocalAssistant/` (8 files)
+- `src/hooks/useLocalAssistant.ts`
+- `src/types/assistant.ts`
+- `src/pages/AssistantManager.tsx`
+- `supabase/functions/suggest-query/`
+- `src/components/food/` (14 files)
+- `src/contexts/FoodContext.tsx`
+- `src/pages/Food.tsx`
+- `src/hooks/useFoodSchedule.ts`
 
-Fix the two broken seed queries:
-- **`get_accounts_balances_details`**: Change `select: ["name", "balance", "currency"]` to `select: ["name", "amount", "currency"]`
-- **`spending_yesterday`**: Remove `currency` from select since it doesn't exist on transactions; the query should just select `amount` and `subcategories.name`
+### Clean up
+- Remove `AssistantChat`/`AssistantFloatingButton` from `src/pages/Index.tsx`
+- Remove `/assistant-manager` route from `src/App.tsx`
+- Remove `FoodProvider` from `src/App.tsx`
+- Remove food references from schedule components
 
-This will be done via SQL update statements.
-
-### Step 2: Add 20+ New Seed Queries
-
-Add comprehensive queries across all categories:
-
-**Financial (8 new):**
-- `top_spending_places` - Top places by spending amount (table output)
-- `top_spending_categories` - Top categories by spending (table output)
-- `spending_this_month_vs_last` - Compare current month to previous month spending
-- `savings_last_month` - Total savings (income - expenses) last month
-- `average_daily_spending` - Average daily spending this month
-- `spending_at_place_this_month` - Spending at specific subcategory this month
-- `total_income_vs_expenses` - Income vs expenses summary
-- `last_5_transactions` - Recent transactions list
-
-**Gym (8 new):**
-- `exercise_details` - Exercise info with photo, video, instructions by name
-- `muscle_last_trained` - When was a specific muscle last trained
-- `muscle_recovery_status` - All muscles and their recovery status
-- `workouts_by_muscle` - How many times trained a specific muscle
-- `exercise_pr` - Personal record (max weight) for an exercise
-- `bicep_training` - Bicep workout history
-- `tricep_training` - Tricep workout history
-- `total_volume_this_month` - Total weight volume lifted this month
-
-**Dreams (2 new):**
-- Fix `active_dreams` query if broken, add more trigger patterns
-- `completed_dreams` - List of completed goals
-
-**General (2 new):**
-- `my_stats_summary` - Overview of all app data (accounts, workouts, dreams)
-- More trigger pattern synonyms for existing queries
-
-### Step 3: Add Extensive Synonyms
-
-Insert Arabic synonyms into `assistant_synonyms`:
-- Financial: صرفت، دفعت، حطيت، مصروف، مصاري
-- Gym: تمرين، جيم، نادي، رياضة، عضلة
-- Prayer: صلاة، صلوات، مواقيت
-- Time: اليوم، مبارح، هالشهر، هالاسبوع
-- Places: الحشاش، حشاش (matching variations)
-
-### Step 4: Improve AI Suggestion Edge Function
-
-Update `suggest-query` to:
-1. Send full schema with **actual column names and types** (not just table names)
-2. Add instructions to validate column names exist
-3. Add a second validation step in the prompt telling AI to double-check columns
-4. Include examples of correct query configs in the system prompt
-5. Add `result_code` and `filter_code` examples for complex queries
-
-### Step 5: Improve Query Editor UX
-
-- When a table is selected, fetch and show its columns as dropdown options for:
-  - Select columns (multi-select checkboxes)
-  - Filter columns (dropdown)
-  - Order by column (dropdown)
-  - Aggregation column (dropdown)
-  - Join `on` field (dropdown of foreign key columns)
-- Show column types next to names
-
-### Step 6: Fix Dreams Query
-
-Debug why "احلامي" doesn't return results:
-- Check if the `active_dreams` query config correctly matches the `dreams` table columns
-- Ensure `status` column value `in_progress` is correct (verify actual data)
-
-### Step 7: Add Gym Exercise Detail Queries with Rich Output
-
-For queries like "شو هاد التمرين bench press":
-- Query exercises table for name, photo_url, video_url, instructions, muscle_group, equipment, difficulty_level
-- Use `result_code` to format rich output with image/video links
-- Add trigger patterns in Arabic and English
+DB tables (`assistant_queries`, `assistant_synonyms`, `assistant_pending_queries`, `food_items`, `meals`, `meal_foods`, `meal_plans`, `meal_plan_meals`, `meal_consumptions`) stay in Supabase (no data loss) but code references are cleaned.
 
 ---
 
-## Files to Modify
+## Phase 2: Smart Cooking (Supabase)
 
-| File | Changes |
+### New Supabase Tables
+
+```sql
+-- Recipes stored in Supabase
+CREATE TABLE recipes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  image text,
+  category text NOT NULL DEFAULT 'meal', -- meal/drink/dessert
+  tools text[] DEFAULT '{}',
+  total_time integer DEFAULT 0,
+  video_url text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+CREATE TABLE recipe_ingredients (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  recipe_id uuid REFERENCES recipes(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  quantity text NOT NULL
+);
+
+CREATE TABLE recipe_steps (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  recipe_id uuid REFERENCES recipes(id) ON DELETE CASCADE,
+  step_number integer NOT NULL,
+  instruction text NOT NULL,
+  tool text,
+  timer_minutes integer,
+);
+
+-- User's available ingredients
+CREATE TABLE user_ingredients (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
+```
+
+RLS: permissive for all operations (no auth, matching existing app pattern).
+
+### New Files
+| File | Purpose |
 |------|---------|
-| `supabase/migrations/new_migration.sql` | Fix broken queries, add 20+ new queries, add synonyms |
-| `supabase/functions/suggest-query/index.ts` | Send full column schema, add validation instructions |
-| `src/components/assistant/QueryEditor.tsx` | Add column dropdowns based on selected table |
-| `src/services/LocalAssistant/ResponseFormatter.ts` | Add gym exercise detail formatter with photo/video |
-| `src/services/LocalAssistant/QueryExecutor.ts` | Handle exercise detail rich output |
-| `src/hooks/useLocalAssistant.ts` | Pass schema with columns to AI function |
-| `src/types/assistant.ts` | Add column metadata to TABLE_CATEGORIES |
-| `src/components/assistant/DatabaseExplorer.tsx` | Export schema fetching for reuse |
+| `src/contexts/CookingContext.tsx` | CRUD via Supabase for recipes, ingredients |
+| `src/pages/Cooking.tsx` | Main page with tabs |
+| `src/components/cooking/recipe-list.tsx` | Browse recipes with ingredient match |
+| `src/components/cooking/add-recipe-dialog.tsx` | Manual add form |
+| `src/components/cooking/import-recipe-dialog.tsx` | URL/text paste with local parsing |
+| `src/components/cooking/recipe-detail.tsx` | Full recipe view |
+| `src/components/cooking/cooking-mode.tsx` | Step-by-step with timers |
+| `src/components/cooking/my-ingredients.tsx` | Manage available ingredients |
+| `src/components/cooking/cooking-timer.tsx` | Countdown timer |
+| `src/components/dashboard/cooking-card.tsx` | Dashboard card |
+
+### Cooking Mode
+- Full-screen step-by-step, one step at a time
+- Progress bar, tool icons, countdown timers for oven/airfryer/stove
+- "Meal Ready ✅" on completion
+
+### Import (Local Parsing Only, No AI)
+- **URL**: Fetch HTML, extract JSON-LD Recipe schema or parse DOM
+- **Text**: Regex-based ingredient/step detection
+- Missing data → user fills manually
+- **Optional AI toggle**: If user enables AI in settings, can use edge function to parse recipes better
 
 ---
 
-## Technical Details
+## Phase 3: Smart Closet + Laundry (Supabase)
 
-### Rich Exercise Output Format
-When user asks about an exercise, the response will include:
-```text
-💪 Bench Press
-📋 تمرين ضغط الصدر
-🎯 العضلة: صدر | المعدات: بنش + بار
-📊 الصعوبة: متوسط
-🏆 أعلى وزن: 80 كغ
-📸 [صورة]
-🎬 [فيديو]
-📝 التعليمات: ...
+### New Supabase Tables
+
+```sql
+CREATE TABLE clothing_items (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text,
+  image text, -- URL from Supabase storage (wardrobe bucket exists)
+  type text NOT NULL, -- jacket/shoes/socks/jeans/shorts/tshirt/shirt/hoodie/sweater/coat/other
+  color text, -- hex
+  pattern text DEFAULT 'plain', -- plain/striped/patterned
+  status text DEFAULT 'closet', -- closet/laundry_basket/washing_machine
+  last_worn timestamptz,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+CREATE TABLE saved_outfits (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text,
+  item_ids uuid[] NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
+
+CREATE TABLE shopping_list (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  category text,
+  price numeric,
+  is_purchased boolean DEFAULT false,
+  created_at timestamptz DEFAULT now()
+);
 ```
 
-### Monthly Comparison Logic
-Uses `result_code` to:
-1. Fetch current month expenses
-2. Compare with previous month (via date filter)
-3. Calculate percentage change
-4. Format as "صرفت هالشهر X شيكل (Y% أكثر/أقل من الشهر اللي قبل)"
+### Storage
+Use existing `wardrobe` bucket for clothing images.
 
-### Schema for AI
-Instead of sending just table names, send:
-```json
-{
-  "name": "transactions",
-  "category": "financial",
-  "columns": [
-    {"name": "id", "type": "uuid"},
-    {"name": "amount", "type": "numeric"},
-    {"name": "type", "type": "text"},
-    {"name": "date", "type": "date"},
-    ...
-  ]
-}
-```
+### New Files
+| File | Purpose |
+|------|---------|
+| `src/contexts/ClosetContext.tsx` | CRUD via Supabase |
+| `src/pages/Closet.tsx` | Main page with tabs: Closet, Outfits, Laundry, Shopping |
+| `src/components/closet/clothes-grid.tsx` | Grid view of clothes |
+| `src/components/closet/add-clothing-dialog.tsx` | Upload + auto-detect color |
+| `src/components/closet/outfit-suggestion.tsx` | Rule-based outfit generator |
+| `src/components/closet/laundry-system.tsx` | State machine: closet→basket→machine→closet |
+| `src/components/closet/shopping-list.tsx` | Shopping list CRUD |
+| `src/components/closet/color-extractor.ts` | Canvas-based dominant color |
+| `src/components/dashboard/closet-card.tsx` | Dashboard card |
+
+### Color Extraction (Local, No AI)
+- Canvas pixel sampling → simple k-means clustering → dominant color
+
+### Background Removal (Local)
+- Corner-pixel sampling → make similar colors transparent
+
+### Outfit Suggestion (Rule-Based, No AI)
+- Pick top + bottom + shoes + optional layer
+- Rules: no duplicate types, valid layering
+- Weather-aware (see Phase 4)
+- **Optional AI toggle**: If enabled, can suggest smarter combinations
+
+### Laundry Flow
+- Move items between states via buttons
+- Washing machine timer → auto-return to closet on completion
+
+---
+
+## Phase 4: Weather Widget
+
+### New Files
+| File | Purpose |
+|------|---------|
+| `src/hooks/useWeather.ts` | Open-Meteo API for Jenin (free, no key) |
+| `src/components/dashboard/weather-card.tsx` | Dashboard widget |
+
+- API: `https://api.open-meteo.com/v1/forecast?latitude=32.46&longitude=35.30&current_weather=true&daily=temperature_2m_max,temperature_2m_min`
+- Cache response in localStorage for 1 hour
+- Show: current temp, high/low, weather icon
+- Feed into closet outfit suggestions
+
+---
+
+## Phase 5: Financial Rework
+
+### Remove Goals Tab
+- Delete `src/components/financial/goals-overview.tsx`
+- Change bottom nav from 4 tabs to 3: Accounts, Transactions, Stats
+- Remove `Target` import and goals references from `Financial.tsx`
+
+### Add to Stats Page (`stats-overview.tsx`)
+1. **Monthly Savings Card**: Income - Expenses per month (skip first month as baseline)
+2. **Net Worth Card**: Sum of all `accounts.amount` (with currency conversion via `currency_ratios`)
+3. **Monthly Savings Chart**: Bar chart showing savings trend over time
+
+No new tables needed — computed from existing `transactions` and `accounts` data.
+
+---
+
+## Phase 6: Dashboard Updates
+
+### Update `src/pages/Index.tsx`
+- Remove Assistant floating button and chat
+- Add `WeatherCard`, `CookingCard`, `ClosetCard` to BentoGrid
+
+### Update `src/App.tsx`
+- Remove FoodProvider, assistant imports
+- Add routes: `/cooking`, `/closet`
+
+---
+
+## AI as Optional Feature
+
+A settings toggle "Enable External AI" stored in `user_preferences` table. When enabled:
+- Recipe import can use AI for better parsing
+- Closet can get smarter outfit suggestions
+- Everything works without AI by default
+
+No AI edge functions created unless user explicitly enables — keeps the app fully functional offline with rule-based logic.
+
+---
+
+## Implementation Order
+
+1. Delete assistant files + old food files + clean imports
+2. DB migration: create cooking + closet + shopping tables
+3. Create CookingContext + Cooking page + all cooking components
+4. Create ClosetContext + Closet page + all closet components
+5. Create weather hook + weather card
+6. Rework financial stats (remove goals, add savings/net worth)
+7. Update dashboard with new cards + routes
+
+~25 new files, ~10 deleted, ~5 modified.
 
