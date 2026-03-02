@@ -1,238 +1,193 @@
 
 
-# Full App Refactor — Supabase Storage, No AI (Optional AI)
+# Comprehensive App Update Plan
 
-This is a massive refactor. The key change from the previous plan: all new features store data in **Supabase** (not localStorage), and AI is **optional** (off by default, user can enable).
-
----
-
-## Phase 1: Delete Assistant + Old Food
-
-### Delete (files to remove)
-- `src/components/assistant/` (9 files)
-- `src/services/LocalAssistant/` (8 files)
-- `src/hooks/useLocalAssistant.ts`
-- `src/types/assistant.ts`
-- `src/pages/AssistantManager.tsx`
-- `supabase/functions/suggest-query/`
-- `src/components/food/` (14 files)
-- `src/contexts/FoodContext.tsx`
-- `src/pages/Food.tsx`
-- `src/hooks/useFoodSchedule.ts`
-
-### Clean up
-- Remove `AssistantChat`/`AssistantFloatingButton` from `src/pages/Index.tsx`
-- Remove `/assistant-manager` route from `src/App.tsx`
-- Remove `FoodProvider` from `src/App.tsx`
-- Remove food references from schedule components
-
-DB tables (`assistant_queries`, `assistant_synonyms`, `assistant_pending_queries`, `food_items`, `meals`, `meal_foods`, `meal_plans`, `meal_plan_meals`, `meal_consumptions`) stay in Supabase (no data loss) but code references are cleaned.
+This plan covers UI redesign, bug fixes, financial features, and recipe import -- prioritized as requested.
 
 ---
 
-## Phase 2: Smart Cooking (Supabase)
+## Priority 1: Dashboard UI Redesign
 
-### New Supabase Tables
+### 1A. Simplify cards to match Cooking/Closet minimal style
+
+**Gym, Supplements, Dreams cards** will be redesigned to match the compact `CookingCard`/`ClosetCard` pattern: icon + name + description only. Remove all data (progress rings, streak badges, sparklines, etc.) and quick action buttons.
+
+**Files:** `gym-card.tsx`, `supplements-card.tsx`, `dreams-card-new.tsx`
+
+Each becomes ~20 lines: a BentoCard with a gradient icon, title, and subtitle.
+
+### 1B. Simplify Wallet card
+
+Remove the income/expense section at the bottom. Keep: icon, "Total Balance", sparkline. Remove the `+` button.
+
+**File:** `finance-card.tsx` -- delete lines 102-133 (the grid with income/expenses) and the Plus button.
+
+### 1C. Simplify Weight card
+
+Remove "Last Change" and "Weekly" stats grid. Keep: icon, weight value, sparkline. Remove `+` button. Rename "Current Weight" → "Weight". Change icon from `Scale` to `PersonStanding` or `Activity` (human weight related).
+
+**File:** `weight-stats-card.tsx`
+
+### 1D. Replace Today's Agenda → Prayer card
+
+- Rename to "Prayer", change icon to `Moon` (Islamic)
+- Show only next prayer name + time (single line)
+- Remove expand/collapse, remove `+` button, remove all schedule items
+- On click → navigate to `/islamic` instead of expanding
+- Remove `AddActivityDialog` import
+
+**File:** `today-agenda-card.tsx` -- complete rewrite to ~30 lines
+
+### 1E. Card order in BentoGrid
+
+Reorder in `Index.tsx`:
+1. Prayer (was TodayAgenda)
+2. Weight
+3. Wallet (2-col span)
+4. Gym
+5. Smart Closet
+6. Smart Cooking
+7. Supplements
+8. Dreams
+
+### 1F. Weather → Header (replace profile icon)
+
+Remove the `WeatherCard` from the BentoGrid. Replace the profile icon/name ("Basil" + avatar) in the header with a compact weather display: temperature + icon. On click, show a popover with full weather details (high/low, condition).
+
+**File:** `Index.tsx` -- remove profile section, add weather inline in header
+
+### 1G. Fix loading states for Cooking, Closet, Islamic cards
+
+Currently these cards don't use the `loading` prop on BentoCard. They render immediately (no async data). The issue is they may not have the module-specific glow color. Ensure consistent card styling with appropriate theme colors:
+- Cooking: orange
+- Closet: violet/purple
+- Islamic/Prayer: use `accent` color (golden)
+
+### 1H. Remove quick action buttons from ALL cards
+
+Delete the `+`, `Play`, etc. buttons from: Gym, Supplements, Dreams, Wallet, Weight cards. Users navigate by clicking the card itself.
+
+---
+
+## Priority 2: iOS Scrolling Input Bug
+
+The video shows that when scrolling down on the financial page and tapping a category/subcategory button, the input doesn't focus properly on iOS Safari.
+
+**Root cause:** iOS Safari has a known issue where `position: fixed` elements (like the Drawer) combined with scroll position cause focus issues. The number pad in `AddTransactionDialog` uses a Drawer.
+
+**Fix in `add-transaction-dialog.tsx`:**
+- Add `onOpenChange` handler that scrolls to top before opening
+- Or add `document.activeElement?.blur()` before opening
+- Add `-webkit-overflow-scrolling: touch` CSS fix
+- Ensure the Drawer's content has `touch-action: manipulation` to prevent iOS zoom/focus issues
+- Add `inputMode="none"` to the amount display to prevent iOS keyboard from competing with custom number pad
+
+---
+
+## Priority 3: Financial Features
+
+### 3A. New "Browse" tab for category/subcategory transaction filtering
+
+Add a 4th tab to Financial bottom nav: "Browse" (icon: `Search` or `Filter`).
+
+**New file:** `src/components/financial/transaction-browser.tsx`
+
+Features:
+- Category dropdown filter
+- Subcategory dropdown filter (populated based on selected category)
+- Date from / Date to pickers
+- Shows filtered transactions list
+- Shows total amount at top
+
+**File:** `Financial.tsx` -- add `Browse` to `financialItems`, add tab content
+
+### 3B. Monthly Net Worth Snapshots
+
+Create a new table `net_worth_snapshots` with columns: `id`, `month`, `year`, `total_amount`, `currency`, `created_at`.
+
+Add a mechanism to record snapshots (button in stats or automatic on first visit of new month).
+
+**File:** `stats-overview.tsx` -- add net worth chart section
+
+### 3C. Savings Total (exclude Aug 2025)
+
+Add a "Total Savings" card in stats that sums monthly savings (income - expenses) across all months, excluding August 2025 as baseline.
+
+**File:** `stats-overview.tsx`
+
+### 3D. Replace 6-month chart with switchable chart
+
+Replace the current 6-month AreaChart and bar chart with a single chart section that has toggle buttons:
+- "Income vs Expenses" (current area chart)
+- "Savings" (bar chart of monthly savings)
+- "Net Worth" (line chart of net worth over time)
+
+Remove the separate bar chart section.
+
+**File:** `stats-overview.tsx`
+
+---
+
+## Priority 4: Recipe Import Feature
+
+**Add import tab/button** in `AddRecipeDialog` or as separate dialog.
+
+**New file:** `src/components/cooking/import-recipe-dialog.tsx`
+
+Features:
+- Two modes: "Paste URL" and "Paste Text"
+- **URL mode:** Fetch page via a CORS proxy or edge function, extract JSON-LD `Recipe` schema, or parse DOM for ingredients/steps
+- **Text mode:** Regex-based parsing:
+  - Detect ingredient lines (lines with quantities/units)
+  - Detect step lines (numbered lines or "Step X" patterns)
+  - Detect tool keywords (oven, airfryer, stove, etc.)
+- Pre-fill the add recipe form with parsed data
+- User reviews and edits before saving
+- Show warnings for missing fields
+
+**Edge function** `supabase/functions/fetch-recipe-url/index.ts`: Simple fetch proxy to bypass CORS when importing from URL.
+
+---
+
+## Priority 5: Database Migration
+
+New migration for `net_worth_snapshots` table:
 
 ```sql
--- Recipes stored in Supabase
-CREATE TABLE recipes (
+CREATE TABLE net_worth_snapshots (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  image text,
-  category text NOT NULL DEFAULT 'meal', -- meal/drink/dessert
-  tools text[] DEFAULT '{}',
-  total_time integer DEFAULT 0,
-  video_url text,
+  month integer NOT NULL,
+  year integer NOT NULL,
+  total_amount numeric NOT NULL DEFAULT 0,
   created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
+  UNIQUE(month, year)
 );
 
-CREATE TABLE recipe_ingredients (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  recipe_id uuid REFERENCES recipes(id) ON DELETE CASCADE,
-  name text NOT NULL,
-  quantity text NOT NULL
-);
-
-CREATE TABLE recipe_steps (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  recipe_id uuid REFERENCES recipes(id) ON DELETE CASCADE,
-  step_number integer NOT NULL,
-  instruction text NOT NULL,
-  tool text,
-  timer_minutes integer,
-);
-
--- User's available ingredients
-CREATE TABLE user_ingredients (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  created_at timestamptz DEFAULT now()
-);
+ALTER TABLE net_worth_snapshots ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all on net_worth_snapshots" ON net_worth_snapshots FOR ALL USING (true) WITH CHECK (true);
 ```
 
-RLS: permissive for all operations (no auth, matching existing app pattern).
-
-### New Files
-| File | Purpose |
-|------|---------|
-| `src/contexts/CookingContext.tsx` | CRUD via Supabase for recipes, ingredients |
-| `src/pages/Cooking.tsx` | Main page with tabs |
-| `src/components/cooking/recipe-list.tsx` | Browse recipes with ingredient match |
-| `src/components/cooking/add-recipe-dialog.tsx` | Manual add form |
-| `src/components/cooking/import-recipe-dialog.tsx` | URL/text paste with local parsing |
-| `src/components/cooking/recipe-detail.tsx` | Full recipe view |
-| `src/components/cooking/cooking-mode.tsx` | Step-by-step with timers |
-| `src/components/cooking/my-ingredients.tsx` | Manage available ingredients |
-| `src/components/cooking/cooking-timer.tsx` | Countdown timer |
-| `src/components/dashboard/cooking-card.tsx` | Dashboard card |
-
-### Cooking Mode
-- Full-screen step-by-step, one step at a time
-- Progress bar, tool icons, countdown timers for oven/airfryer/stove
-- "Meal Ready ✅" on completion
-
-### Import (Local Parsing Only, No AI)
-- **URL**: Fetch HTML, extract JSON-LD Recipe schema or parse DOM
-- **Text**: Regex-based ingredient/step detection
-- Missing data → user fills manually
-- **Optional AI toggle**: If user enables AI in settings, can use edge function to parse recipes better
-
 ---
 
-## Phase 3: Smart Closet + Laundry (Supabase)
+## Files Summary
 
-### New Supabase Tables
-
-```sql
-CREATE TABLE clothing_items (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text,
-  image text, -- URL from Supabase storage (wardrobe bucket exists)
-  type text NOT NULL, -- jacket/shoes/socks/jeans/shorts/tshirt/shirt/hoodie/sweater/coat/other
-  color text, -- hex
-  pattern text DEFAULT 'plain', -- plain/striped/patterned
-  status text DEFAULT 'closet', -- closet/laundry_basket/washing_machine
-  last_worn timestamptz,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
-
-CREATE TABLE saved_outfits (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text,
-  item_ids uuid[] NOT NULL,
-  created_at timestamptz DEFAULT now()
-);
-
-CREATE TABLE shopping_list (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL,
-  category text,
-  price numeric,
-  is_purchased boolean DEFAULT false,
-  created_at timestamptz DEFAULT now()
-);
-```
-
-### Storage
-Use existing `wardrobe` bucket for clothing images.
-
-### New Files
-| File | Purpose |
-|------|---------|
-| `src/contexts/ClosetContext.tsx` | CRUD via Supabase |
-| `src/pages/Closet.tsx` | Main page with tabs: Closet, Outfits, Laundry, Shopping |
-| `src/components/closet/clothes-grid.tsx` | Grid view of clothes |
-| `src/components/closet/add-clothing-dialog.tsx` | Upload + auto-detect color |
-| `src/components/closet/outfit-suggestion.tsx` | Rule-based outfit generator |
-| `src/components/closet/laundry-system.tsx` | State machine: closet→basket→machine→closet |
-| `src/components/closet/shopping-list.tsx` | Shopping list CRUD |
-| `src/components/closet/color-extractor.ts` | Canvas-based dominant color |
-| `src/components/dashboard/closet-card.tsx` | Dashboard card |
-
-### Color Extraction (Local, No AI)
-- Canvas pixel sampling → simple k-means clustering → dominant color
-
-### Background Removal (Local)
-- Corner-pixel sampling → make similar colors transparent
-
-### Outfit Suggestion (Rule-Based, No AI)
-- Pick top + bottom + shoes + optional layer
-- Rules: no duplicate types, valid layering
-- Weather-aware (see Phase 4)
-- **Optional AI toggle**: If enabled, can suggest smarter combinations
-
-### Laundry Flow
-- Move items between states via buttons
-- Washing machine timer → auto-return to closet on completion
-
----
-
-## Phase 4: Weather Widget
-
-### New Files
-| File | Purpose |
-|------|---------|
-| `src/hooks/useWeather.ts` | Open-Meteo API for Jenin (free, no key) |
-| `src/components/dashboard/weather-card.tsx` | Dashboard widget |
-
-- API: `https://api.open-meteo.com/v1/forecast?latitude=32.46&longitude=35.30&current_weather=true&daily=temperature_2m_max,temperature_2m_min`
-- Cache response in localStorage for 1 hour
-- Show: current temp, high/low, weather icon
-- Feed into closet outfit suggestions
-
----
-
-## Phase 5: Financial Rework
-
-### Remove Goals Tab
-- Delete `src/components/financial/goals-overview.tsx`
-- Change bottom nav from 4 tabs to 3: Accounts, Transactions, Stats
-- Remove `Target` import and goals references from `Financial.tsx`
-
-### Add to Stats Page (`stats-overview.tsx`)
-1. **Monthly Savings Card**: Income - Expenses per month (skip first month as baseline)
-2. **Net Worth Card**: Sum of all `accounts.amount` (with currency conversion via `currency_ratios`)
-3. **Monthly Savings Chart**: Bar chart showing savings trend over time
-
-No new tables needed — computed from existing `transactions` and `accounts` data.
-
----
-
-## Phase 6: Dashboard Updates
-
-### Update `src/pages/Index.tsx`
-- Remove Assistant floating button and chat
-- Add `WeatherCard`, `CookingCard`, `ClosetCard` to BentoGrid
-
-### Update `src/App.tsx`
-- Remove FoodProvider, assistant imports
-- Add routes: `/cooking`, `/closet`
-
----
-
-## AI as Optional Feature
-
-A settings toggle "Enable External AI" stored in `user_preferences` table. When enabled:
-- Recipe import can use AI for better parsing
-- Closet can get smarter outfit suggestions
-- Everything works without AI by default
-
-No AI edge functions created unless user explicitly enables — keeps the app fully functional offline with rule-based logic.
-
----
-
-## Implementation Order
-
-1. Delete assistant files + old food files + clean imports
-2. DB migration: create cooking + closet + shopping tables
-3. Create CookingContext + Cooking page + all cooking components
-4. Create ClosetContext + Closet page + all closet components
-5. Create weather hook + weather card
-6. Rework financial stats (remove goals, add savings/net worth)
-7. Update dashboard with new cards + routes
-
-~25 new files, ~10 deleted, ~5 modified.
+| Action | File |
+|--------|------|
+| Rewrite | `src/components/dashboard/today-agenda-card.tsx` → Prayer card |
+| Simplify | `src/components/dashboard/gym-card.tsx` |
+| Simplify | `src/components/dashboard/supplements-card.tsx` |
+| Simplify | `src/components/dashboard/dreams-card-new.tsx` |
+| Simplify | `src/components/dashboard/finance-card.tsx` |
+| Simplify | `src/components/dashboard/weight-stats-card.tsx` |
+| Modify | `src/pages/Index.tsx` (reorder, weather in header) |
+| Delete | `src/components/dashboard/weather-card.tsx` (moved to header) |
+| Modify | `src/components/financial/stats-overview.tsx` (savings, net worth, chart switcher) |
+| Modify | `src/pages/Financial.tsx` (add Browse tab) |
+| Create | `src/components/financial/transaction-browser.tsx` |
+| Fix | `src/components/financial/add-transaction-dialog.tsx` (iOS bug) |
+| Create | `src/components/cooking/import-recipe-dialog.tsx` |
+| Modify | `src/pages/Cooking.tsx` (add import button) |
+| Create | `supabase/functions/fetch-recipe-url/index.ts` |
+| Migration | `net_worth_snapshots` table |
+| Modify | `src/integrations/supabase/types.ts` |
 
