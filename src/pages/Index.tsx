@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Logo } from "@/components/ui/logo";
 import { SettingsDialog } from "@/components/ui/settings-dialog";
 import { Button } from "@/components/ui/button";
-import { Settings, User } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Settings } from "lucide-react";
 import { useSound } from "@/hooks/useSound";
+import { useWeather } from "@/hooks/useWeather";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // Dashboard Components
 import { BentoGrid } from "@/components/dashboard/bento-grid";
@@ -14,17 +15,16 @@ import { GymCard } from "@/components/dashboard/gym-card";
 import { SupplementsCard } from "@/components/dashboard/supplements-card";
 import { DreamsCardNew } from "@/components/dashboard/dreams-card-new";
 import { WeightStatsCard } from "@/components/dashboard/weight-stats-card";
-import { WeatherCard } from "@/components/dashboard/weather-card";
 import { CookingCard } from "@/components/dashboard/cooking-card";
 import { ClosetCard } from "@/components/dashboard/closet-card";
 
 const Index = () => {
-  const isMobile = useIsMobile();
   const { click } = useSound();
+  const { weather, icon, condition, isLoading: weatherLoading } = useWeather();
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Enhanced Header */}
+      {/* Header */}
       <header className="border-b border-border/30 bg-gradient-to-r from-card/95 via-card/90 to-card/95 backdrop-blur-xl sticky top-0 z-50">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/3 via-transparent to-accent/3 pointer-events-none" />
         <div className="container mx-auto px-4 py-3 relative">
@@ -32,17 +32,30 @@ const Index = () => {
             <Logo size="md" />
             
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-secondary/80 to-secondary/50 border border-border/30 transition-all duration-300 hover:border-primary/30 hover:shadow-sm">
-                {!isMobile && (
-                  <span className="text-sm font-medium text-foreground">Basil</span>
-                )}
-                <div className="relative">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary via-primary to-accent flex items-center justify-center shadow-lg shadow-primary/25">
-                    <User className="h-4 w-4 text-primary-foreground" />
+              {/* Weather in header */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-secondary/80 to-secondary/50 border border-border/30 transition-all duration-300 hover:border-primary/30 hover:shadow-sm">
+                    <span className="text-lg">{icon}</span>
+                    <span className="text-sm font-semibold text-foreground">
+                      {weather?.temperature ?? '--'}°
+                    </span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-4" align="end">
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground font-medium">Jenin, Palestine</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold text-foreground">{weather?.temperature ?? '--'}°</span>
+                      <span className="text-xl">{icon}</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{condition}</p>
+                    <p className="text-xs text-muted-foreground">
+                      H: {weather?.high ?? '--'}° L: {weather?.low ?? '--'}°
+                    </p>
                   </div>
-                  <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background" />
-                </div>
-              </div>
+                </PopoverContent>
+              </Popover>
 
               <SettingsDialog>
                 <Button 
@@ -63,14 +76,13 @@ const Index = () => {
       <main className="container mx-auto px-4 py-6">
         <div className="space-y-4">
           <BentoGrid>
-            <WeatherCard />
             <TodayAgendaCard />
+            <WeightStatsCard />
             <FinanceCard />
             <GymCard />
-            <CookingCard />
             <ClosetCard />
+            <CookingCard />
             <SupplementsCard />
-            <WeightStatsCard />
             <DreamsCardNew />
           </BentoGrid>
         </div>

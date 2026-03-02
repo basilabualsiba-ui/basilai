@@ -604,12 +604,23 @@ export const AddTransactionDialog = ({
       </DrawerContent>
     </Drawer>
   );
+  const handleDrawerOpen = (isOpen: boolean) => {
+    if (isOpen) {
+      // iOS Safari fix: blur active element and scroll to top before opening drawer
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      window.scrollTo(0, 0);
+    }
+    setOpen(isOpen);
+  };
+
   return <>
-      <Drawer open={open} onOpenChange={setOpen}>
+      <Drawer open={open} onOpenChange={handleDrawerOpen}>
         <DrawerTrigger asChild>
           {trigger}
         </DrawerTrigger>
-        <DrawerContent className="h-[90vh] bg-background border-t border-wallet/30 rounded-t-3xl scrollbar-wallet">
+        <DrawerContent className="h-[90vh] bg-background border-t border-wallet/30 rounded-t-3xl scrollbar-wallet" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
           {/* Minimal Header */}
           <div className="flex items-center justify-between px-5 py-4">
             <button 
