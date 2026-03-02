@@ -1,271 +1,30 @@
-import { useState } from "react";
 import { BentoCard } from "./bento-grid";
-import { Clock, Moon, ChevronDown, ChevronUp, Plus, Check } from "lucide-react";
+import { Moon } from "lucide-react";
 import { usePrayerNotifications } from "@/contexts/PrayerContext";
-import { useSchedule, ScheduleItem } from "@/contexts/ScheduleContext";
-import { Button } from "@/components/ui/button";
-import { AddActivityDialog } from "@/components/schedule/add-activity-dialog";
-import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useNavigate } from "react-router-dom";
 
 export function TodayAgendaCard() {
+  const navigate = useNavigate();
   const { getNextPrayerTime } = usePrayerNotifications();
-  const { getTodaySchedule, toggleActivityCompletion } = useSchedule();
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [showAddActivity, setShowAddActivity] = useState(false);
-  
   const nextPrayer = getNextPrayerTime();
-  const todaySchedule = getTodaySchedule();
-  
-  // Get current time
-  const now = new Date();
-  const currentTime = now.toTimeString().slice(0, 5);
-  
-  // Get upcoming items (not completed and time > now)
-  const upcomingItems = todaySchedule
-    .filter(item => !item.isCompleted && item.startTime && item.startTime > currentTime)
-    .slice(0, isExpanded ? 10 : 1);
-  
-  // All items for expanded view
-  const allItems = todaySchedule;
-
-  // Calculate time until next event
-  const getTimeUntil = (time: string) => {
-    const [hours, minutes] = time.split(':').map(Number);
-    const eventTime = new Date();
-    eventTime.setHours(hours, minutes, 0, 0);
-    const diff = eventTime.getTime() - now.getTime();
-    if (diff < 0) return null;
-    const diffMinutes = Math.floor(diff / 60000);
-    if (diffMinutes < 60) return `in ${diffMinutes}m`;
-    const diffHours = Math.floor(diffMinutes / 60);
-    return `in ${diffHours}h ${diffMinutes % 60}m`;
-  };
-
-  const getItemColor = (type: string, activityType?: string) => {
-    if (type === 'prayer') return 'bg-accent/20 text-accent';
-    if (type === 'meal') return 'bg-warning/20 text-warning';
-    if (activityType === 'exercise') return 'bg-gym/20 text-gym';
-    return 'bg-agenda/20 text-agenda';
-  };
-
-  const handleToggleComplete = async (item: ScheduleItem) => {
-    if (item.type === 'activity') {
-      const dateStr = new Date().toISOString().split('T')[0];
-      await toggleActivityCompletion(item.id, dateStr, !item.isCompleted);
-    }
-  };
-
-  const handleAddClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowAddActivity(true);
-  };
-
-  // Get the next upcoming item for minimized view
-  const nextUpcomingItem = upcomingItems[0];
 
   return (
-    <>
-      <BentoCard className="lg:col-span-2 group">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-agenda/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Clock className="h-5 w-5 text-agenda" />
-            </div>
-            <h3 className="font-semibold text-foreground">Today's Agenda</h3>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8 hover:text-agenda hover:bg-agenda/10"
-              onClick={handleAddClick}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              {isExpanded ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
+    <BentoCard onClick={() => navigate('/islamic')} className="group">
+      <div className="flex items-center gap-3">
+        <div className="p-2.5 rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-600 shadow-lg shadow-amber-500/25 group-hover:scale-110 transition-transform">
+          <Moon className="h-5 w-5 text-white" />
         </div>
-
-        {!isExpanded ? (
-          // Minimized view - show next prayer and next task separately
-          <div className="space-y-2">
-            {/* Next Prayer */}
-            {nextPrayer && (
-              <div className="flex items-center justify-between p-3 rounded-xl bg-accent/10 border border-accent/20 transition-all hover:border-accent/40">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-accent/20 flex items-center justify-center">
-                    <Moon className="h-4 w-4 text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Next Prayer: {nextPrayer.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      at {nextPrayer.time}
-                    </p>
-                  </div>
-                </div>
-                {nextPrayer.time && (
-                  <span className="text-xs text-accent font-medium">
-                    {getTimeUntil(nextPrayer.time)}
-                  </span>
-                )}
-              </div>
-            )}
-
-            {/* Next Activity */}
-            {nextUpcomingItem && (
-              <div className="flex items-center justify-between p-3 rounded-xl bg-agenda/10 border border-agenda/20 transition-all hover:border-agenda/40">
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "w-9 h-9 rounded-lg flex items-center justify-center",
-                    getItemColor(nextUpcomingItem.type, nextUpcomingItem.activityType)
-                  )}>
-                    {nextUpcomingItem.emoji || <Clock className="h-4 w-4" />}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{nextUpcomingItem.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {nextUpcomingItem.startTime}{nextUpcomingItem.endTime && ` - ${nextUpcomingItem.endTime}`}
-                    </p>
-                  </div>
-                </div>
-                {nextUpcomingItem.startTime && (
-                  <span className="text-xs text-agenda font-medium">
-                    {getTimeUntil(nextUpcomingItem.startTime)}
-                  </span>
-                )}
-              </div>
-            )}
-
-            {!nextUpcomingItem && !nextPrayer && (
-              <div className="text-center py-4 text-muted-foreground">
-                <p className="text-sm">No upcoming events</p>
-              </div>
-            )}
-
-            {/* Show count of remaining items */}
-            {allItems.length > 1 && (
-              <button 
-                onClick={() => setIsExpanded(true)}
-                className="w-full text-center text-xs text-muted-foreground hover:text-agenda transition-colors py-2"
-              >
-                +{allItems.length - 1} more items today
-              </button>
-            )}
-          </div>
-        ) : (
-          // Expanded view - show all items
-          <ScrollArea className="h-[300px] pr-2">
-            <div className="space-y-2">
-              {/* Next Prayer at top */}
-              {nextPrayer && (
-                <div className="flex items-center justify-between p-3 rounded-xl bg-accent/10 border border-accent/20 animate-fade-in">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-accent/20 flex items-center justify-center">
-                      <Moon className="h-4 w-4 text-accent" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">Next Prayer: {nextPrayer.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        at {nextPrayer.time}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* All schedule items */}
-              {allItems.map((item, index) => (
-                <div 
-                  key={item.id}
-                  className={cn(
-                    "flex items-center justify-between p-3 rounded-xl border transition-all",
-                    item.isCompleted 
-                      ? "bg-secondary/20 border-border/20" 
-                      : "bg-secondary/30 border-border/30 hover:border-agenda/30"
-                  )}
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className={cn(
-                      "w-9 h-9 rounded-lg flex items-center justify-center transition-transform",
-                      getItemColor(item.type, item.activityType),
-                      !item.isCompleted && "hover:scale-110"
-                    )}>
-                      {item.emoji || <Clock className="h-4 w-4" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={cn(
-                        "text-sm font-medium transition-all",
-                        item.isCompleted ? "line-through text-muted-foreground" : "text-foreground"
-                      )}>
-                        {item.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.startTime}{item.endTime && ` - ${item.endTime}`}
-                      </p>
-                    </div>
-                  </div>
-
-                  {item.type === 'activity' && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0"
-                      onClick={() => handleToggleComplete(item)}
-                    >
-                      <div className={cn(
-                        "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
-                        item.isCompleted 
-                          ? "bg-success border-success scale-110" 
-                          : "border-muted-foreground hover:border-agenda"
-                      )}>
-                        {item.isCompleted && (
-                          <Check className="h-3 w-3 text-success-foreground" />
-                        )}
-                      </div>
-                    </Button>
-                  )}
-                </div>
-              ))}
-
-              {allItems.length === 0 && !nextPrayer && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Clock className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No events scheduled</p>
-                  <Button 
-                    variant="link" 
-                    size="sm"
-                    onClick={handleAddClick}
-                    className="text-agenda"
-                  >
-                    Add an event
-                  </Button>
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-        )}
-      </BentoCard>
-
-      <AddActivityDialog
-        open={showAddActivity}
-        onOpenChange={setShowAddActivity}
-        onActivityAdded={() => {
-          setShowAddActivity(false);
-        }}
-      />
-    </>
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">Prayer</h3>
+          {nextPrayer ? (
+            <p className="text-xs text-muted-foreground">
+              {nextPrayer.name} at {nextPrayer.time}
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">All prayers done</p>
+          )}
+        </div>
+      </div>
+    </BentoCard>
   );
 }

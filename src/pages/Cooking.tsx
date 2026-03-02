@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, ChefHat, Plus, Search, UtensilsCrossed } from 'lucide-react';
+import { ArrowLeft, ChefHat, Plus, Search, UtensilsCrossed, Import } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSound } from '@/hooks/useSound';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import { RecipeList } from '@/components/cooking/recipe-list';
 import { MyIngredients } from '@/components/cooking/my-ingredients';
 import { AddRecipeDialog } from '@/components/cooking/add-recipe-dialog';
 import { CookingMode } from '@/components/cooking/cooking-mode';
+import { ImportRecipeDialog } from '@/components/cooking/import-recipe-dialog';
 
 export interface Recipe {
   id: string;
@@ -33,6 +34,7 @@ const Cooking = () => {
   const [userIngredients, setUserIngredients] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [cookingRecipe, setCookingRecipe] = useState<Recipe | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -87,9 +89,14 @@ const Cooking = () => {
               </div>
             </div>
           </div>
-          <Button size="sm" onClick={() => setIsAddOpen(true)} className="rounded-xl">
-            <Plus className="h-4 w-4 mr-1" /> Add
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => setIsImportOpen(true)} className="rounded-xl">
+              <Import className="h-4 w-4 mr-1" /> Import
+            </Button>
+            <Button size="sm" onClick={() => setIsAddOpen(true)} className="rounded-xl">
+              <Plus className="h-4 w-4 mr-1" /> Add
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -129,6 +136,7 @@ const Cooking = () => {
       </main>
 
       <AddRecipeDialog open={isAddOpen} onOpenChange={setIsAddOpen} onAdded={loadData} />
+      <ImportRecipeDialog open={isImportOpen} onOpenChange={setIsImportOpen} onImported={loadData} />
     </div>
   );
 };

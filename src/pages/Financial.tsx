@@ -7,7 +7,8 @@ import { AccountsOverview } from '@/components/financial/accounts-overview';
 import { StatsOverview } from '@/components/financial/stats-overview';
 import { TransactionCalendar } from '@/components/financial/transaction-calendar';
 import { BudgetCategories } from '@/components/financial/budget-categories';
-import { ArrowLeft, CreditCard, PieChart, Calendar, TrendingUp, Wallet } from "lucide-react";
+import { TransactionBrowser } from '@/components/financial/transaction-browser';
+import { ArrowLeft, CreditCard, PieChart, Calendar, TrendingUp, Wallet, Search } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CurrencyRatesDialog } from '@/components/financial/currency-rates-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,6 +18,7 @@ import { useEffect } from 'react';
 const financialItems = [
   { title: "Accounts", value: "accounts", icon: CreditCard },
   { title: "Transactions", value: "transactions", icon: Calendar },
+  { title: "Browse", value: "browse", icon: Search },
   { title: "Stats", value: "stats", icon: TrendingUp }
 ];
 
@@ -52,7 +54,6 @@ const Financial = () => {
                 <div className="p-2.5 rounded-2xl bg-gradient-to-br from-wallet via-emerald-600 to-teal-600 shadow-lg shadow-wallet/30 transition-transform duration-300 group-hover:scale-105">
                   <Wallet className="h-5 w-5 text-white" />
                 </div>
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-wallet to-teal-500 opacity-50 blur-xl -z-10 group-hover:opacity-70 transition-opacity" />
               </div>
               <div>
                 <h1 className="text-lg font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">Wallet</h1>
@@ -78,6 +79,7 @@ const Financial = () => {
           {activeTab === 'accounts' && <AccountsOverview />}
           {activeTab === 'budget' && <BudgetCategories />}
           {activeTab === 'transactions' && <TransactionCalendar />}
+          {activeTab === 'browse' && <TransactionBrowser />}
           {activeTab === 'stats' && <StatsOverview />}
         </div>
       </main>
@@ -86,7 +88,7 @@ const Financial = () => {
         <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
         <div className="bg-background/80 backdrop-blur-2xl border-t border-border/20 shadow-2xl shadow-black/10">
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-wallet/30 to-transparent" />
-          <div className="grid grid-cols-3 h-16 px-2">
+          <div className="grid grid-cols-4 h-16 px-2">
             {financialItems.map((item) => (
               <button key={item.value} onClick={() => handleTabChange(item.value)}
                 className={`relative flex flex-col items-center justify-center gap-0.5 transition-all duration-300 rounded-2xl mx-1 ${

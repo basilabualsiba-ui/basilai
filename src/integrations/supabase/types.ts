@@ -915,6 +915,30 @@ export type Database = {
         }
         Relationships: []
       }
+      net_worth_snapshots: {
+        Row: {
+          created_at: string | null
+          id: string
+          month: number
+          total_amount: number
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          month: number
+          total_amount?: number
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          month?: number
+          total_amount?: number
+          year?: number
+        }
+        Relationships: []
+      }
       plan_workouts: {
         Row: {
           created_at: string

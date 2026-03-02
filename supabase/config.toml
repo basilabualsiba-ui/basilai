@@ -43,3 +43,6 @@ verify_jwt = false
 
 [functions.suggest-query]
 verify_jwt = false
+
+[functions.fetch-recipe-url]
+verify_jwt = false
