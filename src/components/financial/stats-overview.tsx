@@ -60,7 +60,6 @@ export const StatsOverview = () => {
         .from('net_worth_snapshots')
         .upsert({ month: currentMonth, year: currentYear, total_amount: Math.round(totalNetWorth) }, { onConflict: 'month,year' })
         .then(() => {
-          // Refresh snapshots
           supabase
             .from('net_worth_snapshots')
             .select('month, year, total_amount')
@@ -134,6 +133,52 @@ export const StatsOverview = () => {
   const netBalance = totalIncome - totalExpenses;
   const savingsRate = totalIncome > 0 ? Math.round((netBalance / totalIncome) * 100) : 0;
 
+  // Build monthly savings map for all months
+  const monthlySavingsMap = useMemo(() => {
+    const map = new Map<string, { income: number; expense: number; year: number; month: number }>();
+    transactions.forEach(t => {
+      const d = new Date(t.date);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      if (!map.has(key)) map.set(key, { income: 0, expense: 0, year: d.getFullYear(), month: d.getMonth() });
+      const entry = map.get(key)!;
+      if (t.type === 'income') entry.income += t.amount;
+      else if (t.type === 'expense') entry.expense += t.amount;
+    });
+    return map;
+  }, [transactions]);
+
+  // Cumulative total savings up to selected month (excluding Aug 2025)
+  const cumulativeSavingsForSelected = useMemo(() => {
+    let total = 0;
+    monthlySavingsMap.forEach((val, key) => {
+      if (key === '2025-7') return; // Exclude Aug 2025
+      const entryDate = new Date(val.year, val.month);
+      const selectedDate = new Date(selectedYear, selectedMonth);
+      if (entryDate <= selectedDate) {
+        total += val.income - val.expense;
+      }
+    });
+    return total;
+  }, [monthlySavingsMap, selectedMonth, selectedYear]);
+
+  // Net worth for selected month
+  const netWorthForSelected = useMemo(() => {
+    const now = new Date();
+    const isCurrentMonth = selectedMonth === now.getMonth() && selectedYear === now.getFullYear();
+    
+    if (isCurrentMonth) {
+      // Live calculation
+      return accounts.reduce((sum, acc) => {
+        const rate = getRate(acc.currency, 'ILS');
+        return sum + (acc.amount * rate);
+      }, 0);
+    }
+    
+    // Use snapshot for past months
+    const snapshot = netWorthSnapshots.find(s => s.month === selectedMonth + 1 && s.year === selectedYear);
+    return snapshot ? Number(snapshot.total_amount) : 0;
+  }, [selectedMonth, selectedYear, accounts, getRate, netWorthSnapshots]);
+
   // Monthly trend data (last 6 months)
   const monthlyData = useMemo(() => {
     const data = [];
@@ -141,54 +186,33 @@ export const StatsOverview = () => {
       const date = new Date();
       date.setMonth(date.getMonth() - i);
       const mName = date.toLocaleDateString('en-US', { month: 'short' });
-      const monthExpenses = transactions.filter(t => {
-        const d = new Date(t.date);
-        return d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear() && t.type === 'expense';
-      }).reduce((sum, t) => sum + t.amount, 0);
-      const monthIncome = transactions.filter(t => {
-        const d = new Date(t.date);
-        return d.getMonth() === date.getMonth() && d.getFullYear() === date.getFullYear() && t.type === 'income';
-      }).reduce((sum, t) => sum + t.amount, 0);
-      data.push({ month: mName, expenses: monthExpenses, income: monthIncome, savings: monthIncome - monthExpenses });
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      const entry = monthlySavingsMap.get(key);
+      const monthIncome = entry?.income || 0;
+      const monthExpenses = entry?.expense || 0;
+      
+      // Cumulative savings up to this month
+      let cumSavings = 0;
+      monthlySavingsMap.forEach((val, k) => {
+        if (k === '2025-7') return;
+        const entryDate = new Date(val.year, val.month);
+        if (entryDate <= date) {
+          cumSavings += val.income - val.expense;
+        }
+      });
+      
+      data.push({ month: mName, expenses: monthExpenses, income: monthIncome, savings: cumSavings });
     }
     return data;
-  }, [transactions]);
+  }, [monthlySavingsMap]);
 
-  // Net worth chart data
+  // Net worth chart data from snapshots
   const netWorthChartData = useMemo(() => {
     return netWorthSnapshots.map(s => ({
       month: new Date(s.year, s.month - 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
       amount: Number(s.total_amount),
     }));
   }, [netWorthSnapshots]);
-
-  // Total savings (exclude Aug 2025)
-  const totalSavings = useMemo(() => {
-    const monthlyMap = new Map<string, { income: number; expense: number }>();
-    transactions.forEach(t => {
-      const d = new Date(t.date);
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
-      if (!monthlyMap.has(key)) monthlyMap.set(key, { income: 0, expense: 0 });
-      const entry = monthlyMap.get(key)!;
-      if (t.type === 'income') entry.income += t.amount;
-      else if (t.type === 'expense') entry.expense += t.amount;
-    });
-    let total = 0;
-    monthlyMap.forEach((val, key) => {
-      // Exclude Aug 2025 (month index 7)
-      if (key === '2025-7') return;
-      total += val.income - val.expense;
-    });
-    return total;
-  }, [transactions]);
-
-  // Current net worth
-  const currentNetWorth = useMemo(() => {
-    return accounts.reduce((sum, acc) => {
-      const rate = getRate(acc.currency, 'ILS');
-      return sum + (acc.amount * rate);
-    }, 0);
-  }, [accounts, getRate]);
 
   return (
     <div className="space-y-4 pb-6">
@@ -257,9 +281,10 @@ export const StatsOverview = () => {
               <div className="p-2 rounded-xl bg-wallet/20"><PiggyBank className="h-4 w-4 text-wallet" /></div>
             </div>
             <p className="text-xs text-muted-foreground font-medium mb-1">Total Savings</p>
-            <p className={`text-lg font-bold ${totalSavings >= 0 ? 'text-wallet' : 'text-destructive'}`}>
-              ₪{Math.round(totalSavings).toLocaleString()}
+            <p className={`text-lg font-bold ${cumulativeSavingsForSelected >= 0 ? 'text-wallet' : 'text-destructive'}`}>
+              ₪{Math.round(cumulativeSavingsForSelected).toLocaleString()}
             </p>
+            <p className="text-[10px] text-muted-foreground mt-1">Through {monthName}</p>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-border/30 overflow-hidden">
@@ -268,7 +293,10 @@ export const StatsOverview = () => {
               <div className="p-2 rounded-xl bg-primary/20"><Wallet className="h-4 w-4 text-primary" /></div>
             </div>
             <p className="text-xs text-muted-foreground font-medium mb-1">Net Worth</p>
-            <p className="text-lg font-bold text-foreground">₪{Math.round(currentNetWorth).toLocaleString()}</p>
+            <p className="text-lg font-bold text-foreground">₪{Math.round(netWorthForSelected).toLocaleString()}</p>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              {selectedMonth === new Date().getMonth() && selectedYear === new Date().getFullYear() ? 'Live' : `End of ${new Date(selectedYear, selectedMonth).toLocaleDateString('en-US', { month: 'short' })}`}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -380,13 +408,13 @@ export const StatsOverview = () => {
                   <Area type="monotone" dataKey="expenses" stroke="hsl(var(--destructive))" strokeWidth={2} fill="url(#expenseGradient)" name="Expenses" />
                 </AreaChart>
               ) : chartView === 'savings' ? (
-                <BarChart data={monthlyData} barGap={4}>
+                <LineChart data={monthlyData}>
                   <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} tickFormatter={(v) => `₪${(v / 1000).toFixed(0)}k`} />
                   <Tooltip formatter={(value: number) => `₪${value.toLocaleString()}`}
                     contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '12px' }} />
-                  <Bar dataKey="savings" fill="hsl(var(--wallet))" radius={[6, 6, 0, 0]} name="Monthly Savings" />
-                </BarChart>
+                  <Line type="monotone" dataKey="savings" stroke="hsl(var(--wallet))" strokeWidth={2} dot={{ r: 4, fill: 'hsl(var(--wallet))' }} name="Cumulative Savings" />
+                </LineChart>
               ) : (
                 <LineChart data={netWorthChartData}>
                   <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />

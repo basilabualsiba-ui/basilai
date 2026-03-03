@@ -233,45 +233,6 @@ export type Database = {
         }
         Relationships: []
       }
-      clothing_items: {
-        Row: {
-          color: string | null
-          created_at: string | null
-          id: string
-          image: string | null
-          last_worn: string | null
-          name: string | null
-          pattern: string | null
-          status: string | null
-          type: string
-          updated_at: string | null
-        }
-        Insert: {
-          color?: string | null
-          created_at?: string | null
-          id?: string
-          image?: string | null
-          last_worn?: string | null
-          name?: string | null
-          pattern?: string | null
-          status?: string | null
-          type: string
-          updated_at?: string | null
-        }
-        Update: {
-          color?: string | null
-          created_at?: string | null
-          id?: string
-          image?: string | null
-          last_worn?: string | null
-          name?: string | null
-          pattern?: string | null
-          status?: string | null
-          type?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       currency_ratios: {
         Row: {
           created_at: string
@@ -488,6 +449,44 @@ export type Database = {
           why_important?: string | null
         }
         Relationships: []
+      }
+      episodes: {
+        Row: {
+          created_at: string | null
+          episode_number: number
+          id: string
+          season_number: number
+          series_id: string
+          title: string | null
+          watched: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          episode_number: number
+          id?: string
+          season_number: number
+          series_id: string
+          title?: string | null
+          watched?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          episode_number?: number
+          id?: string
+          season_number?: number
+          series_id?: string
+          title?: string | null
+          watched?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "episodes_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "media"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       exercise_alternatives: {
         Row: {
@@ -888,6 +887,51 @@ export type Database = {
         }
         Relationships: []
       }
+      media: {
+        Row: {
+          created_at: string | null
+          genres: string[] | null
+          id: string
+          poster_url: string | null
+          rating: number | null
+          runtime: number | null
+          status: string | null
+          title: string
+          tmdb_id: number
+          total_seasons: number | null
+          trailer_url: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          genres?: string[] | null
+          id?: string
+          poster_url?: string | null
+          rating?: number | null
+          runtime?: number | null
+          status?: string | null
+          title: string
+          tmdb_id: number
+          total_seasons?: number | null
+          trailer_url?: string | null
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          genres?: string[] | null
+          id?: string
+          poster_url?: string | null
+          rating?: number | null
+          runtime?: number | null
+          status?: string | null
+          title?: string
+          tmdb_id?: number
+          total_seasons?: number | null
+          trailer_url?: string | null
+          type?: string
+        }
+        Relationships: []
+      }
       muscle_groups: {
         Row: {
           color: string
@@ -1050,160 +1094,6 @@ export type Database = {
           sunrise?: string | null
           sunset?: string | null
           updated_at?: string
-        }
-        Relationships: []
-      }
-      recipe_ingredients: {
-        Row: {
-          created_at: string | null
-          id: string
-          name: string
-          quantity: string
-          recipe_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          name: string
-          quantity: string
-          recipe_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          name?: string
-          quantity?: string
-          recipe_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "recipe_ingredients_recipe_id_fkey"
-            columns: ["recipe_id"]
-            isOneToOne: false
-            referencedRelation: "recipes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      recipe_steps: {
-        Row: {
-          created_at: string | null
-          id: string
-          instruction: string
-          recipe_id: string | null
-          step_number: number
-          timer_minutes: number | null
-          tool: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          instruction: string
-          recipe_id?: string | null
-          step_number: number
-          timer_minutes?: number | null
-          tool?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          instruction?: string
-          recipe_id?: string | null
-          step_number?: number
-          timer_minutes?: number | null
-          tool?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "recipe_steps_recipe_id_fkey"
-            columns: ["recipe_id"]
-            isOneToOne: false
-            referencedRelation: "recipes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      recipes: {
-        Row: {
-          category: string
-          created_at: string | null
-          id: string
-          image: string | null
-          name: string
-          tools: string[] | null
-          total_time: number | null
-          updated_at: string | null
-          video_url: string | null
-        }
-        Insert: {
-          category?: string
-          created_at?: string | null
-          id?: string
-          image?: string | null
-          name: string
-          tools?: string[] | null
-          total_time?: number | null
-          updated_at?: string | null
-          video_url?: string | null
-        }
-        Update: {
-          category?: string
-          created_at?: string | null
-          id?: string
-          image?: string | null
-          name?: string
-          tools?: string[] | null
-          total_time?: number | null
-          updated_at?: string | null
-          video_url?: string | null
-        }
-        Relationships: []
-      }
-      saved_outfits: {
-        Row: {
-          created_at: string | null
-          id: string
-          item_ids: string[]
-          name: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          item_ids: string[]
-          name?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          item_ids?: string[]
-          name?: string | null
-        }
-        Relationships: []
-      }
-      shopping_list: {
-        Row: {
-          category: string | null
-          created_at: string | null
-          id: string
-          is_purchased: boolean | null
-          name: string
-          price: number | null
-        }
-        Insert: {
-          category?: string | null
-          created_at?: string | null
-          id?: string
-          is_purchased?: boolean | null
-          name: string
-          price?: number | null
-        }
-        Update: {
-          category?: string | null
-          created_at?: string | null
-          id?: string
-          is_purchased?: boolean | null
-          name?: string
-          price?: number | null
         }
         Relationships: []
       }
@@ -1413,24 +1303,6 @@ export type Database = {
           recorded_at?: string
           updated_at?: string
           weight?: number
-        }
-        Relationships: []
-      }
-      user_ingredients: {
-        Row: {
-          created_at: string | null
-          id: string
-          name: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          name: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          name?: string
         }
         Relationships: []
       }
