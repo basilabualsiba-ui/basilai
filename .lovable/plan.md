@@ -1,193 +1,151 @@
 
 
-# Comprehensive App Update Plan
+# Plan: Delete Closet/Cooking, Fix Stats, UI Polish, Add TV Tracker
 
-This plan covers UI redesign, bug fixes, financial features, and recipe import -- prioritized as requested.
+## 1. Delete Smart Closet & Smart Cooking (completely)
 
----
+**Delete files:**
+- `src/components/closet/` (5 files)
+- `src/components/cooking/` (5 files)
+- `src/pages/Closet.tsx`
+- `src/pages/Cooking.tsx`
+- `src/components/dashboard/closet-card.tsx`
+- `src/components/dashboard/cooking-card.tsx`
+- `supabase/functions/fetch-recipe-url/`
 
-## Priority 1: Dashboard UI Redesign
+**Clean references:**
+- `src/App.tsx`: Remove Closet/Cooking imports and routes
+- `src/pages/Index.tsx`: Remove ClosetCard/CookingCard from BentoGrid
 
-### 1A. Simplify cards to match Cooking/Closet minimal style
-
-**Gym, Supplements, Dreams cards** will be redesigned to match the compact `CookingCard`/`ClosetCard` pattern: icon + name + description only. Remove all data (progress rings, streak badges, sparklines, etc.) and quick action buttons.
-
-**Files:** `gym-card.tsx`, `supplements-card.tsx`, `dreams-card-new.tsx`
-
-Each becomes ~20 lines: a BentoCard with a gradient icon, title, and subtitle.
-
-### 1B. Simplify Wallet card
-
-Remove the income/expense section at the bottom. Keep: icon, "Total Balance", sparkline. Remove the `+` button.
-
-**File:** `finance-card.tsx` -- delete lines 102-133 (the grid with income/expenses) and the Plus button.
-
-### 1C. Simplify Weight card
-
-Remove "Last Change" and "Weekly" stats grid. Keep: icon, weight value, sparkline. Remove `+` button. Rename "Current Weight" → "Weight". Change icon from `Scale` to `PersonStanding` or `Activity` (human weight related).
-
-**File:** `weight-stats-card.tsx`
-
-### 1D. Replace Today's Agenda → Prayer card
-
-- Rename to "Prayer", change icon to `Moon` (Islamic)
-- Show only next prayer name + time (single line)
-- Remove expand/collapse, remove `+` button, remove all schedule items
-- On click → navigate to `/islamic` instead of expanding
-- Remove `AddActivityDialog` import
-
-**File:** `today-agenda-card.tsx` -- complete rewrite to ~30 lines
-
-### 1E. Card order in BentoGrid
-
-Reorder in `Index.tsx`:
-1. Prayer (was TodayAgenda)
-2. Weight
-3. Wallet (2-col span)
-4. Gym
-5. Smart Closet
-6. Smart Cooking
-7. Supplements
-8. Dreams
-
-### 1F. Weather → Header (replace profile icon)
-
-Remove the `WeatherCard` from the BentoGrid. Replace the profile icon/name ("Basil" + avatar) in the header with a compact weather display: temperature + icon. On click, show a popover with full weather details (high/low, condition).
-
-**File:** `Index.tsx` -- remove profile section, add weather inline in header
-
-### 1G. Fix loading states for Cooking, Closet, Islamic cards
-
-Currently these cards don't use the `loading` prop on BentoCard. They render immediately (no async data). The issue is they may not have the module-specific glow color. Ensure consistent card styling with appropriate theme colors:
-- Cooking: orange
-- Closet: violet/purple
-- Islamic/Prayer: use `accent` color (golden)
-
-### 1H. Remove quick action buttons from ALL cards
-
-Delete the `+`, `Play`, etc. buttons from: Gym, Supplements, Dreams, Wallet, Weight cards. Users navigate by clicking the card itself.
-
----
-
-## Priority 2: iOS Scrolling Input Bug
-
-The video shows that when scrolling down on the financial page and tapping a category/subcategory button, the input doesn't focus properly on iOS Safari.
-
-**Root cause:** iOS Safari has a known issue where `position: fixed` elements (like the Drawer) combined with scroll position cause focus issues. The number pad in `AddTransactionDialog` uses a Drawer.
-
-**Fix in `add-transaction-dialog.tsx`:**
-- Add `onOpenChange` handler that scrolls to top before opening
-- Or add `document.activeElement?.blur()` before opening
-- Add `-webkit-overflow-scrolling: touch` CSS fix
-- Ensure the Drawer's content has `touch-action: manipulation` to prevent iOS zoom/focus issues
-- Add `inputMode="none"` to the amount display to prevent iOS keyboard from competing with custom number pad
-
----
-
-## Priority 3: Financial Features
-
-### 3A. New "Browse" tab for category/subcategory transaction filtering
-
-Add a 4th tab to Financial bottom nav: "Browse" (icon: `Search` or `Filter`).
-
-**New file:** `src/components/financial/transaction-browser.tsx`
-
-Features:
-- Category dropdown filter
-- Subcategory dropdown filter (populated based on selected category)
-- Date from / Date to pickers
-- Shows filtered transactions list
-- Shows total amount at top
-
-**File:** `Financial.tsx` -- add `Browse` to `financialItems`, add tab content
-
-### 3B. Monthly Net Worth Snapshots
-
-Create a new table `net_worth_snapshots` with columns: `id`, `month`, `year`, `total_amount`, `currency`, `created_at`.
-
-Add a mechanism to record snapshots (button in stats or automatic on first visit of new month).
-
-**File:** `stats-overview.tsx` -- add net worth chart section
-
-### 3C. Savings Total (exclude Aug 2025)
-
-Add a "Total Savings" card in stats that sums monthly savings (income - expenses) across all months, excluding August 2025 as baseline.
-
-**File:** `stats-overview.tsx`
-
-### 3D. Replace 6-month chart with switchable chart
-
-Replace the current 6-month AreaChart and bar chart with a single chart section that has toggle buttons:
-- "Income vs Expenses" (current area chart)
-- "Savings" (bar chart of monthly savings)
-- "Net Worth" (line chart of net worth over time)
-
-Remove the separate bar chart section.
-
-**File:** `stats-overview.tsx`
-
----
-
-## Priority 4: Recipe Import Feature
-
-**Add import tab/button** in `AddRecipeDialog` or as separate dialog.
-
-**New file:** `src/components/cooking/import-recipe-dialog.tsx`
-
-Features:
-- Two modes: "Paste URL" and "Paste Text"
-- **URL mode:** Fetch page via a CORS proxy or edge function, extract JSON-LD `Recipe` schema, or parse DOM for ingredients/steps
-- **Text mode:** Regex-based parsing:
-  - Detect ingredient lines (lines with quantities/units)
-  - Detect step lines (numbered lines or "Step X" patterns)
-  - Detect tool keywords (oven, airfryer, stove, etc.)
-- Pre-fill the add recipe form with parsed data
-- User reviews and edits before saving
-- Show warnings for missing fields
-
-**Edge function** `supabase/functions/fetch-recipe-url/index.ts`: Simple fetch proxy to bypass CORS when importing from URL.
-
----
-
-## Priority 5: Database Migration
-
-New migration for `net_worth_snapshots` table:
-
+**Drop Supabase tables** via migration:
 ```sql
-CREATE TABLE net_worth_snapshots (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  month integer NOT NULL,
-  year integer NOT NULL,
-  total_amount numeric NOT NULL DEFAULT 0,
-  created_at timestamptz DEFAULT now(),
-  UNIQUE(month, year)
-);
-
-ALTER TABLE net_worth_snapshots ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all on net_worth_snapshots" ON net_worth_snapshots FOR ALL USING (true) WITH CHECK (true);
+DROP TABLE IF EXISTS recipe_ingredients;
+DROP TABLE IF EXISTS recipe_steps;
+DROP TABLE IF EXISTS recipes;
+DROP TABLE IF EXISTS user_ingredients;
+DROP TABLE IF EXISTS clothing_items;
+DROP TABLE IF EXISTS saved_outfits;
+DROP TABLE IF EXISTS shopping_list;
 ```
 
 ---
 
-## Files Summary
+## 2. Fix Wallet Stats (Total Savings & Net Worth)
 
-| Action | File |
-|--------|------|
-| Rewrite | `src/components/dashboard/today-agenda-card.tsx` → Prayer card |
-| Simplify | `src/components/dashboard/gym-card.tsx` |
-| Simplify | `src/components/dashboard/supplements-card.tsx` |
-| Simplify | `src/components/dashboard/dreams-card-new.tsx` |
-| Simplify | `src/components/dashboard/finance-card.tsx` |
-| Simplify | `src/components/dashboard/weight-stats-card.tsx` |
-| Modify | `src/pages/Index.tsx` (reorder, weather in header) |
-| Delete | `src/components/dashboard/weather-card.tsx` (moved to header) |
-| Modify | `src/components/financial/stats-overview.tsx` (savings, net worth, chart switcher) |
-| Modify | `src/pages/Financial.tsx` (add Browse tab) |
-| Create | `src/components/financial/transaction-browser.tsx` |
-| Fix | `src/components/financial/add-transaction-dialog.tsx` (iOS bug) |
-| Create | `src/components/cooking/import-recipe-dialog.tsx` |
-| Modify | `src/pages/Cooking.tsx` (add import button) |
-| Create | `supabase/functions/fetch-recipe-url/index.ts` |
-| Migration | `net_worth_snapshots` table |
-| Modify | `src/integrations/supabase/types.ts` |
+**Current bug:** "Total Savings" sums each month independently. User wants cumulative total savings (running sum).
+
+**Fix in `stats-overview.tsx`:**
+
+- **For completed months** (before current month): 
+  - Total Savings for month X = sum of (income - expenses) for all months from start through X, excluding Aug 2025
+  - Net Worth for month X = use `net_worth_snapshots` table value (recorded at end of month)
+  
+- **For current (incomplete) month** (e.g., March 2026):
+  - Total Savings = current live calculation (sum all months including current, exclude Aug 2025)  
+  - Net Worth = live sum of all account balances
+
+- Update the "Total Savings" and "Net Worth" cards to show the selected month's values (not always current)
+- Update the savings trend chart to show cumulative savings per month
+- Update net worth trend to show per-month snapshots
+
+---
+
+## 3. UI Fixes
+
+### 3A. Prayer card — match inner colors to card gradient
+The prayer card icon uses `from-amber-500 to-yellow-600`. The inner page (`Islamic.tsx`) header should use the same amber/yellow gradient colors for the icon and accents (currently uses generic styling).
+
+### 3B. Weight card & page — match colors
+- `WeightStatsCard`: currently uses `text-weight` and `bg-weight/20` — correct
+- `WeightStats.tsx` page: rename title from "Weight Stats" to "Weight", change icon from `Scale` to `PersonStanding` to match the card
+
+### 3C. All cards use loading skeleton
+Cards that don't fetch data (Prayer, Gym, Supplements, Dreams) should show a brief loading state matching the wallet card pattern. Add a small `useState` loading trick or `loading` prop to BentoCard for consistency.
+
+---
+
+## 4. TV & Series Tracker (TMDB)
+
+### 4A. Store TMDB API key
+The TMDB API key is a public/free key. Store it as a Supabase secret and use it in an edge function to avoid exposing it client-side. Or since TMDB keys are public-ish, store as `VITE_TMDB_API_KEY` in code.
+
+**Decision:** Use an edge function `tmdb-proxy` to keep the key server-side and avoid CORS issues.
+
+### 4B. New Supabase tables
+
+```sql
+CREATE TABLE media (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  tmdb_id integer NOT NULL,
+  type text NOT NULL, -- 'movie' or 'series'
+  title text NOT NULL,
+  poster_url text,
+  rating numeric,
+  runtime integer,
+  total_seasons integer,
+  genres text[] DEFAULT '{}',
+  trailer_url text,
+  status text DEFAULT 'want_to_watch', -- want_to_watch/watching/watched
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(tmdb_id, type)
+);
+
+CREATE TABLE episodes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  series_id uuid REFERENCES media(id) ON DELETE CASCADE,
+  season_number integer NOT NULL,
+  episode_number integer NOT NULL,
+  title text,
+  watched boolean DEFAULT false,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(series_id, season_number, episode_number)
+);
+```
+
+RLS: permissive for all operations (matching existing pattern).
+
+### 4C. Edge function: `tmdb-proxy`
+- Accepts `path` and `query` parameters
+- Forwards to TMDB API with the stored API key
+- Returns JSON response
+- Handles search, details, season, videos endpoints
+
+### 4D. New files
+
+| File | Purpose |
+|------|---------|
+| `src/pages/TVTracker.tsx` | Main page with tabs: All, Want to Watch, Watching, Watched, Recommendations |
+| `src/components/tv/search-media-dialog.tsx` | Search TMDB, show results, add to library |
+| `src/components/tv/media-card.tsx` | Poster card with title, rating, status badge |
+| `src/components/tv/media-detail-dialog.tsx` | Full details: poster, trailer, episodes, mark watched |
+| `src/components/tv/episode-list.tsx` | Season/episode checklist for series |
+| `src/components/tv/recommendations.tsx` | Genre-based recommendations from TMDB |
+| `src/components/dashboard/tv-card.tsx` | Dashboard card |
+| `supabase/functions/tmdb-proxy/index.ts` | TMDB API proxy |
+
+### 4E. Dashboard & routing
+- Add `TVTrackerCard` to BentoGrid in Index.tsx
+- Add `/tv-tracker` route in App.tsx
+- Card order: Prayer, Weight, Wallet, Gym, TV Tracker, Supplements, Dreams
+
+### 4F. Recommendation logic (no AI)
+- Query user's `media` table, extract most frequent genres
+- Call TMDB `/movie/{id}/recommendations` or `/tv/{id}/recommendations` for top-rated watched items
+- Filter out items already in user's database
+- Display in "Suggested Next Watch" section
+
+---
+
+## Implementation Order
+1. Delete closet & cooking (files + DB migration)
+2. Fix wallet stats (cumulative savings, month-specific net worth)
+3. UI fixes (prayer colors, weight naming, loading states)
+4. Create TV Tracker (DB tables, edge function, UI components, dashboard card)
+
+---
+
+## Technical Notes
+- TMDB API key will need to be added as a Supabase secret — will prompt user for it
+- ~10 files deleted, ~10 new files created, ~5 files modified
+- No AI used anywhere — TMDB API + rule-based recommendations only
 
