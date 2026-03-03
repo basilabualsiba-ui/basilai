@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Logo } from "@/components/ui/logo";
 import { SettingsDialog } from "@/components/ui/settings-dialog";
 import { Button } from "@/components/ui/button";
@@ -15,8 +14,7 @@ import { GymCard } from "@/components/dashboard/gym-card";
 import { SupplementsCard } from "@/components/dashboard/supplements-card";
 import { DreamsCardNew } from "@/components/dashboard/dreams-card-new";
 import { WeightStatsCard } from "@/components/dashboard/weight-stats-card";
-import { CookingCard } from "@/components/dashboard/cooking-card";
-import { ClosetCard } from "@/components/dashboard/closet-card";
+import { TVCard } from "@/components/dashboard/tv-card";
 
 const Index = () => {
   const { click } = useSound();
@@ -80,8 +78,7 @@ const Index = () => {
             <WeightStatsCard />
             <FinanceCard />
             <GymCard />
-            <ClosetCard />
-            <CookingCard />
+            <TVCard />
             <SupplementsCard />
             <DreamsCardNew />
           </BentoGrid>

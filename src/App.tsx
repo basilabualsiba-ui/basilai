@@ -24,8 +24,7 @@ import WorkoutDay from "./pages/WorkoutDay";
 import Schedule from "./pages/Schedule";
 import Islamic from "./pages/Islamic";
 import Dreams from "./pages/Dreams";
-import Cooking from "./pages/Cooking";
-import Closet from "./pages/Closet";
+import TVTracker from "./pages/TVTracker";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,8 +50,7 @@ function AppContent() {
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/islamic" element={<Islamic />} />
           <Route path="/dreams" element={<Dreams />} />
-          <Route path="/cooking" element={<Cooking />} />
-          <Route path="/closet" element={<Closet />} />
+          <Route path="/tv-tracker" element={<TVTracker />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

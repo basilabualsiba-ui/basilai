@@ -1,6 +1,6 @@
 import { GymStats } from "@/components/gym/gym-stats";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Scale } from "lucide-react";
+import { ArrowLeft, PersonStanding } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSound } from "@/hooks/useSound";
 
@@ -27,13 +27,13 @@ const WeightStats = () => {
             <div className="flex items-center gap-3">
               <div className="relative group">
                 <div className="p-2.5 rounded-2xl bg-gradient-to-br from-weight via-blue-600 to-indigo-600 shadow-lg shadow-weight/30 transition-transform duration-300 group-hover:scale-105">
-                  <Scale className="h-5 w-5 text-white" />
+                  <PersonStanding className="h-5 w-5 text-white" />
                 </div>
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-weight to-indigo-500 opacity-50 blur-xl -z-10 group-hover:opacity-70 transition-opacity" />
               </div>
               <div>
                 <h1 className="text-lg font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
-                  Weight Stats
+                  Weight
                 </h1>
                 <p className="text-[10px] text-muted-foreground font-medium tracking-wide uppercase">Track your progress</p>
               </div>
