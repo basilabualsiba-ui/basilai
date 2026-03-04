@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useFinancial } from '@/contexts/FinancialContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, Area, AreaChart, LineChart, Line } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, Area, AreaChart, LineChart, Line, ComposedChart } from 'recharts';
 import { 
   TrendingUp, 
   TrendingDown, 
