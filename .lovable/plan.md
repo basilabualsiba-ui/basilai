@@ -1,117 +1,151 @@
 
 
-# Plan: TV Tracker Overhaul, Wallet Stats Fix, Dreams Fix, UI Polish
+# Plan: Delete Closet/Cooking, Fix Stats, UI Polish, Add TV Tracker
 
-## 1. TV Tracker — Complete Rewrite (`TVTracker.tsx`)
+## 1. Delete Smart Closet & Smart Cooking (completely)
 
-### Top Toggle
-- Replace old tabs with a top toggle: `[ 🎬 Movies | 📺 Series ]`
-- Controls which content type is shown in the library
+**Delete files:**
+- `src/components/closet/` (5 files)
+- `src/components/cooking/` (5 files)
+- `src/pages/Closet.tsx`
+- `src/pages/Cooking.tsx`
+- `src/components/dashboard/closet-card.tsx`
+- `src/components/dashboard/cooking-card.tsx`
+- `supabase/functions/fetch-recipe-url/`
 
-### Bottom Navigation Bar (3 tabs)
-- **Library** — shows movies or series based on top toggle
-- **Recommendations** — series mode: "What to Watch Next" based on watching progress; movie mode: genre-based from local library
-- **Stats** — top genres, total watched, total time spent
+**Clean references:**
+- `src/App.tsx`: Remove Closet/Cooking imports and routes
+- `src/pages/Index.tsx`: Remove ClosetCard/CookingCard from BentoGrid
 
-### Library UI — Movies
-- Remove status buttons (Want to Watch, Watching, Watched)
-- Add 👁 Eye icon at far right of each movie title row: outline = not watched, filled = watched
-- When tapping Watch, prompt for user rating (1-5 stars)
-- Rating displayed in detail page
-
-### Library UI — Series
-- Remove all manual status buttons — status is automatic:
-  - 0 episodes watched → Want to Watch
-  - 1+ but not all → Watching
-  - All → Completed
-- Progress bar at bottom of poster card
-- Series detail: show episode release dates, 🟢 Upcoming badge for future episodes
-- When tapping Watch on episode, prompt for user rating
-
-### Episode Dates & Sync Fix
-- Add `air_date` column to `episodes` table (migration)
-- Add `user_rating` column to both `media` and `episodes` tables
-- When adding a series, store `air_date` from TMDb for each episode
-- On app start, for series in library: fetch latest season/episode data from TMDb, insert missing seasons/episodes
-
-### Search Bar
-- Below toggle: local search that filters library by title
-
-### Stats Page
-- Top genres watched (pie chart)
-- Total movies/series watched
-- Total time spent (sum of runtimes for movies, estimate for series)
-
-### Recommendation Logic (no AI)
-- For series in "watching" status: fetch TMDb recommendations for that series
-- For movies: use most-watched genres to fetch recommendations
-- Filter out items already in library
-
-## 2. DB Migration
-
+**Drop Supabase tables** via migration:
 ```sql
-ALTER TABLE episodes ADD COLUMN IF NOT EXISTS air_date date;
-ALTER TABLE episodes ADD COLUMN IF NOT EXISTS user_rating integer;
-ALTER TABLE media ADD COLUMN IF NOT EXISTS user_rating integer;
+DROP TABLE IF EXISTS recipe_ingredients;
+DROP TABLE IF EXISTS recipe_steps;
+DROP TABLE IF EXISTS recipes;
+DROP TABLE IF EXISTS user_ingredients;
+DROP TABLE IF EXISTS clothing_items;
+DROP TABLE IF EXISTS saved_outfits;
+DROP TABLE IF EXISTS shopping_list;
 ```
 
-## 3. Wallet Stats Fix — Net Worth Backfill
+---
 
-**Current issue:** Past months have no `net_worth_snapshots` entries, so they show ₪0.
+## 2. Fix Wallet Stats (Total Savings & Net Worth)
 
-**New calculation for past months (Aug 2025 through current-1):**
-- Net Worth of month X = Net Worth of current month (live) - cumulative savings from month X+1 through current month
-- Example: Feb 2026 net worth = March 2026 live net worth - March 2026 savings
-- This works backwards from the current live balance
+**Current bug:** "Total Savings" sums each month independently. User wants cumulative total savings (running sum).
 
-**In the I/E chart view:** Add the monthly savings amount (income - expenses) for the selected month as a visible data point.
+**Fix in `stats-overview.tsx`:**
 
-**Implementation:** Update `stats-overview.tsx` to compute historical net worth using the reverse-savings approach when no snapshot exists.
+- **For completed months** (before current month): 
+  - Total Savings for month X = sum of (income - expenses) for all months from start through X, excluding Aug 2025
+  - Net Worth for month X = use `net_worth_snapshots` table value (recorded at end of month)
+  
+- **For current (incomplete) month** (e.g., March 2026):
+  - Total Savings = current live calculation (sum all months including current, exclude Aug 2025)  
+  - Net Worth = live sum of all account balances
 
-## 4. Dreams Fixes
+- Update the "Total Savings" and "Net Worth" cards to show the selected month's values (not always current)
+- Update the savings trend chart to show cumulative savings per month
+- Update net worth trend to show per-month snapshots
 
-### Progress Bar
-- The `<Progress>` component in `dream-detail-dialog.tsx` doesn't use the dreams pink color — apply `className` with `[&>div]:bg-gradient-to-r [&>div]:from-pink-500 [&>div]:to-rose-500`
+---
 
-### Similar Dreams
-- Current logic matches by type OR priority — too broad. Fix to match by type only, and show the actual similar dream titles instead of just counts.
+## 3. UI Fixes
 
-## 5. Dashboard Card Loading States
+### 3A. Prayer card — match inner colors to card gradient
+The prayer card icon uses `from-amber-500 to-yellow-600`. The inner page (`Islamic.tsx`) header should use the same amber/yellow gradient colors for the icon and accents (currently uses generic styling).
 
-Currently `FinanceCard` and `WeightStatsCard` have real data loading (Supabase fetch), while other cards use a fake 400ms timeout. The user wants all cards to show a loading skeleton with the card's logo before content appears.
+### 3B. Weight card & page — match colors
+- `WeightStatsCard`: currently uses `text-weight` and `bg-weight/20` — correct
+- `WeightStats.tsx` page: rename title from "Weight Stats" to "Weight", change icon from `Scale` to `PersonStanding` to match the card
 
-**New approach for all cards:** Create a custom loading skeleton that shows the card's gradient icon (logo) with a pulsing animation + description text, instead of the generic `SkeletonCard`. Modify `BentoCard` to accept `loadingIcon`, `loadingColor`, and `loadingLabel` props for a branded loading state.
+### 3C. All cards use loading skeleton
+Cards that don't fetch data (Prayer, Gym, Supplements, Dreams) should show a brief loading state matching the wallet card pattern. Add a small `useState` loading trick or `loading` prop to BentoCard for consistency.
 
-Cards and their colors:
-- Prayer: amber (Moon icon)
-- Weight: weight/blue (PersonStanding)
-- Wallet: wallet/green (Wallet)
-- Gym: red (Dumbbell)
-- TV: cyan (Tv)
-- Supplements: purple (Pill)
-- Dreams: pink (Target)
+---
 
-## 6. Inner Page Color Consistency
+## 4. TV & Series Tracker (TMDB)
 
-Verify that all inner pages use their card's gradient colors for headers, icons, and accents. Most are already correct based on my review. No major changes needed.
+### 4A. Store TMDB API key
+The TMDB API key is a public/free key. Store it as a Supabase secret and use it in an edge function to avoid exposing it client-side. Or since TMDB keys are public-ish, store as `VITE_TMDB_API_KEY` in code.
 
-## 7. Files Summary
+**Decision:** Use an edge function `tmdb-proxy` to keep the key server-side and avoid CORS issues.
 
-| Action | File |
-|--------|------|
-| Rewrite | `src/pages/TVTracker.tsx` — top toggle, bottom nav, library/recommendations/stats |
-| Modify | `src/components/dashboard/bento-grid.tsx` — add branded loading skeleton props |
-| Modify | `src/components/dashboard/today-agenda-card.tsx` — use branded loading |
-| Modify | `src/components/dashboard/gym-card.tsx` — use branded loading |
-| Modify | `src/components/dashboard/supplements-card.tsx` — use branded loading |
-| Modify | `src/components/dashboard/dreams-card-new.tsx` — use branded loading |
-| Modify | `src/components/dashboard/tv-card.tsx` — use branded loading |
-| Modify | `src/components/dashboard/finance-card.tsx` — use branded loading |
-| Modify | `src/components/dashboard/weight-stats-card.tsx` — use branded loading |
-| Modify | `src/components/financial/stats-overview.tsx` — reverse net worth calc, I/E savings display |
-| Modify | `src/components/dreams/dream-detail-dialog.tsx` — progress bar color, similar dreams fix |
-| Modify | `src/components/dreams/dream-card.tsx` — progress bar color consistency |
-| Migration | Add `air_date`, `user_rating` to episodes; `user_rating` to media |
+### 4B. New Supabase tables
 
-~13 files modified, 1 migration. No new files needed — TV tracker is a rewrite of existing page.
+```sql
+CREATE TABLE media (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  tmdb_id integer NOT NULL,
+  type text NOT NULL, -- 'movie' or 'series'
+  title text NOT NULL,
+  poster_url text,
+  rating numeric,
+  runtime integer,
+  total_seasons integer,
+  genres text[] DEFAULT '{}',
+  trailer_url text,
+  status text DEFAULT 'want_to_watch', -- want_to_watch/watching/watched
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(tmdb_id, type)
+);
+
+CREATE TABLE episodes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  series_id uuid REFERENCES media(id) ON DELETE CASCADE,
+  season_number integer NOT NULL,
+  episode_number integer NOT NULL,
+  title text,
+  watched boolean DEFAULT false,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(series_id, season_number, episode_number)
+);
+```
+
+RLS: permissive for all operations (matching existing pattern).
+
+### 4C. Edge function: `tmdb-proxy`
+- Accepts `path` and `query` parameters
+- Forwards to TMDB API with the stored API key
+- Returns JSON response
+- Handles search, details, season, videos endpoints
+
+### 4D. New files
+
+| File | Purpose |
+|------|---------|
+| `src/pages/TVTracker.tsx` | Main page with tabs: All, Want to Watch, Watching, Watched, Recommendations |
+| `src/components/tv/search-media-dialog.tsx` | Search TMDB, show results, add to library |
+| `src/components/tv/media-card.tsx` | Poster card with title, rating, status badge |
+| `src/components/tv/media-detail-dialog.tsx` | Full details: poster, trailer, episodes, mark watched |
+| `src/components/tv/episode-list.tsx` | Season/episode checklist for series |
+| `src/components/tv/recommendations.tsx` | Genre-based recommendations from TMDB |
+| `src/components/dashboard/tv-card.tsx` | Dashboard card |
+| `supabase/functions/tmdb-proxy/index.ts` | TMDB API proxy |
+
+### 4E. Dashboard & routing
+- Add `TVTrackerCard` to BentoGrid in Index.tsx
+- Add `/tv-tracker` route in App.tsx
+- Card order: Prayer, Weight, Wallet, Gym, TV Tracker, Supplements, Dreams
+
+### 4F. Recommendation logic (no AI)
+- Query user's `media` table, extract most frequent genres
+- Call TMDB `/movie/{id}/recommendations` or `/tv/{id}/recommendations` for top-rated watched items
+- Filter out items already in user's database
+- Display in "Suggested Next Watch" section
+
+---
+
+## Implementation Order
+1. Delete closet & cooking (files + DB migration)
+2. Fix wallet stats (cumulative savings, month-specific net worth)
+3. UI fixes (prayer colors, weight naming, loading states)
+4. Create TV Tracker (DB tables, edge function, UI components, dashboard card)
+
+---
+
+## Technical Notes
+- TMDB API key will need to be added as a Supabase secret — will prompt user for it
+- ~10 files deleted, ~10 new files created, ~5 files modified
+- No AI used anywhere — TMDB API + rule-based recommendations only
 

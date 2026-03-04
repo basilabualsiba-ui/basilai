@@ -38,7 +38,7 @@ export function WeightStatsCard() {
   const weightTrend = useMemo(() => [...stats].reverse().map(s => s.weight), [stats]);
 
   return (
-    <BentoCard onClick={() => navigate('/weight-stats')} loading={isLoading} className="group">
+    <BentoCard onClick={() => navigate('/weight-stats')} loading={isLoading} className="group" loadingIcon={PersonStanding} loadingGradient="bg-gradient-to-br from-blue-500 to-cyan-600 shadow-blue-500/25">
       <div className="flex items-center gap-3 mb-3">
         <div className="w-10 h-10 rounded-xl bg-weight/20 flex items-center justify-center group-hover:scale-110 transition-transform">
           <PersonStanding className="h-5 w-5 text-weight" />

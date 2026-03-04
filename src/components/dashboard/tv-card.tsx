@@ -13,7 +13,7 @@ export function TVCard() {
   }, []);
 
   return (
-    <BentoCard onClick={() => navigate('/tv-tracker')} loading={loading} className="group">
+    <BentoCard onClick={() => navigate('/tv-tracker')} loading={loading} className="group" loadingIcon={Tv} loadingGradient="bg-gradient-to-br from-cyan-500 to-blue-600 shadow-cyan-500/25">
       <div className="flex items-center gap-3">
         <div className="p-2.5 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/25 group-hover:scale-110 transition-transform">
           <Tv className="h-5 w-5 text-white" />

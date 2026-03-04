@@ -30,12 +30,10 @@ export const DreamDetailDialog = ({ dreamId, open, onOpenChange }: DreamDetailDi
   if (!dream) return null;
 
   const similarDreams = dreams.filter(d => 
-    d.id !== dreamId && 
-    (d.type === dream.type || d.priority === dream.priority)
+    d.id !== dreamId && d.type === dream.type
   );
 
-  const completedSimilar = similarDreams.filter(d => d.status === 'completed');
-  const inProgressSimilar = similarDreams.filter(d => d.status === 'in_progress');
+
 
   const formatValue = (value: number, unit: string) => {
     if (unit === 'kg') return `${value.toFixed(1)} kg`;
@@ -123,7 +121,7 @@ export const DreamDetailDialog = ({ dreamId, open, onOpenChange }: DreamDetailDi
               </Card>
             )}
             
-            <Progress value={dream.progress_percentage} className="h-3" />
+            <Progress value={dream.progress_percentage} className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-pink-500 [&>div]:to-rose-500" />
             
             {metadata && metadata.remaining > 0 && (
               <p className="text-sm font-medium text-center text-primary">
@@ -171,28 +169,23 @@ export const DreamDetailDialog = ({ dreamId, open, onOpenChange }: DreamDetailDi
           {similarDreams.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <Target className="h-4 w-4" />
+                <Target className="h-4 w-4 text-pink-500" />
                 <h3 className="font-semibold">Similar Dreams</h3>
               </div>
               <div className="space-y-2">
-                <Card>
-                  <CardContent className="pt-4">
-                    <div className="grid grid-cols-2 gap-4 text-center">
+                {similarDreams.map(d => (
+                  <Card key={d.id} className="bg-gradient-to-br from-pink-500/5 to-rose-500/5 border-pink-500/20">
+                    <CardContent className="py-3 px-4 flex items-center justify-between">
                       <div>
-                        <p className="text-2xl font-bold text-green-600">{completedSimilar.length}</p>
-                        <p className="text-xs text-muted-foreground">Completed</p>
+                        <p className="text-sm font-medium text-foreground">{d.title}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{d.status.replace('_', ' ')} · {d.progress_percentage}%</p>
                       </div>
-                      <div>
-                        <p className="text-2xl font-bold text-blue-600">{inProgressSimilar.length}</p>
-                        <p className="text-xs text-muted-foreground">In Progress</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <div className="text-xs text-muted-foreground">
-                  You have {similarDreams.length} similar {dream.type} dreams.
-                  {completedSimilar.length > 0 && ` You've already achieved ${completedSimilar.length} of them!`}
-                </div>
+                      {d.status === 'completed' && (
+                        <Badge className="bg-emerald-500/15 text-emerald-500 text-xs">✓</Badge>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             </div>
           )}

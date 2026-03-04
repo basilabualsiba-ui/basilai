@@ -13,7 +13,7 @@ export function SupplementsCard() {
   }, []);
 
   return (
-    <BentoCard onClick={() => navigate('/supplements')} loading={loading} className="group">
+    <BentoCard onClick={() => navigate('/supplements')} loading={loading} className="group" loadingIcon={Pill} loadingGradient="bg-gradient-to-br from-purple-500 to-violet-600 shadow-purple-500/25">
       <div className="flex items-center gap-3">
         <div className="p-2.5 rounded-2xl bg-gradient-to-br from-purple-500 to-violet-600 shadow-lg shadow-purple-500/25 group-hover:scale-110 transition-transform">
           <Pill className="h-5 w-5 text-white" />

@@ -13,7 +13,7 @@ export function DreamsCardNew() {
   }, []);
 
   return (
-    <BentoCard onClick={() => navigate('/dreams')} loading={loading} className="group">
+    <BentoCard onClick={() => navigate('/dreams')} loading={loading} className="group" loadingIcon={Target} loadingGradient="bg-gradient-to-br from-pink-500 to-rose-500 shadow-pink-500/25">
       <div className="flex items-center gap-3">
         <div className="p-2.5 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 shadow-lg shadow-pink-500/25 group-hover:scale-110 transition-transform">
           <Target className="h-5 w-5 text-white" />

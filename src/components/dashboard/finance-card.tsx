@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { BentoCard } from "./bento-grid";
 import { Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -11,13 +11,18 @@ export function FinanceCard() {
   const navigate = useNavigate();
   const { accounts, transactions } = useFinancial();
   const { getRate, getCurrencySymbol } = useCurrency();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 300);
+    return () => clearTimeout(t);
+  }, []);
 
   const totalBalance = accounts.reduce((sum, acc) => {
     const rate = getRate(acc.currency, 'ILS');
     return sum + (acc.amount * rate);
   }, 0);
 
-  // Last 7 days spending for sparkline
   const spendingTrend = useMemo(() => {
     const last7Days: number[] = [];
     for (let i = 6; i >= 0; i--) {
@@ -38,6 +43,9 @@ export function FinanceCard() {
     <BentoCard 
       className="sm:col-span-2 lg:col-span-2 group"
       onClick={() => navigate('/financial')}
+      loading={loading}
+      loadingIcon={Wallet}
+      loadingGradient="bg-gradient-to-br from-emerald-500 to-green-600 shadow-emerald-500/25"
     >
       <div className="flex items-center gap-3 mb-3">
         <div className="w-12 h-12 rounded-xl bg-wallet/20 flex items-center justify-center group-hover:scale-110 transition-transform">

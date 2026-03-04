@@ -13,7 +13,7 @@ export function GymCard() {
   }, []);
 
   return (
-    <BentoCard onClick={() => navigate('/gym')} loading={loading} className="group">
+    <BentoCard onClick={() => navigate('/gym')} loading={loading} className="group" loadingIcon={Dumbbell} loadingGradient="bg-gradient-to-br from-red-500 to-rose-600 shadow-red-500/25">
       <div className="flex items-center gap-3">
         <div className="p-2.5 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 shadow-lg shadow-red-500/25 group-hover:scale-110 transition-transform">
           <Dumbbell className="h-5 w-5 text-white" />

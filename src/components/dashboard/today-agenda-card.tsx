@@ -16,7 +16,7 @@ export function TodayAgendaCard() {
   }, []);
 
   return (
-    <BentoCard onClick={() => navigate('/islamic')} loading={loading} className="group">
+    <BentoCard onClick={() => navigate('/islamic')} loading={loading} className="group" loadingIcon={Moon} loadingGradient="bg-gradient-to-br from-amber-500 to-yellow-600 shadow-amber-500/25">
       <div className="flex items-center gap-3">
         <div className="p-2.5 rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-600 shadow-lg shadow-amber-500/25 group-hover:scale-110 transition-transform">
           <Moon className="h-5 w-5 text-amber-100" />
