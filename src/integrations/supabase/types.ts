@@ -452,30 +452,36 @@ export type Database = {
       }
       episodes: {
         Row: {
+          air_date: string | null
           created_at: string | null
           episode_number: number
           id: string
           season_number: number
           series_id: string
           title: string | null
+          user_rating: number | null
           watched: boolean | null
         }
         Insert: {
+          air_date?: string | null
           created_at?: string | null
           episode_number: number
           id?: string
           season_number: number
           series_id: string
           title?: string | null
+          user_rating?: number | null
           watched?: boolean | null
         }
         Update: {
+          air_date?: string | null
           created_at?: string | null
           episode_number?: number
           id?: string
           season_number?: number
           series_id?: string
           title?: string | null
+          user_rating?: number | null
           watched?: boolean | null
         }
         Relationships: [
@@ -901,6 +907,7 @@ export type Database = {
           total_seasons: number | null
           trailer_url: string | null
           type: string
+          user_rating: number | null
         }
         Insert: {
           created_at?: string | null
@@ -915,6 +922,7 @@ export type Database = {
           total_seasons?: number | null
           trailer_url?: string | null
           type: string
+          user_rating?: number | null
         }
         Update: {
           created_at?: string | null
@@ -929,6 +937,7 @@ export type Database = {
           total_seasons?: number | null
           trailer_url?: string | null
           type?: string
+          user_rating?: number | null
         }
         Relationships: []
       }
