@@ -161,23 +161,37 @@ export const StatsOverview = () => {
     return total;
   }, [monthlySavingsMap, selectedMonth, selectedYear]);
 
-  // Net worth for selected month
+  // Current live net worth
+  const liveNetWorth = useMemo(() => {
+    return accounts.reduce((sum, acc) => {
+      const rate = getRate(acc.currency, 'ILS');
+      return sum + (acc.amount * rate);
+    }, 0);
+  }, [accounts, getRate]);
+
+  // Net worth for selected month - reverse calculation from live
   const netWorthForSelected = useMemo(() => {
     const now = new Date();
     const isCurrentMonth = selectedMonth === now.getMonth() && selectedYear === now.getFullYear();
     
     if (isCurrentMonth) {
-      // Live calculation
-      return accounts.reduce((sum, acc) => {
-        const rate = getRate(acc.currency, 'ILS');
-        return sum + (acc.amount * rate);
-      }, 0);
+      return liveNetWorth;
     }
     
-    // Use snapshot for past months
-    const snapshot = netWorthSnapshots.find(s => s.month === selectedMonth + 1 && s.year === selectedYear);
-    return snapshot ? Number(snapshot.total_amount) : 0;
-  }, [selectedMonth, selectedYear, accounts, getRate, netWorthSnapshots]);
+    // Reverse calculation: Net Worth(month X) = Live Net Worth - sum of savings from month X+1 through current month
+    let savingsAfterSelected = 0;
+    monthlySavingsMap.forEach((val, key) => {
+      if (key === '2025-7') return; // Exclude Aug 2025
+      const entryDate = new Date(val.year, val.month);
+      const selectedDate = new Date(selectedYear, selectedMonth);
+      const currentDate = new Date(now.getFullYear(), now.getMonth());
+      if (entryDate > selectedDate && entryDate <= currentDate) {
+        savingsAfterSelected += val.income - val.expense;
+      }
+    });
+    
+    return liveNetWorth - savingsAfterSelected;
+  }, [selectedMonth, selectedYear, liveNetWorth, monthlySavingsMap]);
 
   // Monthly trend data (last 6 months)
   const monthlyData = useMemo(() => {
@@ -201,18 +215,37 @@ export const StatsOverview = () => {
         }
       });
       
-      data.push({ month: mName, expenses: monthExpenses, income: monthIncome, savings: cumSavings });
+      data.push({ month: mName, expenses: monthExpenses, income: monthIncome, savings: cumSavings, monthlySaving: monthIncome - monthExpenses });
     }
     return data;
   }, [monthlySavingsMap]);
 
-  // Net worth chart data from snapshots
+  // Net worth chart data - reverse calculated from live
   const netWorthChartData = useMemo(() => {
-    return netWorthSnapshots.map(s => ({
-      month: new Date(s.year, s.month - 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
-      amount: Number(s.total_amount),
-    }));
-  }, [netWorthSnapshots]);
+    const data = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const mName = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+      const isCurrentMonth = date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+      
+      if (isCurrentMonth) {
+        data.push({ month: mName, amount: Math.round(liveNetWorth) });
+      } else {
+        let savingsAfter = 0;
+        monthlySavingsMap.forEach((val, key) => {
+          if (key === '2025-7') return;
+          const entryDate = new Date(val.year, val.month);
+          if (entryDate > date && entryDate <= now) {
+            savingsAfter += val.income - val.expense;
+          }
+        });
+        data.push({ month: mName, amount: Math.round(liveNetWorth - savingsAfter) });
+      }
+    }
+    return data;
+  }, [liveNetWorth, monthlySavingsMap]);
 
   return (
     <div className="space-y-4 pb-6">
@@ -406,6 +439,7 @@ export const StatsOverview = () => {
                   <Legend wrapperStyle={{ paddingTop: '12px' }} iconType="circle" iconSize={8} />
                   <Area type="monotone" dataKey="income" stroke="hsl(var(--wallet))" strokeWidth={2} fill="url(#incomeGradient)" name="Income" />
                   <Area type="monotone" dataKey="expenses" stroke="hsl(var(--destructive))" strokeWidth={2} fill="url(#expenseGradient)" name="Expenses" />
+                  <Line type="monotone" dataKey="monthlySaving" stroke="#8B5CF6" strokeWidth={2} dot={{ r: 3, fill: '#8B5CF6' }} name="Saving" />
                 </AreaChart>
               ) : chartView === 'savings' ? (
                 <LineChart data={monthlyData}>
