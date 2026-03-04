@@ -33,8 +33,7 @@ export const DreamDetailDialog = ({ dreamId, open, onOpenChange }: DreamDetailDi
     d.id !== dreamId && d.type === dream.type
   );
 
-  const completedSimilar = similarDreams.filter(d => d.status === 'completed');
-  const inProgressSimilar = similarDreams.filter(d => d.status === 'in_progress');
+
 
   const formatValue = (value: number, unit: string) => {
     if (unit === 'kg') return `${value.toFixed(1)} kg`;
