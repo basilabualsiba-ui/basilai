@@ -1,141 +1,151 @@
 
-Implementation plan
 
-1. Wallet / Prayer / TV bottom bars
-- Rebuild the Prayer and TV mobile bottom bars to match the Wallet pattern exactly:
-  - blurred glass container
-  - top glow line in module color
-  - rounded active tile with soft inner gradient
-  - active icon scale + slight lift
-  - small top highlight line
-- Use amber theme for Prayer and cyan theme for TV.
-- Keep the same spacing/height/grid behavior as Wallet so all modules feel unified.
+# Plan: Delete Closet/Cooking, Fix Stats, UI Polish, Add TV Tracker
 
-2. Welcome-screen / open animation fixes
-- Audit each module page load path and move the “welcome” animation to page-level wrappers, not only card-level loaders.
-- Add a short controlled intro state when a module opens so the branded loading/welcome screen always appears before content mounts.
-- Fix cases where data already exists and the page renders too fast, skipping the animation.
-- Apply this consistently to Prayer, TV, Gym, Wallet, Dreams, Supplements, and Weight.
+## 1. Delete Smart Closet & Smart Cooking (completely)
 
-3. Floating action buttons
-- Reuse the Dreams FAB size/shape/position as the shared pattern.
-- Convert:
-  - Gym top-right play button → floating action button
-  - TV top-right add button → floating action button
-  - Wallet “make log” / add action → floating action button
-- Keep each FAB in its module theme color and shadow.
-- Standardize z-index, bottom spacing above bottom nav, and sound trigger behavior.
+**Delete files:**
+- `src/components/closet/` (5 files)
+- `src/components/cooking/` (5 files)
+- `src/pages/Closet.tsx`
+- `src/pages/Cooking.tsx`
+- `src/components/dashboard/closet-card.tsx`
+- `src/components/dashboard/cooking-card.tsx`
+- `supabase/functions/fetch-recipe-url/`
 
-4. TV Tracker redesign
-- Header
-  - Move the Movies/Series toggle into the top bar where the add button used to be.
-  - Make it pill/circular styled in the TV theme.
-- Main filtering
-  - Add a second segmented filter row where the old Movies/Series toggle currently is.
-  - Movies filters: Want to Watch, Watched
-  - Series filters: Want to Watch, Watching, Watched
-  - Preserve current bottom tab when switching Movies/Series.
-- Ratings
-  - Fix star selection so choosing 4 fills 1–4, choosing 2 fills 1–2.
-  - Add visible 1 label on the left and 5 on the right.
-- Recommendations
-  - Tapping a suggested title should open a detail dialog/page instead of only offering add-to-library.
-- Refresh / sync on scroll
-  - Add pull/down refresh behavior or near-top refresh trigger for series syncing.
-  - On refresh, fetch latest TMDb season data for series already in library and insert missing episodes/seasons.
-- Upcoming episodes
-  - Keep existing upcoming badge behavior and ensure refreshed episodes also get air_date.
-- Bottom nav
-  - Restyle TV bottom nav to match the Wallet design.
+**Clean references:**
+- `src/App.tsx`: Remove Closet/Cooking imports and routes
+- `src/pages/Index.tsx`: Remove ClosetCard/CookingCard from BentoGrid
 
-5. Dreams improvements
-- Card actions
-  - Add a visible edit button for each dream card.
-- Progress bug
-  - Fix progress math in `useDreamProgress` for weight dreams.
-  - Use the correct formula based on starting value, current value, target value, and gain/loss direction.
-  - Clamp 0–100 and make it work for existing and future records.
-- New-dream flow
-  - Remove “AI genera/type” exposure and “why important” field from the creation flow.
-  - Keep background logic that detects links to gym / weight / wallet and estimated cost when relevant.
-- Types UX
-  - Replace the current type dropdown with type cards/chips near the top of Dreams.
-  - Let users create new custom types.
-  - Then show related dreams below based on selected type.
-- Keep existing similar-dreams refinement (same type only, real titles shown).
+**Drop Supabase tables** via migration:
+```sql
+DROP TABLE IF EXISTS recipe_ingredients;
+DROP TABLE IF EXISTS recipe_steps;
+DROP TABLE IF EXISTS recipes;
+DROP TABLE IF EXISTS user_ingredients;
+DROP TABLE IF EXISTS clothing_items;
+DROP TABLE IF EXISTS saved_outfits;
+DROP TABLE IF EXISTS shopping_list;
+```
 
-6. My Games Tracker feature
-- Scope
-  - New dashboard card + new page + RAWG-backed add/search flow.
-  - Keep same app card structure, but give games a distinct module color.
-  - Per your answer, hide Game Pass for now.
-- Data model / backend
-  - Add a new `games` table for tracked games.
-  - Recommended extra columns beyond your base spec:
-    - `rawg_id`
-    - `slug`
-    - `platform`
-    - `project_link`
-    - `user_price_ils`
-    - `genres` text[]
-    - `image`
-    - `rating`
-    - `date_added`
-    - cached RAWG metadata fields as needed
-  - Add permissive RLS consistent with current app pattern.
-- Edge function
-  - Create a RAWG proxy edge function using `RAWG_API_KEY`.
-  - Support:
-    - search endpoint
-    - game details endpoint
-    - suggested/recommendations endpoint
-  - Cache responses where practical.
-- UI
-  - New “My Games Tracker” page with:
-    - top platform filter
-    - library grid/list of tracked games
-    - floating “+ Add Game” button
-    - add-game modal with RAWG autocomplete, platform picker, project link, price field
-    - recommended games section limited to 5
-  - “Open Project” should open inside the app:
-    - web: internal dialog/sheet with iframe/web view style container
-    - mobile/capacitor: in-app browser/webview fallback path
-- Routing/dashboard
-  - Add dashboard card and route.
-  - Use lazy image loading for game covers.
+---
 
-7. Sounds / theming consistency
-- Audit module pages and buttons so colors, shadows, chips, active states, and glows follow each module icon/theme color.
-- Review button sound coverage across the updated modules.
-- If implementation stays simple, keep the current shared sound system and map module actions consistently.
-- If needed, introduce a lightweight per-module config object for color tokens + preferred sound presets, without overcomplicating the codebase.
+## 2. Fix Wallet Stats (Total Savings & Net Worth)
 
-8. Required reads/changes for implementation
-- Files likely to update:
-  - `src/pages/TVTracker.tsx`
-  - `src/pages/Financial.tsx`
-  - `src/pages/Gym.tsx`
-  - `src/pages/Islamic.tsx`
-  - `src/pages/Dreams.tsx`
-  - `src/components/dreams/dream-card.tsx`
-  - `src/components/dreams/add-dream-dialog.tsx`
-  - `src/hooks/useDreamProgress.ts`
-  - `src/components/dashboard/*card*.tsx`
-  - `src/App.tsx`
-  - `src/services/SoundService.ts`
-- New files likely:
-  - games page/components
-  - RAWG edge function
-  - migration for `games` table
-  - games dashboard card
+**Current bug:** "Total Savings" sums each month independently. User wants cumulative total savings (running sum).
 
-9. Important dependency/setup note
-- `TMDB_API_KEY` already exists.
-- `RAWG_API_KEY` is not currently present in project secrets, so implementation of the Games feature should wait for that secret to be added first.
+**Fix in `stats-overview.tsx`:**
 
-10. Recommended implementation order
-- First: bottom nav redesign + floating buttons + welcome-screen reliability
-- Second: TV Tracker interaction fixes and sync refresh
-- Third: Dreams fixes
-- Fourth: My Games Tracker schema + RAWG proxy + UI
-- Fifth: end-to-end visual/audio consistency pass and testing
+- **For completed months** (before current month): 
+  - Total Savings for month X = sum of (income - expenses) for all months from start through X, excluding Aug 2025
+  - Net Worth for month X = use `net_worth_snapshots` table value (recorded at end of month)
+  
+- **For current (incomplete) month** (e.g., March 2026):
+  - Total Savings = current live calculation (sum all months including current, exclude Aug 2025)  
+  - Net Worth = live sum of all account balances
+
+- Update the "Total Savings" and "Net Worth" cards to show the selected month's values (not always current)
+- Update the savings trend chart to show cumulative savings per month
+- Update net worth trend to show per-month snapshots
+
+---
+
+## 3. UI Fixes
+
+### 3A. Prayer card — match inner colors to card gradient
+The prayer card icon uses `from-amber-500 to-yellow-600`. The inner page (`Islamic.tsx`) header should use the same amber/yellow gradient colors for the icon and accents (currently uses generic styling).
+
+### 3B. Weight card & page — match colors
+- `WeightStatsCard`: currently uses `text-weight` and `bg-weight/20` — correct
+- `WeightStats.tsx` page: rename title from "Weight Stats" to "Weight", change icon from `Scale` to `PersonStanding` to match the card
+
+### 3C. All cards use loading skeleton
+Cards that don't fetch data (Prayer, Gym, Supplements, Dreams) should show a brief loading state matching the wallet card pattern. Add a small `useState` loading trick or `loading` prop to BentoCard for consistency.
+
+---
+
+## 4. TV & Series Tracker (TMDB)
+
+### 4A. Store TMDB API key
+The TMDB API key is a public/free key. Store it as a Supabase secret and use it in an edge function to avoid exposing it client-side. Or since TMDB keys are public-ish, store as `VITE_TMDB_API_KEY` in code.
+
+**Decision:** Use an edge function `tmdb-proxy` to keep the key server-side and avoid CORS issues.
+
+### 4B. New Supabase tables
+
+```sql
+CREATE TABLE media (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  tmdb_id integer NOT NULL,
+  type text NOT NULL, -- 'movie' or 'series'
+  title text NOT NULL,
+  poster_url text,
+  rating numeric,
+  runtime integer,
+  total_seasons integer,
+  genres text[] DEFAULT '{}',
+  trailer_url text,
+  status text DEFAULT 'want_to_watch', -- want_to_watch/watching/watched
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(tmdb_id, type)
+);
+
+CREATE TABLE episodes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  series_id uuid REFERENCES media(id) ON DELETE CASCADE,
+  season_number integer NOT NULL,
+  episode_number integer NOT NULL,
+  title text,
+  watched boolean DEFAULT false,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(series_id, season_number, episode_number)
+);
+```
+
+RLS: permissive for all operations (matching existing pattern).
+
+### 4C. Edge function: `tmdb-proxy`
+- Accepts `path` and `query` parameters
+- Forwards to TMDB API with the stored API key
+- Returns JSON response
+- Handles search, details, season, videos endpoints
+
+### 4D. New files
+
+| File | Purpose |
+|------|---------|
+| `src/pages/TVTracker.tsx` | Main page with tabs: All, Want to Watch, Watching, Watched, Recommendations |
+| `src/components/tv/search-media-dialog.tsx` | Search TMDB, show results, add to library |
+| `src/components/tv/media-card.tsx` | Poster card with title, rating, status badge |
+| `src/components/tv/media-detail-dialog.tsx` | Full details: poster, trailer, episodes, mark watched |
+| `src/components/tv/episode-list.tsx` | Season/episode checklist for series |
+| `src/components/tv/recommendations.tsx` | Genre-based recommendations from TMDB |
+| `src/components/dashboard/tv-card.tsx` | Dashboard card |
+| `supabase/functions/tmdb-proxy/index.ts` | TMDB API proxy |
+
+### 4E. Dashboard & routing
+- Add `TVTrackerCard` to BentoGrid in Index.tsx
+- Add `/tv-tracker` route in App.tsx
+- Card order: Prayer, Weight, Wallet, Gym, TV Tracker, Supplements, Dreams
+
+### 4F. Recommendation logic (no AI)
+- Query user's `media` table, extract most frequent genres
+- Call TMDB `/movie/{id}/recommendations` or `/tv/{id}/recommendations` for top-rated watched items
+- Filter out items already in user's database
+- Display in "Suggested Next Watch" section
+
+---
+
+## Implementation Order
+1. Delete closet & cooking (files + DB migration)
+2. Fix wallet stats (cumulative savings, month-specific net worth)
+3. UI fixes (prayer colors, weight naming, loading states)
+4. Create TV Tracker (DB tables, edge function, UI components, dashboard card)
+
+---
+
+## Technical Notes
+- TMDB API key will need to be added as a Supabase secret — will prompt user for it
+- ~10 files deleted, ~10 new files created, ~5 files modified
+- No AI used anywhere — TMDB API + rule-based recommendations only
+

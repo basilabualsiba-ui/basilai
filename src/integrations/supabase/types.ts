@@ -668,6 +668,54 @@ export type Database = {
         }
         Relationships: []
       }
+      games: {
+        Row: {
+          created_at: string
+          date_added: string
+          genres: string[]
+          id: string
+          image: string | null
+          name: string
+          platform: string
+          project_link: string | null
+          rating: number | null
+          rawg_id: number
+          slug: string | null
+          updated_at: string
+          user_price_ils: number
+        }
+        Insert: {
+          created_at?: string
+          date_added?: string
+          genres?: string[]
+          id?: string
+          image?: string | null
+          name: string
+          platform: string
+          project_link?: string | null
+          rating?: number | null
+          rawg_id: number
+          slug?: string | null
+          updated_at?: string
+          user_price_ils?: number
+        }
+        Update: {
+          created_at?: string
+          date_added?: string
+          genres?: string[]
+          id?: string
+          image?: string | null
+          name?: string
+          platform?: string
+          project_link?: string | null
+          rating?: number | null
+          rawg_id?: number
+          slug?: string | null
+          updated_at?: string
+          user_price_ils?: number
+        }
+        Relationships: []
+      }
       icons: {
         Row: {
           created_at: string
