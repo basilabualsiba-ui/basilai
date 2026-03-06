@@ -173,6 +173,3 @@ const Dreams = () => {
 };
 
 export default Dreams;
-
-// Need useMemo import
-import { useMemo } from "react";
