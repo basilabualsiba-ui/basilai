@@ -8,10 +8,11 @@ import { StatsOverview } from '@/components/financial/stats-overview';
 import { TransactionCalendar } from '@/components/financial/transaction-calendar';
 import { BudgetCategories } from '@/components/financial/budget-categories';
 import { TransactionBrowser } from '@/components/financial/transaction-browser';
-import { ArrowLeft, CreditCard, PieChart, Calendar, TrendingUp, Wallet, Search } from "lucide-react";
+import { ArrowLeft, CreditCard, PieChart, Calendar, TrendingUp, Wallet, Search, Plus } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CurrencyRatesDialog } from '@/components/financial/currency-rates-dialog';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ModuleIntroScreen } from '@/components/ui/module-intro-screen';
+import { FloatingActionButton } from '@/components/ui/floating-action-button';
 import { useSound } from '@/hooks/useSound';
 import { useEffect } from 'react';
 
@@ -33,10 +34,7 @@ const Financial = () => {
     if (tab) setActiveTab(tab);
   }, [searchParams]);
 
-  const handleTabChange = (tab: string) => {
-    click();
-    setActiveTab(tab);
-  };
+  const handleTabChange = (tab: string) => { click(); setActiveTab(tab); };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-wallet/5 flex flex-col w-full">
@@ -45,8 +43,7 @@ const Financial = () => {
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-wallet/30 to-transparent" />
         <div className="container mx-auto px-4 py-3 flex items-center justify-between relative">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => { click(); navigate("/"); }} 
-              className="hover:bg-wallet/10 hover:text-wallet transition-all duration-300 rounded-xl h-9 w-9">
+            <Button variant="ghost" size="icon" onClick={() => { click(); navigate("/"); }} className="hover:bg-wallet/10 hover:text-wallet transition-all duration-300 rounded-xl h-9 w-9">
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-3">
@@ -84,6 +81,11 @@ const Financial = () => {
         </div>
       </main>
 
+      {/* FAB for transactions */}
+      <FloatingActionButton onClick={() => { click(); handleTabChange('transactions'); }} className="bg-gradient-to-br from-wallet to-emerald-600 text-white shadow-wallet/40 hover:opacity-90">
+        <Plus className="h-6 w-6" />
+      </FloatingActionButton>
+
       <div className="fixed bottom-0 left-0 right-0 z-50">
         <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
         <div className="bg-background/80 backdrop-blur-2xl border-t border-border/20 shadow-2xl shadow-black/10">
@@ -91,9 +93,7 @@ const Financial = () => {
           <div className="grid grid-cols-4 h-16 px-2">
             {financialItems.map((item) => (
               <button key={item.value} onClick={() => handleTabChange(item.value)}
-                className={`relative flex flex-col items-center justify-center gap-0.5 transition-all duration-300 rounded-2xl mx-1 ${
-                  activeTab === item.value ? 'text-wallet' : 'text-muted-foreground hover:text-foreground'
-                }`}>
+                className={`relative flex flex-col items-center justify-center gap-0.5 transition-all duration-300 rounded-2xl mx-1 ${activeTab === item.value ? 'text-wallet' : 'text-muted-foreground hover:text-foreground'}`}>
                 {activeTab === item.value && (
                   <>
                     <div className="absolute inset-1 bg-gradient-to-b from-wallet/15 to-wallet/5 rounded-xl" />
@@ -103,9 +103,7 @@ const Financial = () => {
                 <div className={`relative z-10 transition-all duration-300 ${activeTab === item.value ? 'scale-110 -translate-y-0.5' : ''}`}>
                   <item.icon className="h-5 w-5" />
                 </div>
-                <span className={`relative z-10 text-[10px] font-medium transition-all duration-300 ${activeTab === item.value ? 'font-semibold' : ''}`}>
-                  {item.title}
-                </span>
+                <span className={`relative z-10 text-[10px] font-medium transition-all duration-300 ${activeTab === item.value ? 'font-semibold' : ''}`}>{item.title}</span>
               </button>
             ))}
           </div>
@@ -117,23 +115,7 @@ const Financial = () => {
 
 const FinancialWithLoading = () => {
   const { isLoading } = useFinancial();
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background via-background to-wallet/5">
-        <div className="text-center space-y-4">
-          <div className="relative">
-            <div className="p-5 rounded-3xl bg-gradient-to-br from-wallet via-emerald-600 to-teal-600 shadow-2xl shadow-wallet/40 animate-pulse">
-              <Wallet className="h-10 w-10 text-white" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-32 mx-auto" />
-            <Skeleton className="h-3 w-24 mx-auto" />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <ModuleIntroScreen icon={Wallet} title="Wallet" subtitle="Loading your finances" theme="wallet" />;
   return <Financial />;
 };
 
