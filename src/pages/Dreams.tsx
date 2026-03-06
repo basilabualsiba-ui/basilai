@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Search, Sparkles, Star, Target, Plus, ArrowLeft, Edit } from "lucide-react";
+import { Search, Sparkles, Star, Target, Plus, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDreams } from "@/contexts/DreamsContext";
 import { AddDreamDialog } from "@/components/dreams/add-dream-dialog";
