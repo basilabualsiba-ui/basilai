@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDreams } from "@/contexts/DreamsContext";
 import { Plus, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,85 +13,92 @@ import { toast } from "sonner";
 interface AddDreamDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  editDreamId?: string;
 }
 
-export const AddDreamDialog = ({ open: controlledOpen, onOpenChange }: AddDreamDialogProps) => {
+export const AddDreamDialog = ({ open: controlledOpen, onOpenChange, editDreamId }: AddDreamDialogProps) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
   const setOpen = isControlled ? (onOpenChange ?? (() => {})) : setInternalOpen;
   
-  const { addDream } = useDreams();
+  const { addDream, updateDream, dreams } = useDreams();
   const [createFinancialGoal, setCreateFinancialGoal] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    why_important: '',
     target_date: '',
     estimated_cost: '',
     location: '',
   });
 
+  const isEditMode = !!editDreamId;
+
+  // Load dream data for edit mode
+  useEffect(() => {
+    if (editDreamId && open) {
+      const dream = dreams.find(d => d.id === editDreamId);
+      if (dream) {
+        setFormData({
+          title: dream.title,
+          description: dream.description || '',
+          target_date: dream.target_date || '',
+          estimated_cost: dream.estimated_cost ? String(dream.estimated_cost) : '',
+          location: dream.location || '',
+        });
+      }
+    } else if (!editDreamId) {
+      setFormData({ title: '', description: '', target_date: '', estimated_cost: '', location: '' });
+    }
+  }, [editDreamId, open, dreams]);
+
   const detectDreamType = (title: string, description: string): string => {
     const text = `${title} ${description}`.toLowerCase();
-    
-    // Travel & Places
-    if (text.match(/visit|travel|trip|country|city|landmark|destination|explore|journey|vacation|tour/)) {
-      return 'travel';
-    }
-    
-    // Personal Development
-    if (text.match(/kg|weight|fitness|workout|gym|exercise|habit|overcome|learn|skill|fear|health|meditation|yoga/)) {
-      return 'personal';
-    }
-    
-    // Career & Learning
-    if (text.match(/business|career|job|certification|course|startup|company|promotion|degree|study|training/)) {
-      return 'career';
-    }
-    
-    // Adventures & Sports
-    if (text.match(/skydiving|marathon|climbing|adventure|sport|race|hiking|diving|surfing|extreme/)) {
-      return 'adventure';
-    }
-    
-    // Family & Relationships
-    if (text.match(/marry|wedding|kids|child|family|relationship|friend|reconnect|parent/)) {
-      return 'creative'; // Using creative as closest match
-    }
-    
+    if (text.match(/visit|travel|trip|country|city|landmark|destination|explore|journey|vacation|tour/)) return 'travel';
+    if (text.match(/kg|weight|fitness|workout|gym|exercise|habit|overcome|learn|skill|fear|health|meditation|yoga/)) return 'personal';
+    if (text.match(/business|career|job|certification|course|startup|company|promotion|degree|study|training/)) return 'career';
+    if (text.match(/skydiving|marathon|climbing|adventure|sport|race|hiking|diving|surfing|extreme/)) return 'adventure';
+    if (text.match(/marry|wedding|kids|child|family|relationship|friend|reconnect|parent/)) return 'creative';
     return 'general';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      if (isEditMode && editDreamId) {
+        // Update existing dream
+        await updateDream(editDreamId, {
+          title: formData.title,
+          description: formData.description || undefined,
+          target_date: formData.target_date || undefined,
+          estimated_cost: formData.estimated_cost ? parseFloat(formData.estimated_cost) : undefined,
+          location: formData.location || undefined,
+          type: detectDreamType(formData.title, formData.description),
+        });
+        toast.success('Dream updated!');
+        setOpen(false);
+        return;
+      }
+
       setIsGeneratingImage(true);
-      
-      // Detect dream type using AI logic
       const detectedType = detectDreamType(formData.title, formData.description);
       
-      // Generate AI cover image
       let coverImageUrl: string | undefined;
       try {
-        const { data: imageData, error: imageError } = await supabase.functions.invoke('generate-dream-image', {
+        const { data: imageData } = await supabase.functions.invoke('generate-dream-image', {
           body: { prompt: `${formData.title}. ${formData.description}` }
         });
-        
-        if (imageData?.image) {
-          coverImageUrl = imageData.image;
-        }
+        if (imageData?.image) coverImageUrl = imageData.image;
       } catch (err) {
         console.error('Failed to generate image:', err);
         toast.error('Could not generate image, but dream will still be created');
       }
 
-      // Create the dream
       const dreamData = {
         ...formData,
         type: detectedType,
-        priority: 'medium', // Default priority since we removed the field
+        priority: 'medium',
         estimated_cost: formData.estimated_cost ? parseFloat(formData.estimated_cost) : undefined,
         target_date: formData.target_date || undefined,
         cover_image_url: coverImageUrl,
@@ -100,61 +107,30 @@ export const AddDreamDialog = ({ open: controlledOpen, onOpenChange }: AddDreamD
       await addDream(dreamData);
       setIsGeneratingImage(false);
 
-      // Create financial goal if requested and estimated cost exists
       if (createFinancialGoal && formData.estimated_cost) {
-        const goalName = `${formData.title} - Savings Goal`;
         const targetAmount = parseFloat(formData.estimated_cost);
-        
-        // Create a category for dream savings if it doesn't exist
         const { data: existingCategories } = await supabase
-          .from('categories')
-          .select('id')
-          .eq('name', 'Dream Savings')
-          .eq('type', 'expense')
-          .single();
-
+          .from('categories').select('id').eq('name', 'Dream Savings').eq('type', 'expense').single();
         let categoryId = existingCategories?.id;
-
         if (!categoryId) {
           const { data: newCategory } = await supabase
-            .from('categories')
-            .insert({
-              name: 'Dream Savings',
-              type: 'expense',
-              icon: 'Sparkles'
-            })
-            .select()
-            .single();
-          
+            .from('categories').insert({ name: 'Dream Savings', type: 'expense', icon: 'Sparkles' }).select().single();
           categoryId = newCategory?.id;
         }
-
-        // Create a budget for tracking savings
         if (categoryId && formData.target_date) {
           const targetDate = new Date(formData.target_date);
-          await supabase
-            .from('budgets')
-            .insert({
-              category_id: categoryId,
-              amount: targetAmount,
-              month: targetDate.getMonth() + 1,
-              year: targetDate.getFullYear()
-            });
+          await supabase.from('budgets').insert({
+            category_id: categoryId, amount: targetAmount,
+            month: targetDate.getMonth() + 1, year: targetDate.getFullYear()
+          });
         }
       }
 
-      setFormData({
-        title: '',
-        description: '',
-        why_important: '',
-        target_date: '',
-        estimated_cost: '',
-        location: '',
-      });
+      setFormData({ title: '', description: '', target_date: '', estimated_cost: '', location: '' });
       setCreateFinancialGoal(false);
       setOpen(false);
     } catch (error) {
-      console.error('Error adding dream:', error);
+      console.error('Error saving dream:', error);
       setIsGeneratingImage(false);
     }
   };
@@ -163,131 +139,68 @@ export const AddDreamDialog = ({ open: controlledOpen, onOpenChange }: AddDreamD
     <Dialog open={open} onOpenChange={setOpen}>
       {!isControlled && (
         <DialogTrigger asChild>
-          <Button className="gap-2 bg-dreams hover:bg-dreams/90 text-white">
-            <Plus className="h-4 w-4" />
-            Add Dream
-          </Button>
+          <Button className="gap-2 bg-dreams hover:bg-dreams/90 text-white"><Plus className="h-4 w-4" /> Add Dream</Button>
         </DialogTrigger>
       )}
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-dreams/30 bg-gradient-to-br from-background via-background to-dreams/5">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-dreams/20">
-              <Sparkles className="h-4 w-4 text-dreams" />
-            </div>
-            Add New Dream
+            <div className="p-2 rounded-xl bg-dreams/20"><Sparkles className="h-4 w-4 text-dreams" /></div>
+            {isEditMode ? 'Edit Dream' : 'Add New Dream'}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">Title *</Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="What's your dream?"
-              required
-              className="focus:border-dreams focus:ring-dreams/30"
-            />
+            <Input id="title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="What's your dream?" required className="focus:border-dreams focus:ring-dreams/30" />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Describe your dream..."
-              rows={3}
-              className="focus:border-dreams focus:ring-dreams/30"
-            />
-            <p className="text-xs text-muted-foreground">
-              💡 AI will automatically categorize your dream based on your description
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="why_important">Why is this important to you?</Label>
-            <Textarea
-              id="why_important"
-              value={formData.why_important}
-              onChange={(e) => setFormData({ ...formData, why_important: e.target.value })}
-              placeholder="Your motivation..."
-              rows={2}
-              className="focus:border-dreams focus:ring-dreams/30"
-            />
+            <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Describe your dream..." rows={3} className="focus:border-dreams focus:ring-dreams/30" />
+            <p className="text-xs text-muted-foreground">💡 AI will automatically categorize your dream based on your description</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="target_date">Target Date</Label>
-              <Input
-                id="target_date"
-                type="date"
-                value={formData.target_date}
-                onChange={(e) => setFormData({ ...formData, target_date: e.target.value })}
-                className="focus:border-dreams focus:ring-dreams/30"
-              />
+              <Input id="target_date" type="date" value={formData.target_date}
+                onChange={(e) => setFormData({ ...formData, target_date: e.target.value })} className="focus:border-dreams focus:ring-dreams/30" />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="estimated_cost">Estimated Cost</Label>
-              <Input
-                id="estimated_cost"
-                type="number"
-                step="0.01"
-                value={formData.estimated_cost}
-                onChange={(e) => setFormData({ ...formData, estimated_cost: e.target.value })}
-                placeholder="0.00"
-                className="focus:border-dreams focus:ring-dreams/30"
-              />
+              <Input id="estimated_cost" type="number" step="0.01" value={formData.estimated_cost}
+                onChange={(e) => setFormData({ ...formData, estimated_cost: e.target.value })} placeholder="0.00" className="focus:border-dreams focus:ring-dreams/30" />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="location">Location (if applicable)</Label>
-            <Input
-              id="location"
-              value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              placeholder="e.g., Paris, France"
-              className="focus:border-dreams focus:ring-dreams/30"
-            />
+            <Input id="location" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              placeholder="e.g., Paris, France" className="focus:border-dreams focus:ring-dreams/30" />
           </div>
 
-          {formData.estimated_cost && (
+          {formData.estimated_cost && !isEditMode && (
             <div className="flex items-center justify-between p-4 border border-dreams/20 rounded-lg bg-dreams/5">
               <div className="space-y-1">
-                <Label htmlFor="create-goal" className="text-base">
-                  Create Financial Savings Goal
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Track your savings progress towards this dream in the Financial app
-                </p>
+                <Label htmlFor="create-goal" className="text-base">Create Financial Savings Goal</Label>
+                <p className="text-sm text-muted-foreground">Track your savings progress towards this dream in the Financial app</p>
               </div>
-              <Switch
-                id="create-goal"
-                checked={createFinancialGoal}
-                onCheckedChange={setCreateFinancialGoal}
-              />
+              <Switch id="create-goal" checked={createFinancialGoal} onCheckedChange={setCreateFinancialGoal} />
             </div>
           )}
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button type="submit" disabled={isGeneratingImage} className="bg-dreams hover:bg-dreams/90 text-white">
               {isGeneratingImage ? (
-                <>
-                  <Sparkles className="h-4 w-4 mr-2 animate-spin" />
-                  Generating Dream Image...
-                </>
+                <><Sparkles className="h-4 w-4 mr-2 animate-spin" /> Generating Dream Image...</>
+              ) : isEditMode ? (
+                'Update Dream'
               ) : (
-                <>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Dream
-                </>
+                <><Plus className="h-4 w-4 mr-2" /> Add Dream</>
               )}
             </Button>
           </div>
