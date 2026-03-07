@@ -37,7 +37,7 @@ export const Logo = ({ className, size = "md" }: LogoProps) => {
         <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary to-accent opacity-50 blur-md -z-10 group-hover:opacity-70 transition-opacity" />
       </div>
       <span className="whitespace-nowrap bg-gradient-to-r from-primary via-foreground to-primary bg-clip-text text-transparent">
-        BASIL's AI
+        Basilix
       </span>
     </div>
   );
