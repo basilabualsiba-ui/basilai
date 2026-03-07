@@ -188,9 +188,9 @@ const Dreams = () => {
                           <span>Avg. progress</span>
                           <span className="font-semibold text-foreground">{avgProgress}%</span>
                         </div>
-                        <div className="h-1.5 rounded-full bg-black/10 overflow-hidden">
+                        <div className="h-2 rounded-full bg-muted/50 overflow-hidden">
                           <div
-                            className={`h-full rounded-full bg-gradient-to-r ${cfg.glow === 'bg-dreams' ? 'from-dreams to-rose-500' : `${cfg.glow.replace('bg-', 'from-')} to-transparent`} transition-all duration-500`}
+                            className="h-full rounded-full bg-gradient-to-r from-pink-500 to-rose-500 transition-all duration-500 shadow-sm"
                             style={{ width: `${avgProgress}%` }}
                           />
                         </div>
