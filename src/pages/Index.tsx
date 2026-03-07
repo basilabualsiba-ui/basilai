@@ -75,17 +75,23 @@ const Index = () => {
       {/* Main Content - Dashboard */}
       <main className="container mx-auto px-4 py-6">
         <div className="space-y-4">
-          <BentoGrid>
-            <SoccerCard />
+          {/* Custom responsive grid */}
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Soccer card: full width on desktop, 2-cols on tablet, 1-col on mobile */}
+            <div className="col-span-1 sm:col-span-2 lg:col-span-4">
+              <SoccerCard />
+            </div>
+            {/* Remaining cards: 4-per-row desktop, 2-per-row tablet, 1-per-row mobile */}
+            {/* Weight comes right after Gym */}
             <TodayAgendaCard />
-            <WeightStatsCard />
             <FinanceCard />
             <GymCard />
+            <WeightStatsCard />
             <TVCard />
             <GamesCard />
             <SupplementsCard />
             <DreamsCardNew />
-          </BentoGrid>
+          </div>
         </div>
       </main>
     </div>
