@@ -8,7 +8,7 @@ import { StatsOverview } from '@/components/financial/stats-overview';
 import { TransactionCalendar } from '@/components/financial/transaction-calendar';
 import { BudgetCategories } from '@/components/financial/budget-categories';
 import { TransactionBrowser } from '@/components/financial/transaction-browser';
-import { ArrowLeft, CreditCard, PieChart, Calendar, TrendingUp, Wallet, Search, Plus } from "lucide-react";
+import { ArrowLeft, CreditCard, PieChart, Calendar, TrendingUp, Wallet, Search } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CurrencyRatesDialog } from '@/components/financial/currency-rates-dialog';
 import { ModuleIntroScreen } from '@/components/ui/module-intro-screen';
@@ -59,13 +59,6 @@ const Financial = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => handleTabChange('budget')}
-              className={`flex items-center gap-2 rounded-xl border-border/40 h-8 text-xs font-medium transition-all duration-300 ${
-                activeTab === 'budget' ? 'bg-wallet/15 text-wallet border-wallet/40 shadow-sm shadow-wallet/10' : 'hover:bg-wallet/10 hover:border-wallet/30 hover:text-wallet'
-              }`}>
-              <PieChart className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Budget</span>
-            </Button>
             <CurrencyRatesDialog isActive={false} />
           </div>
         </div>
@@ -82,8 +75,8 @@ const Financial = () => {
       </main>
 
       {/* FAB for transactions */}
-      <FloatingActionButton onClick={() => { click(); handleTabChange('transactions'); }} className="bg-gradient-to-br from-wallet to-emerald-600 text-white shadow-wallet/40 hover:opacity-90">
-        <Plus className="h-6 w-6" />
+      <FloatingActionButton onClick={() => { click(); handleTabChange('budget'); }} className="bg-gradient-to-br from-wallet to-emerald-600 text-white shadow-wallet/40 hover:opacity-90">
+        <PieChart className="h-6 w-6" />
       </FloatingActionButton>
 
       <div className="fixed bottom-0 left-0 right-0 z-50">
