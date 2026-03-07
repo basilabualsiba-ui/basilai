@@ -76,6 +76,7 @@ const Index = () => {
       <main className="container mx-auto px-4 py-6">
         <div className="space-y-4">
           <BentoGrid>
+            <SoccerCard />
             <TodayAgendaCard />
             <WeightStatsCard />
             <FinanceCard />
@@ -84,7 +85,6 @@ const Index = () => {
             <GamesCard />
             <SupplementsCard />
             <DreamsCardNew />
-            <SoccerCard />
           </BentoGrid>
         </div>
       </main>
