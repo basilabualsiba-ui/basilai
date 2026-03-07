@@ -2,10 +2,13 @@ import { Logo } from "@/components/ui/logo";
 import { SettingsDialog } from "@/components/ui/settings-dialog";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
+import { useEffect } from 'react';
 import { useSound } from "@/hooks/useSound";
 import { useWeather } from "@/hooks/useWeather";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
+import { useEffect } from 'react';
+import { initPush } from '@/services/PushService';
 // Dashboard Components
 import { BentoGrid } from "@/components/dashboard/bento-grid";
 import { FinanceCard } from "@/components/dashboard/finance-card";
@@ -21,6 +24,9 @@ import { SoccerCard } from "@/components/dashboard/soccer-card";
 const Index = () => {
   const { click } = useSound();
   const { weather, icon, condition, isLoading: weatherLoading } = useWeather();
+
+  // Register Web Push subscription (background notifications)
+  useEffect(() => { initPush().catch(console.error); }, []);
 
   return (
     <div className="min-h-screen bg-background">
