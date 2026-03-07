@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNotifications } from '@/hooks/useNotifications';
+import { schedulePrayerPushes } from '@/services/PushService';
 
 interface PrayerTime {
   id: string;
@@ -141,31 +142,18 @@ export const PrayerNotificationProvider: React.FC<{ children: React.ReactNode }>
 
   const schedulePrayerNotifications = async () => {
     if (!prayerTimes) return;
-
-    const today = new Date().toDateString();
-    
-    prayers.forEach(async (prayer) => {
-      const settings = notificationSettings[prayer.key];
-      if (settings.enabled) {
-        // Parse prayer time and create Date object
-        const [hours, minutes] = prayerTimes[prayer.key as keyof PrayerTime].toString().split(':');
-        const prayerTime = new Date();
-        prayerTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-        
-        // Create reminder time (15 minutes before)
-        const reminderTime = new Date(prayerTime.getTime() - 15 * 60 * 1000);
-        
-        // Only schedule if reminder time is in the future
-        const now = new Date();
-        if (reminderTime > now) {
-          try {
-            await schedulePrayerReminder(prayer.name, reminderTime);
-          } catch (error) {
-            console.error(`Failed to schedule ${prayer.name} reminder:`, error);
-          }
-        }
-      }
-    });
+    // Use server-side Web Push — fires even when app is closed (iOS + web)
+    try {
+      await schedulePrayerPushes({
+        fajr:    String(prayerTimes.fajr),
+        dhuhr:   String(prayerTimes.dhuhr),
+        asr:     String(prayerTimes.asr),
+        maghrib: String(prayerTimes.maghrib),
+        isha:    String(prayerTimes.isha),
+      }, 15);
+    } catch (err) {
+      console.error('Failed to schedule prayer pushes:', err);
+    }
   };
 
 
