@@ -190,8 +190,8 @@ const Dreams = () => {
                         </div>
                         <div className="h-2 rounded-full bg-white/20 overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-gradient-to-r from-pink-500 to-rose-500 transition-all duration-500 shadow-sm"
-                            style={{ width: `${avgProgress}%` }}
+                            className="h-full rounded-full transition-all duration-500 relative"
+                            style={{ width: `${avgProgress}%`, background: 'linear-gradient(to right, #ec4899, #f43f5e, rgba(244,63,94,0.3))' }}
                           />
                         </div>
                       </div>
