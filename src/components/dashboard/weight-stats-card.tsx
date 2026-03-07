@@ -1,9 +1,8 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { BentoCard } from "./bento-grid";
 import { PersonStanding } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkline } from "@/components/ui/sparkline";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 
 interface BodyStat {
@@ -35,7 +34,6 @@ export function WeightStatsCard() {
   }, []);
 
   const currentWeight = stats[0]?.weight || 0;
-  const weightTrend = useMemo(() => [...stats].reverse().map(s => s.weight), [stats]);
 
   return (
     <BentoCard onClick={() => navigate('/weight-stats')} loading={isLoading} className="group" loadingIcon={PersonStanding} loadingGradient="bg-gradient-to-br from-blue-500 to-cyan-600 shadow-blue-500/25">
@@ -53,9 +51,6 @@ export function WeightStatsCard() {
         </div>
       </div>
 
-      {weightTrend.length > 1 && (
-        <Sparkline data={weightTrend} color="weight" height={28} />
-      )}
     </BentoCard>
   );
 }
