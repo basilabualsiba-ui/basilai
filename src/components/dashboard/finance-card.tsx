@@ -41,7 +41,7 @@ export function FinanceCard() {
 
   return (
     <BentoCard 
-      className="sm:col-span-2 lg:col-span-2 group"
+      className="group"
       onClick={() => navigate('/financial')}
       loading={loading}
       loadingIcon={Wallet}
