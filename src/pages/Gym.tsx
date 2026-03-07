@@ -115,9 +115,10 @@ const Gym = () => {
 };
 
 const GymWithLoading = () => {
-const { isLoading } = useGym();
-     const showIntro = useModuleIntro(900);
-     if (isLoading || showIntro) return <ModuleIntroScreen ...  return <Gym />;
+  const { isLoading } = useGym();
+  const showIntro = useModuleIntro(900);
+  if (isLoading || showIntro) return <ModuleIntroScreen icon={Dumbbell} title="Gym" subtitle="Loading your workouts" theme="gym" />;
+  return <Gym />;
 };
 
 export default function GymWithAuth() {
