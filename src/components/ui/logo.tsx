@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils";
-import { Sparkles } from "lucide-react";
 
 interface LogoProps {
   className?: string;
@@ -26,17 +25,16 @@ export const Logo = ({ className, size = "md" }: LogoProps) => {
   };
 
   return (
-    <div className={cn("flex items-center gap-2 font-bold", sizeClasses[size], className)}>
-      <div className="relative group">
-        <div className={cn(
-          "rounded-xl bg-gradient-to-br from-primary via-primary to-accent shadow-lg shadow-primary/25",
-          containerSizes[size]
-        )}>
-          <Sparkles className={cn("text-primary-foreground", iconSizes[size])} />
-        </div>
-        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary to-accent opacity-50 blur-md -z-10 group-hover:opacity-70 transition-opacity" />
-      </div>
-      <span className="whitespace-nowrap bg-gradient-to-r from-primary via-foreground to-primary bg-clip-text text-transparent">
+    <div className={cn("flex items-center font-bold", sizeClasses[size], className)}>
+      <span
+        className="whitespace-nowrap font-extrabold tracking-wide"
+        style={{
+          background: "linear-gradient(to right, #10b981, #ef4444, #ec4899, #8b5cf6, #06b6d4, #eab308, #3b82f6, #f97316, #10b981)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+        }}
+      >
         Basilix
       </span>
     </div>
