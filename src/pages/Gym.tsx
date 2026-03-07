@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useGym } from '@/contexts/GymContext';
+import { useModuleIntro } from '@/hooks/use-module-intro';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Dumbbell, Calendar, Target, BarChart3, Flame, Play } from "lucide-react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
@@ -114,9 +115,9 @@ const Gym = () => {
 };
 
 const GymWithLoading = () => {
-  const { isLoading } = useGym();
-  if (isLoading) return <ModuleIntroScreen icon={Dumbbell} title="Gym" subtitle="Loading your workouts" theme="gym" />;
-  return <Gym />;
+const { isLoading } = useGym();
+     const showIntro = useModuleIntro(900);
+     if (isLoading || showIntro) return <ModuleIntroScreen ...  return <Gym />;
 };
 
 export default function GymWithAuth() {
