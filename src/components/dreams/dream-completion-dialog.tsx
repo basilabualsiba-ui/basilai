@@ -1,264 +1,213 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { FileUpload } from "@/components/ui/file-upload";
+import { useState, useEffect } from "react";
 import { useDreams } from "@/contexts/DreamsContext";
-import { Calendar, DollarSign, MapPin, Target, TrendingUp, TrendingDown, Activity } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { useEffect, useState, useMemo } from "react";
-import { DreamMetadata } from "@/hooks/useDreamProgress";
+import { Share2, Sparkles } from "lucide-react";
+import confetti from "canvas-confetti";
+import { supabase } from "@/integrations/supabase/client";
 
-interface DreamDetailDialogProps {
-  dreamId: string;
+interface DreamCompletionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  dreamId: string;
+  dreamTitle: string;
 }
 
-export const DreamDetailDialog = ({ dreamId, open, onOpenChange }: DreamDetailDialogProps) => {
-  const { dreams } = useDreams();
-  const [metadata, setMetadata] = useState<DreamMetadata | null>(null);
-  const dream = dreams.find(d => d.id === dreamId);
+export const DreamCompletionDialog = ({ open, onOpenChange, dreamId, dreamTitle }: DreamCompletionDialogProps) => {
+  const { updateDream, addDreamPhoto } = useDreams();
+  const [notes, setNotes] = useState("");
+  const [lessonsLearned, setLessonsLearned] = useState("");
+  const [rating, setRating] = useState(5);
+  const [photo, setPhoto] = useState<{ file: File; preview: string } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (dream) {
-      const stored = localStorage.getItem(`dream_${dream.id}_meta`);
-      if (stored) {
-        setMetadata(JSON.parse(stored));
-      }
-    }
-  }, [dream?.id, dream?.progress_percentage]);
+    if (open) {
+      // Trigger confetti animation
+      const duration = 3 * 1000;
+      const animationEnd = Date.now() + duration;
+      
+      const randomInRange = (min: number, max: number) => {
+        return Math.random() * (max - min) + min;
+      };
 
-  if (!dream) return null;
+      const interval = setInterval(() => {
+        const timeLeft = animationEnd - Date.now();
 
-  // Smart related dreams: score each dream on multiple factors
-  const relatedDreams = useMemo(() => {
-    const keywords = (text: string) =>
-      text.toLowerCase().split(/\W+/).filter(w => w.length > 3);
-
-    const dreamWords = new Set([
-      ...keywords(dream.title),
-      ...keywords(dream.description || ''),
-    ]);
-
-    return dreams
-      .filter(d => d.id !== dreamId)
-      .map(d => {
-        let score = 0;
-        const reasons: string[] = [];
-
-        // Same category: strong match
-        if (d.type === dream.type) { score += 3; reasons.push('Same category'); }
-
-        // Shared keywords in title/description
-        const dWords = keywords(d.title + ' ' + (d.description || ''));
-        const shared = dWords.filter(w => dreamWords.has(w));
-        if (shared.length > 0) { score += Math.min(shared.length, 3); reasons.push('Similar theme'); }
-
-        // Same priority
-        if (d.priority === dream.priority) { score += 1; reasons.push('Same importance'); }
-
-        // Both have estimated cost (financial goals)
-        if (d.estimated_cost && dream.estimated_cost) { score += 1; reasons.push('Both financial'); }
-
-        // Similar target dates (within 6 months)
-        if (d.target_date && dream.target_date) {
-          const diff = Math.abs(new Date(d.target_date).getTime() - new Date(dream.target_date).getTime());
-          const sixMonths = 1000 * 60 * 60 * 24 * 180;
-          if (diff < sixMonths) { score += 1; reasons.push('Similar timeline'); }
+        if (timeLeft <= 0) {
+          clearInterval(interval);
+          return;
         }
 
-        // Same status (both in progress etc)
-        if (d.status === dream.status && dream.status !== 'completed') { score += 1; reasons.push('Same status'); }
+        const particleCount = 50 * (timeLeft / duration);
 
-        return { dream: d, score, reason: reasons[0] || 'Related' };
-      })
-      .filter(r => r.score >= 2)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 3);
-  }, [dreams, dreamId, dream]);
+        confetti({
+          particleCount,
+          startVelocity: 30,
+          spread: 360,
+          origin: {
+            x: randomInRange(0.1, 0.9),
+            y: Math.random() - 0.2
+          },
+          colors: ['#FFD700', '#FFA500', '#FF69B4', '#00CED1', '#32CD32']
+        });
+      }, 250);
 
-  const formatValue = (value: number, unit: string) => {
-    if (unit === 'kg') return `${value.toFixed(1)} kg`;
-    return `${unit}${value.toFixed(0)}`;
+      return () => clearInterval(interval);
+    }
+  }, [open]);
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      // Upload photo if provided
+      let photoUrl: string | undefined;
+      if (photo) {
+        const fileExt = photo.file.name.split('.').pop();
+        const fileName = `${dreamId}-completion-${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('wardrobe')
+          .upload(fileName, photo.file);
+
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('wardrobe')
+            .getPublicUrl(fileName);
+          
+          photoUrl = publicUrl;
+          
+          // Add to dream_photos
+          await addDreamPhoto({
+            dream_id: dreamId,
+            photo_url: publicUrl,
+            caption: "Completion photo",
+            is_before: false,
+          });
+        }
+      }
+
+      // Update dream
+      await updateDream(dreamId, {
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+        completion_notes: notes,
+        lessons_learned: lessonsLearned,
+        rating,
+        progress_percentage: 100,
+      });
+
+      onOpenChange(false);
+      setNotes("");
+      setLessonsLearned("");
+      setRating(5);
+      setPhoto(null);
+    } catch (error) {
+      console.error('Error completing dream:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleShare = () => {
+    const shareText = `🎉 I just achieved my dream: ${dreamTitle}! ${notes ? '\n\n' + notes : ''}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: 'Dream Achieved!',
+        text: shareText,
+      }).catch(() => {
+        // Fallback to clipboard
+        navigator.clipboard.writeText(shareText);
+      });
+    } else {
+      navigator.clipboard.writeText(shareText);
+      alert('Achievement copied to clipboard!');
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">{dream.title}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2 text-2xl">
+            <Sparkles className="h-6 w-6 text-yellow-500" />
+            Congratulations! 🎉
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {dream.cover_image_url && (
-            <img 
-              src={dream.cover_image_url} 
-              alt={dream.title}
-              className="w-full h-48 object-cover rounded-lg"
+          <p className="text-lg">
+            You've achieved your dream: <strong>{dreamTitle}</strong>
+          </p>
+
+          <div className="space-y-2">
+            <Label>Rate your experience (1-5 stars)</Label>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                  className="text-3xl transition-all hover:scale-110"
+                >
+                  {star <= rating ? '⭐' : '☆'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="notes">Completion Notes</Label>
+            <Textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="How did it feel? What did you experience?"
+              rows={4}
             />
-          )}
-
-          <div className="flex gap-2 flex-wrap">
-            <Badge variant="outline">{dream.type}</Badge>
-            <Badge variant={dream.status === 'completed' ? 'default' : 'secondary'}>
-              {dream.status.replace('_', ' ')}
-            </Badge>
-            {metadata?.type === 'weight' && metadata.direction && (
-              <Badge variant={metadata.direction === 'gain' ? 'default' : 'destructive'} className="flex items-center gap-1">
-                {metadata.direction === 'gain' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                Weight {metadata.direction === 'gain' ? 'Gain' : 'Loss'} Goal
-              </Badge>
-            )}
           </div>
 
-          {dream.description && (
-            <div>
-              <h3 className="font-semibold mb-2">Description</h3>
-              <p className="text-muted-foreground">{dream.description}</p>
-            </div>
-          )}
-
-          {dream.why_important && (
-            <div>
-              <h3 className="font-semibold mb-2">Why This Matters</h3>
-              <p className="text-muted-foreground">{dream.why_important}</p>
-            </div>
-          )}
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Activity className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Progress</span>
-              </div>
-              <span className="text-sm font-bold">{dream.progress_percentage}%</span>
-            </div>
-            
-            {metadata && (
-              <Card className="bg-muted/50">
-                <CardContent className="pt-4 pb-3">
-                  <div className={`grid ${metadata.starting ? 'grid-cols-3' : 'grid-cols-2'} gap-4 text-center`}>
-                    {metadata.starting && (
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">Started At</p>
-                        <p className="font-semibold text-muted-foreground">
-                          {formatValue(metadata.starting, metadata.unit)}
-                        </p>
-                      </div>
-                    )}
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground">Current</p>
-                      <p className="font-semibold text-primary text-lg">
-                        {formatValue(metadata.current, metadata.unit)}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground">Target</p>
-                      <p className="font-semibold text-lg">
-                        {formatValue(metadata.target, metadata.unit)}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-            
-            <Progress value={dream.progress_percentage} className="h-3 [&>div]:bg-gradient-to-r [&>div]:from-pink-500 [&>div]:to-rose-500" />
-            
-            {metadata && metadata.remaining > 0 && (
-              <p className="text-sm font-medium text-center text-primary">
-                {metadata.direction === 'gain' ? '📈 Need to gain ' : '📉 Need to lose '}
-                {formatValue(metadata.remaining, metadata.unit)} to reach your goal
-              </p>
-            )}
-            {metadata && metadata.remaining <= 0 && (
-              <p className="text-sm font-medium text-center text-green-600">
-                🎉 Goal reached! Congratulations!
-              </p>
-            )}
+          <div className="space-y-2">
+            <Label htmlFor="lessons">Lessons Learned</Label>
+            <Textarea
+              id="lessons"
+              value={lessonsLearned}
+              onChange={(e) => setLessonsLearned(e.target.value)}
+              placeholder="What did you learn from this journey?"
+              rows={3}
+            />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            {dream.target_date && (
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Target Date</p>
-                  <p className="text-sm font-medium">{new Date(dream.target_date).toLocaleDateString()}</p>
-                </div>
-              </div>
-            )}
-            {dream.estimated_cost && (
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Estimated Cost</p>
-                  <p className="text-sm font-medium">${dream.estimated_cost.toFixed(2)}</p>
-                </div>
-              </div>
-            )}
-            {dream.location && (
-              <div className="flex items-center gap-2 col-span-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Location</p>
-                  <p className="text-sm font-medium">{dream.location}</p>
-                </div>
-              </div>
-            )}
+          <div className="space-y-2">
+            <Label>Add a Celebration Photo (Optional)</Label>
+            <FileUpload
+              accept="image/*"
+              onChange={(file, preview) => setPhoto({ file, preview })}
+              value={photo?.preview}
+            />
           </div>
 
-          {relatedDreams.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Target className="h-4 w-4 text-pink-500" />
-                <h3 className="font-semibold">Related Dreams</h3>
-              </div>
-              <div className="space-y-2">
-                {relatedDreams.map(({ dream: d, reason }) => (
-                  <Card key={d.id} className="bg-gradient-to-br from-pink-500/5 to-rose-500/5 border-pink-500/20">
-                    <CardContent className="py-3 px-4 flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{d.title}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <p className="text-xs text-muted-foreground capitalize">{d.status.replace('_', ' ')} · {d.progress_percentage}%</p>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-dreams/10 text-dreams font-medium">{reason}</span>
-                        </div>
-                      </div>
-                      {d.status === 'completed' && (
-                        <Badge className="bg-emerald-500/15 text-emerald-500 text-xs ml-2">✓</Badge>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {dream.status === 'completed' && (
-            <div className="border-t pt-4">
-              <h3 className="font-semibold mb-2">Completion Details</h3>
-              {dream.completed_at && (
-                <p className="text-sm text-muted-foreground mb-2">
-                  Completed on {new Date(dream.completed_at).toLocaleDateString()}
-                </p>
-              )}
-              {dream.rating && (
-                <p className="text-sm mb-2">Rating: {dream.rating}⭐</p>
-              )}
-              {dream.completion_notes && (
-                <div className="mb-2">
-                  <p className="text-sm font-medium">Notes:</p>
-                  <p className="text-sm text-muted-foreground">{dream.completion_notes}</p>
-                </div>
-              )}
-              {dream.lessons_learned && (
-                <div>
-                  <p className="text-sm font-medium">Lessons Learned:</p>
-                  <p className="text-sm text-muted-foreground">{dream.lessons_learned}</p>
-                </div>
-              )}
-            </div>
-          )}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleShare}
+              className="flex-1 gap-2"
+            >
+              <Share2 className="h-4 w-4" />
+              Share Achievement
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="flex-1"
+            >
+              {isSubmitting ? "Saving..." : "Complete Dream"}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
