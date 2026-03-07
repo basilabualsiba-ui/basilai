@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { useState, useEffect } from "react";
 import { useDreams } from "@/contexts/DreamsContext";
 import { Plus, Sparkles } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -31,6 +32,8 @@ export const AddDreamDialog = ({ open: controlledOpen, onOpenChange, editDreamId
     target_date: '',
     estimated_cost: '',
     location: '',
+    type: '',
+    priority: 'medium',
   });
 
   const isEditMode = !!editDreamId;
@@ -46,10 +49,12 @@ export const AddDreamDialog = ({ open: controlledOpen, onOpenChange, editDreamId
           target_date: dream.target_date || '',
           estimated_cost: dream.estimated_cost ? String(dream.estimated_cost) : '',
           location: dream.location || '',
+          type: dream.type || '',
+          priority: dream.priority || 'medium',
         });
       }
     } else if (!editDreamId) {
-      setFormData({ title: '', description: '', target_date: '', estimated_cost: '', location: '' });
+      setFormData({ title: '', description: '', target_date: '', estimated_cost: '', location: '', type: '', priority: 'medium' });
     }
   }, [editDreamId, open, dreams]);
 
@@ -74,7 +79,8 @@ export const AddDreamDialog = ({ open: controlledOpen, onOpenChange, editDreamId
           target_date: formData.target_date || undefined,
           estimated_cost: formData.estimated_cost ? parseFloat(formData.estimated_cost) : undefined,
           location: formData.location || undefined,
-          type: detectDreamType(formData.title, formData.description),
+          type: formData.type || detectDreamType(formData.title, formData.description),
+          priority: formData.priority,
         });
         toast.success('Dream updated!');
         setOpen(false);
@@ -97,8 +103,8 @@ export const AddDreamDialog = ({ open: controlledOpen, onOpenChange, editDreamId
 
       const dreamData = {
         ...formData,
-        type: detectedType,
-        priority: 'medium',
+        type: formData.type || detectedType,
+        priority: formData.priority || 'medium',
         estimated_cost: formData.estimated_cost ? parseFloat(formData.estimated_cost) : undefined,
         target_date: formData.target_date || undefined,
         cover_image_url: coverImageUrl,
@@ -126,7 +132,7 @@ export const AddDreamDialog = ({ open: controlledOpen, onOpenChange, editDreamId
         }
       }
 
-      setFormData({ title: '', description: '', target_date: '', estimated_cost: '', location: '' });
+      setFormData({ title: '', description: '', target_date: '', estimated_cost: '', location: '', type: '', priority: 'medium' });
       setCreateFinancialGoal(false);
       setOpen(false);
     } catch (error) {
@@ -160,7 +166,39 @@ export const AddDreamDialog = ({ open: controlledOpen, onOpenChange, editDreamId
             <Label htmlFor="description">Description</Label>
             <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Describe your dream..." rows={3} className="focus:border-dreams focus:ring-dreams/30" />
-            <p className="text-xs text-muted-foreground">💡 AI will automatically categorize your dream based on your description</p>
+            <p className="text-xs text-muted-foreground">💡 Leave category empty to let AI auto-detect it</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })}>
+                <SelectTrigger className="focus:border-dreams focus:ring-dreams/30">
+                  <SelectValue placeholder="Auto-detect" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="general">General</SelectItem>
+                  <SelectItem value="travel">Travel</SelectItem>
+                  <SelectItem value="adventure">Adventure</SelectItem>
+                  <SelectItem value="career">Career</SelectItem>
+                  <SelectItem value="personal">Personal</SelectItem>
+                  <SelectItem value="creative">Creative</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Importance</Label>
+              <Select value={formData.priority} onValueChange={(v) => setFormData({ ...formData, priority: v })}>
+                <SelectTrigger className="focus:border-dreams focus:ring-dreams/30">
+                  <SelectValue placeholder="Medium" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">🔴 High</SelectItem>
+                  <SelectItem value="medium">🟡 Medium</SelectItem>
+                  <SelectItem value="low">🟢 Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
