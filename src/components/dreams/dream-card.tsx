@@ -150,10 +150,10 @@ export const DreamCard = ({ dream, onEdit }: DreamCardProps) => {
                 <span>Goal: {formatValue(metadata.target, metadata.unit)}</span>
               </div>
             )}
-            <div className="relative h-2 rounded-full bg-muted/50 overflow-hidden">
+            <div className="relative h-2 rounded-full bg-white/20 overflow-hidden">
               <div 
-                className="absolute inset-y-0 left-0 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full transition-all duration-500"
-                style={{ width: `${dream.progress_percentage}%` }}
+                className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+                style={{ width: `${dream.progress_percentage}%`, background: 'linear-gradient(to right, #ec4899, #f43f5e, rgba(244,63,94,0.3))' }}
               />
             </div>
             {metadata && metadata.remaining > 0 && (
