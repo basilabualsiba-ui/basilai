@@ -101,6 +101,7 @@ const TVTracker = () => {
   const [syncing, setSyncing] = useState(false);
   const [movieRatingValue, setMovieRatingValue] = useState(0);
   const [episodeRatingValue, setEpisodeRatingValue] = useState(0);
+  const [selectedMediaExtra, setSelectedMediaExtra] = useState<{ overview?: string; year?: string } | null>(null);
 
   const loadLibrary = async () => {
     const { data } = await supabase.from('media').select('*').order('created_at', { ascending: false });
@@ -355,10 +356,29 @@ const TVTracker = () => {
     click();
     try {
       const path = rec.media_type === 'movie' ? `/movie/${rec.id}` : `/tv/${rec.id}`;
-      const details = await tmdbFetch(path);
-      setRecDetail({ ...rec, ...details, title: details.title || details.name || rec.title || rec.name });
+      const videosPath = rec.media_type === 'movie' ? `/movie/${rec.id}/videos` : `/tv/${rec.id}/videos`;
+      const [details, videos] = await Promise.all([tmdbFetch(path), tmdbFetch(videosPath)]);
+      const trailer = (videos.results || []).find((v: any) => v.type === 'Trailer' && v.site === 'YouTube');
+      const trailer_url = trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : null;
+      setRecDetail({ ...rec, ...details, title: details.title || details.name || rec.title || rec.name, trailer_url });
     } catch {
       setRecDetail(rec);
+    }
+  };
+
+  const openLibraryDetail = async (item: MediaItem) => {
+    click();
+    setSelectedMedia(item);
+    setSelectedMediaExtra(null);
+    try {
+      const path = item.type === 'movie' ? `/movie/${item.tmdb_id}` : `/tv/${item.tmdb_id}`;
+      const details = await tmdbFetch(path);
+      const year = item.type === 'movie'
+        ? details.release_date?.slice(0, 4)
+        : details.first_air_date?.slice(0, 4);
+      setSelectedMediaExtra({ overview: details.overview || '', year });
+    } catch {
+      setSelectedMediaExtra({});
     }
   };
 
@@ -469,7 +489,7 @@ const TVTracker = () => {
                 {filteredLibrary.map((item) => {
                   const progress = item.type === 'series' ? getSeriesProgress(item.id) : null;
                   return (
-                    <Card key={item.id} className="border-border/30 overflow-hidden cursor-pointer hover:border-cyan-500/30 transition-all" onClick={() => setSelectedMedia(item)}>
+                    <Card key={item.id} className="border-border/30 overflow-hidden cursor-pointer hover:border-cyan-500/30 transition-all" onClick={() => openLibraryDetail(item)}>
                       <div className="relative">
                         {item.poster_url ? (
                           <img src={item.poster_url} alt={item.title} className="w-full aspect-[2/3] object-cover" />
@@ -610,7 +630,7 @@ const TVTracker = () => {
       </div>
 
       {/* Media Detail Dialog */}
-      <Dialog open={!!selectedMedia} onOpenChange={(open) => !open && setSelectedMedia(null)}>
+      <Dialog open={!!selectedMedia} onOpenChange={(open) => { if (!open) { setSelectedMedia(null); setSelectedMediaExtra(null); } }}>
         <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto p-0">
           {selectedMedia && (
             <>
@@ -629,11 +649,15 @@ const TVTracker = () => {
                     <Badge variant="outline">{selectedMedia.type === 'movie' ? 'Movie' : 'Series'}</Badge>
                     {selectedMedia.runtime && <Badge variant="outline">{selectedMedia.runtime} min</Badge>}
                     {selectedMedia.total_seasons && <Badge variant="outline">{selectedMedia.total_seasons} Seasons</Badge>}
+                    {selectedMediaExtra?.year && <Badge variant="outline">{selectedMediaExtra.year}</Badge>}
                   </div>
                   {selectedMedia.genres.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {selectedMedia.genres.map(g => <Badge key={g} variant="secondary" className="text-[10px]">{g}</Badge>)}
                     </div>
+                  )}
+                  {selectedMediaExtra?.overview && (
+                    <p className="text-sm text-muted-foreground leading-relaxed mt-2">{selectedMediaExtra.overview}</p>
                   )}
                 </div>
                 {selectedMedia.trailer_url && (
@@ -731,6 +755,11 @@ const TVTracker = () => {
                   )}
                 </div>
                 {recDetail.overview && <p className="text-sm text-muted-foreground leading-relaxed">{recDetail.overview}</p>}
+                {(recDetail as any).trailer_url && (
+                  <a href={(recDetail as any).trailer_url} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" className="w-full rounded-xl gap-2"><Play className="h-4 w-4" /> Watch Trailer <ExternalLink className="h-3 w-3" /></Button>
+                  </a>
+                )}
                 <Button className="w-full rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white"
                   onClick={() => addToLibrary(recDetail, recDetail.media_type === 'movie' ? 'movie' : 'series')}>
                   <Plus className="h-4 w-4 mr-2" /> Add to Library
