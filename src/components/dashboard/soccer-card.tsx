@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useSound } from "@/hooks/useSound";
+import { scheduleMatchPush } from "@/services/PushService";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Team { name: string; shortName: string; logo: string; score: string; winner: boolean; }
@@ -17,7 +18,6 @@ interface SoccerData {
 }
 
 const PROXY = "https://sfreodzibxmniiccqpcl.supabase.co/functions/v1/soccer-proxy";
-const RM_CREST = "https://a.espncdn.com/i/teamlogos/soccer/500/86.png";
 
 const COMP_COLORS: Record<string, string> = {
   "La Liga": "#ef4444",
@@ -65,11 +65,15 @@ export function SoccerCard() {
   useEffect(() => {
     fetch(PROXY)
       .then(r => r.json())
-      .then(d => { setData(d); setLoading(false); })
+      .then(d => {
+        setData(d);
+        setLoading(false);
+        // Schedule push notification 30 min before next match
+        if (d?.upcomingMatches?.[0]) scheduleMatchPush(d.upcomingMatches[0]).catch(console.error);
+      })
       .catch(() => setLoading(false));
   }, []);
 
-  const rmStanding = data?.standings?.find(s => s.isRealMadrid);
   const live     = data?.liveMatches     || [];
   const upcoming = data?.upcomingMatches || [];
   const past     = data?.pastMatches     || [];
@@ -136,14 +140,6 @@ export function SoccerCard() {
         style={{ background: "radial-gradient(circle, #c8a84b, transparent)" }} />
 
       <div className="relative p-5">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <img src={RM_CREST} className="h-9 w-9 object-contain drop-shadow-lg" alt="Real Madrid" />
-            <div>
-              <p className="text-sm font-black text-white tracking-wider">REAL MADRID</p>
-              <p className="text-[10px] text-white/40 uppercase tracking-widest">2025/26 Season</p>
-            </div>
           </div>
           {rmStanding && (
             <div className="text-right">
