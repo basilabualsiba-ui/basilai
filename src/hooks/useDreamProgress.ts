@@ -75,17 +75,27 @@ export const useDreamProgress = () => {
           if (currentWeight < target) actualDirection = 'gain';
           else if (currentWeight > target) actualDirection = 'loss';
           
-          let progress: number;
           const remaining = Math.abs(target - currentWeight);
-          
+          let progress: number;
+
           if (actualDirection === 'gain') {
             const totalToGain = target - startingWeight;
             const gained = currentWeight - startingWeight;
-            progress = totalToGain > 0 ? Math.round((gained / totalToGain) * 100) : 0;
+            // If startingWeight >= target (bad data), fall back to current/target ratio
+            if (totalToGain <= 0) {
+              progress = currentWeight >= target ? 100 : Math.round((currentWeight / target) * 100);
+            } else {
+              progress = Math.round((gained / totalToGain) * 100);
+            }
           } else {
             const totalToLose = startingWeight - target;
             const lost = startingWeight - currentWeight;
-            progress = totalToLose > 0 ? Math.round((lost / totalToLose) * 100) : 0;
+            // If startingWeight <= target (bad data), fall back to inverse ratio
+            if (totalToLose <= 0) {
+              progress = currentWeight <= target ? 100 : Math.round(((startingWeight - currentWeight) / startingWeight) * 100);
+            } else {
+              progress = Math.round((lost / totalToLose) * 100);
+            }
           }
           
           calculatedProgress = Math.max(0, Math.min(progress, 100));
