@@ -2,7 +2,6 @@ import { Logo } from "@/components/ui/logo";
 import { SettingsDialog } from "@/components/ui/settings-dialog";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
-import { useEffect } from 'react';
 import { useSound } from "@/hooks/useSound";
 import { useWeather } from "@/hooks/useWeather";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
