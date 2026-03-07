@@ -54,45 +54,37 @@ export const useDreamProgress = () => {
         if (weightGoal && currentWeight !== null && bodyStats && bodyStats.length > 0) {
           const { target, direction } = weightGoal;
           
-          // Find starting weight: weight closest to dream creation date
-          const dreamCreatedAt = new Date(dream.created_at).getTime();
-          let startingWeight: number;
-          
-          // Find the body stat recorded closest to the dream creation date
-          let closestStat = bodyStats[0];
-          let closestDiff = Math.abs(new Date(bodyStats[0].recorded_at).getTime() - dreamCreatedAt);
-          for (const stat of bodyStats) {
-            const diff = Math.abs(new Date(stat.recorded_at).getTime() - dreamCreatedAt);
-            if (diff < closestDiff) {
-              closestDiff = diff;
-              closestStat = stat;
-            }
-          }
-          startingWeight = Number(closestStat.weight);
-          
-          // Auto-detect direction
+          // Auto-detect direction based on current vs target
           let actualDirection = direction;
           if (currentWeight < target) actualDirection = 'gain';
           else if (currentWeight > target) actualDirection = 'loss';
-          
+
+          // Use the most meaningful starting point:
+          // Gain goals → lowest ever recorded weight (full journey upward)
+          // Loss goals → highest ever recorded weight (full journey downward)
+          let startingWeight: number;
+          if (actualDirection === 'gain') {
+            startingWeight = Math.min(...bodyStats.map(s => Number(s.weight)));
+          } else {
+            startingWeight = Math.max(...bodyStats.map(s => Number(s.weight)));
+          }
+
           const remaining = Math.abs(target - currentWeight);
           let progress: number;
 
           if (actualDirection === 'gain') {
             const totalToGain = target - startingWeight;
             const gained = currentWeight - startingWeight;
-            // If startingWeight >= target (bad data), fall back to current/target ratio
-            if (totalToGain <= 0) {
-              progress = currentWeight >= target ? 100 : Math.round((currentWeight / target) * 100);
+            if (totalToGain <= 0 || gained <= 0) {
+              progress = 0;
             } else {
               progress = Math.round((gained / totalToGain) * 100);
             }
           } else {
             const totalToLose = startingWeight - target;
             const lost = startingWeight - currentWeight;
-            // If startingWeight <= target (bad data), fall back to inverse ratio
-            if (totalToLose <= 0) {
-              progress = currentWeight <= target ? 100 : Math.round(((startingWeight - currentWeight) / startingWeight) * 100);
+            if (totalToLose <= 0 || lost <= 0) {
+              progress = 0;
             } else {
               progress = Math.round((lost / totalToLose) * 100);
             }
