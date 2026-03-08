@@ -2471,6 +2471,35 @@ export function AssistantBubble() {
 
   // ── Chip click: for time clarification, re-run with original question + time period ──
   const handleChipClick = useCallback(async (chip: string) => {
+    // ── Handle fuzzy suggestion confirmation ──
+    if (pendingSuggestion && (chip === "✅ أيوا" || chip === "❌ لا")) {
+      addMsg({ role: "user", content: chip });
+      if (chip === "❌ لا") {
+        setPendingSuggestion(null);
+        addMsg({ role: "assistant", content: "ما فهمت سؤالك، جرب بطريقة ثانية 🤔" });
+        return;
+      }
+      // Save the alias and execute
+      saveLearnedAlias(pendingSuggestion.userText, pendingSuggestion.intentId);
+      setLoading(true);
+      try {
+        const result = await processQuestion(pendingSuggestion.keyword);
+        addMsg({
+          role: "assistant",
+          content: result.content,
+          needs_clarification: result.needs_clarification,
+          clarification_type: result.clarification_type,
+          reply_chips: result.reply_chips,
+        });
+      } catch {
+        addMsg({ role: "assistant", content: "صار خطأ، جرب مرة ثانية 😕" });
+      } finally {
+        setLoading(false);
+        setPendingSuggestion(null);
+      }
+      return;
+    }
+
     // ── Handle expense confirmation ──
     if (pendingExpense && (chip === "✅ أكيد سجلها" || chip === "❌ لا إلغاء")) {
       addMsg({ role: "user", content: chip });
