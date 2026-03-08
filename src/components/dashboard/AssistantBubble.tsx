@@ -694,7 +694,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── NET BALANCE (Income - Expenses) ───────────────────────────────────────
   intents.push({
     id: "net_balance",
-    keywords: ["صافي", "الصافي", "دخل مقابل مصاريف", "ربح", "خسارة"],
+    keywords: ["صافي", "الصافي", "دخل مقابل مصاريف", "ربح", "خسارة", "صافي الحساب", "كم باقي صافي"],
     needsTime: true,
     priority: 66,
     handler: async (period) => {
