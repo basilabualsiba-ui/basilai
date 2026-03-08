@@ -227,6 +227,18 @@ function fmtNum(n: number): string {
   return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
 }
 
+function iconToEmoji(icon: string): string {
+  const map: Record<string, string> = {
+    Wallet: "👛", PiggyBank: "🐷", CreditCard: "💳",
+    Banknote: "💵", Building2: "🏢", Landmark: "🏛️",
+    Car: "🚗", Home: "🏠", ShoppingCart: "🛒",
+    Coffee: "☕", Gamepad2: "🎮", Gift: "🎁",
+    Plane: "✈️", Music: "🎵", BookOpen: "📖", Camera: "📷",
+  };
+  if (!icon || icon.startsWith("http")) return "💰";
+  return map[icon] || "💰";
+}
+
 // ─── Intent matching engine ─────────────────────────────────────────────────
 type IntentHandler = (period: TimePeriod | null, matchedName?: string, originalText?: string) => Promise<string>;
 
@@ -685,11 +697,11 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
       const txt = (originalText || "").toLowerCase();
       const specificAcc = data.find(a => txt.includes(a.name.toLowerCase()));
       if (specificAcc) {
-        return `${specificAcc.icon || "💰"} ${specificAcc.name}: ${fmtNum(Number(specificAcc.amount))} ${specificAcc.currency}`;
+        return `${iconToEmoji(specificAcc.icon)} ${specificAcc.name}: ${fmtNum(Number(specificAcc.amount))} ${specificAcc.currency}`;
       }
 
       const total = data.reduce((s, a) => s + Number(a.amount), 0);
-      const lines = data.map(a => `${a.icon || "💰"} ${a.name}: ${fmtNum(Number(a.amount))} ${a.currency}`);
+      const lines = data.map(a => `${iconToEmoji(a.icon)} ${a.name}: ${fmtNum(Number(a.amount))} ${a.currency}`);
       return `🏦 حساباتك:\n${lines.join("\n")}\n\n💰 المجموع: ${fmtNum(total)} ₪`;
     },
   });
