@@ -342,7 +342,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── TOP SPENDING CATEGORIES ───────────────────────────────────────────────
   intents.push({
     id: "top_spending_categories",
-    keywords: ["أكثر فئة", "أكثر فئات", "اكثر فئة", "فئات المصاريف", "حسب الفئات"],
+    keywords: ["أكثر فئة", "أكثر فئات", "اكثر فئة", "فئات المصاريف", "حسب الفئات", "حسب الفئة", "توزيع حسب الفئات"],
     needsTime: true,
     priority: 85,
     handler: async (period) => {
