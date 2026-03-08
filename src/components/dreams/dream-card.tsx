@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Edit, Trash2, TrendingUp, TrendingDown, Target, Calendar, MapPin, Star as StarIcon } from "lucide-react";
+import { CheckCircle2, Edit, Trash2, TrendingUp, TrendingDown, Target, Calendar, MapPin, Star as StarIcon, Dumbbell, Wallet, Scale, Pill } from "lucide-react";
 import { useState, useEffect } from "react";
 import { DreamCompletionDialog } from "./dream-completion-dialog";
 import { DreamDetailDialog } from "./dream-detail-dialog";
@@ -88,7 +88,15 @@ export const DreamCard = ({ dream, onEdit }: DreamCardProps) => {
 
   const formatValue = (value: number, unit: string) => {
     if (unit === 'kg') return `${value.toFixed(1)} kg`;
+    if (unit === 'workouts') return `${value} workouts`;
     return `${unit}${value.toFixed(0)}`;
+  };
+
+  const linkedModuleConfig: Record<string, { icon: React.ElementType; label: string; color: string }> = {
+    weight: { icon: Scale, label: 'Weight Stats', color: 'bg-blue-500/15 text-blue-600 border-blue-500/30' },
+    financial: { icon: Wallet, label: 'Financial', color: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30' },
+    gym: { icon: Dumbbell, label: 'Gym', color: 'bg-orange-500/15 text-orange-600 border-orange-500/30' },
+    supplements: { icon: Pill, label: 'Supplements', color: 'bg-purple-500/15 text-purple-600 border-purple-500/30' },
   };
 
   const isCompleted = dream.status === 'completed';
@@ -107,7 +115,17 @@ export const DreamCard = ({ dream, onEdit }: DreamCardProps) => {
             <Badge variant="outline" className="text-xs font-medium">
               {getTypeLabel(dream.type)}
             </Badge>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-wrap">
+              {metadata?.linkedModule && linkedModuleConfig[metadata.linkedModule] && (() => {
+                const config = linkedModuleConfig[metadata.linkedModule!];
+                const Icon = config.icon;
+                return (
+                  <Badge className={`flex items-center gap-1 text-xs ${config.color}`}>
+                    <Icon className="h-3 w-3" />
+                    {config.label}
+                  </Badge>
+                );
+              })()}
               {metadata?.type === 'weight' && metadata.direction && (
                 <Badge className={`flex items-center gap-1 text-xs ${
                   metadata.direction === 'gain' 
