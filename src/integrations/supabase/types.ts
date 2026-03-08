@@ -74,6 +74,39 @@ export type Database = {
         }
         Relationships: []
       }
+      assistant_memory: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          id: string
+          keywords: string[] | null
+          question: string
+          sql_pattern: string | null
+          teaching: string
+          use_count: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          keywords?: string[] | null
+          question: string
+          sql_pattern?: string | null
+          teaching: string
+          use_count?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          keywords?: string[] | null
+          question?: string
+          sql_pattern?: string | null
+          teaching?: string
+          use_count?: number | null
+        }
+        Relationships: []
+      }
       assistant_pending_queries: {
         Row: {
           created_at: string | null
@@ -1151,6 +1184,69 @@ export type Database = {
           sunrise?: string | null
           sunset?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          auth: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          auth?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      scheduled_pushes: {
+        Row: {
+          body: string
+          created_at: string | null
+          data: Json | null
+          id: string
+          send_at: string
+          sent: boolean | null
+          tag: string
+          title: string
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          send_at: string
+          sent?: boolean | null
+          tag: string
+          title: string
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          send_at?: string
+          sent?: boolean | null
+          tag?: string
+          title?: string
         }
         Relationships: []
       }
