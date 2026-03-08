@@ -115,7 +115,17 @@ export const DreamCard = ({ dream, onEdit }: DreamCardProps) => {
             <Badge variant="outline" className="text-xs font-medium">
               {getTypeLabel(dream.type)}
             </Badge>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-wrap">
+              {metadata?.linkedModule && linkedModuleConfig[metadata.linkedModule] && (() => {
+                const config = linkedModuleConfig[metadata.linkedModule!];
+                const Icon = config.icon;
+                return (
+                  <Badge className={`flex items-center gap-1 text-xs ${config.color}`}>
+                    <Icon className="h-3 w-3" />
+                    {config.label}
+                  </Badge>
+                );
+              })()}
               {metadata?.type === 'weight' && metadata.direction && (
                 <Badge className={`flex items-center gap-1 text-xs ${
                   metadata.direction === 'gain' 

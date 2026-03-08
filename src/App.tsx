@@ -39,6 +39,7 @@ function AppContent() {
   return (
     <BrowserRouter>
       <TooltipProvider>
+        <OfflineIndicator />
         <FirstTimePermissions />
         <Toaster />
         <Sonner />
