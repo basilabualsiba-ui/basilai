@@ -1181,7 +1181,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── MOST USED ACCOUNT ─────────────────────────────────────────────────────
   intents.push({
     id: "most_used_account",
-    keywords: ["أكثر حساب صرفت", "اكثر حساب", "الحساب اللي أكثر", "الحساب اللي اكثر"],
+    keywords: ["أكثر حساب صرفت", "اكثر حساب", "الحساب اللي أكثر", "الحساب اللي اكثر", "من وين أكثر صرفت"],
     needsTime: true,
     priority: 80,
     handler: async (period) => {
