@@ -988,6 +988,27 @@ export function AssistantBubble() {
         return { content: result };
       }
 
+      // ── Special handling for last transaction by account ──
+      if (intent.id === "last_transaction_by_account") {
+        // Try to find account name in text
+        const { data: accounts } = await supabase.from("accounts").select("id, name");
+        if (accounts && accounts.length > 0) {
+          const lower = textForMatch.toLowerCase();
+          const matched = accounts.find(a => lower.includes(a.name.toLowerCase()));
+          if (matched) {
+            const { data } = await supabase.from("transactions").select("amount, date, time, description, type, category_id, subcategory_id, categories(name), subcategories(name)").eq("type", "expense").eq("account_id", matched.id).order("date", { ascending: false }).order("time", { ascending: false }).limit(1);
+            if (!data || data.length === 0) return { content: `ما في مصاريف من حساب ${matched.name} بعد 📭` };
+            const t = data[0] as any;
+            const place = t.subcategories?.name || t.categories?.name || "غير محدد";
+            return { content: `💳 آخر مصروف من ${matched.name}:\n💰 ${fmtNum(Number(t.amount))} ₪\n📍 ${place}${t.description ? `\n📝 ${t.description}` : ""}\n📅 ${t.date}${t.time ? " " + t.time.substring(0, 5) : ""}` };
+          }
+          // Account not found, list available accounts
+          const names = accounts.map(a => a.name).join("، ");
+          return { content: `ما لقيت الحساب 🤔\nحساباتك: ${names}\nجرب: شو آخر اشي صرفتو بال[اسم الحساب]` };
+        }
+        return { content: "ما في حسابات مسجلة بعد 🏦" };
+      }
+
       // If intent needs time and none provided, ask for clarification
       if (intent.needsTime && !period) {
         setPendingQuestion(text);
