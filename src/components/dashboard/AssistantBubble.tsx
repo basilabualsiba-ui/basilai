@@ -1694,11 +1694,22 @@ function MsgBubble({ msg, onChipClick }: { msg: Msg; onChipClick: (text: string)
 
       {msg.reply_chips && msg.reply_chips.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          {msg.reply_chips.map((chip) => (
-            <button key={chip} onClick={() => onChipClick(chip)} className="text-[11px] px-3 py-1.5 rounded-full font-medium transition-all active:scale-95 hover:brightness-110" style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.65)" }}>
-              {chip}
-            </button>
-          ))}
+          {msg.reply_chips.map((chip) => {
+            const isConfirm = chip.startsWith("✅");
+            const isCancel = chip.startsWith("❌");
+            const chipStyle = isConfirm
+              ? { background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.4)", color: "#22c55e" }
+              : isCancel
+              ? { background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.4)", color: "#ef4444" }
+              : msg.clarification_type === "account"
+              ? { background: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.35)", color: "#60a5fa" }
+              : { background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.65)" };
+            return (
+              <button key={chip} onClick={() => onChipClick(chip)} className="text-[11px] px-3 py-1.5 rounded-full font-medium transition-all active:scale-95 hover:brightness-110" style={chipStyle}>
+                {chip}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
