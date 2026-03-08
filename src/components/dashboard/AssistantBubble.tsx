@@ -501,7 +501,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── CURRENT WEIGHT ────────────────────────────────────────────────────────
   intents.push({
     id: "current_weight",
-    keywords: ["وزني", "وزن", "كيلو", "الوزن"],
+    keywords: ["وزني", "وزن", "كيلو", "الوزن", "كم وزني", "شو وزني", "وزني هلق", "وزني الحالي", "كم وزني هلق"],
     needsTime: false,
     priority: 75,
     handler: async () => {
