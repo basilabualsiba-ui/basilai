@@ -1981,22 +1981,83 @@ export function AssistantBubble() {
 
   // ── Chip click: for time clarification, re-run with original question + time period ──
   const handleChipClick = useCallback(async (chip: string) => {
-    // Check if this is a time chip for a pending question
+    // ── Handle expense confirmation ──
+    if (pendingExpense && (chip === "✅ أكيد سجلها" || chip === "❌ لا إلغاء")) {
+      addMsg({ role: "user", content: chip });
+      if (chip === "❌ لا إلغاء") {
+        setPendingExpense(null);
+        addMsg({ role: "assistant", content: "تم الإلغاء ❌" });
+        return;
+      }
+      // Insert the transaction
+      setLoading(true);
+      try {
+        const now = new Date();
+        const { error } = await supabase.from("transactions").insert({
+          amount: pendingExpense.amount,
+          type: "expense",
+          date: format(now, "yyyy-MM-dd"),
+          time: format(now, "HH:mm:ss"),
+          account_id: pendingExpense.account_id!,
+          category_id: pendingExpense.category_id || null,
+          subcategory_id: pendingExpense.subcategory_id || null,
+          description: pendingExpense.description || null,
+        });
+        if (error) throw error;
+
+        // Update account balance
+        const { data: acc } = await supabase.from("accounts").select("amount").eq("id", pendingExpense.account_id!).single();
+        if (acc) {
+          await supabase.from("accounts").update({ amount: Number(acc.amount) - pendingExpense.amount }).eq("id", pendingExpense.account_id!);
+        }
+
+        const catLabel = pendingExpense.subcategory_name || pendingExpense.category_name || pendingExpense.description || "";
+        addMsg({ role: "assistant", content: `✅ تم تسجيل ${fmtNum(pendingExpense.amount)} ₪ على ${catLabel} من ${pendingExpense.account_name}!\n📅 ${format(now, "yyyy-MM-dd")} ${format(now, "HH:mm")}` });
+        setPendingExpense(null);
+      } catch (err) {
+        console.error("Insert error:", err);
+        addMsg({ role: "assistant", content: "صار خطأ بالتسجيل 😕 جرب مرة ثانية" });
+        setPendingExpense(null);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // ── Handle account selection for pending expense ──
+    if (pendingExpense && !pendingExpense.account_id) {
+      const selectedAcc = accountsList.find(a => a.name === chip);
+      if (selectedAcc) {
+        addMsg({ role: "user", content: chip });
+        const updated = { ...pendingExpense, account_id: selectedAcc.id, account_name: selectedAcc.name };
+        setPendingExpense(updated);
+        const catLabel = updated.subcategory_name || updated.category_name || updated.description || "";
+        addMsg({
+          role: "assistant",
+          content: `🧾 تأكيد الصرفة:\n💰 ${fmtNum(updated.amount)} ₪\n📍 ${catLabel}\n🏦 ${selectedAcc.name}\n📅 ${format(new Date(), "yyyy-MM-dd")}\n\nمتأكد؟`,
+          needs_clarification: true,
+          clarification_type: "confirm_expense",
+          reply_chips: ["✅ أكيد سجلها", "❌ لا إلغاء"],
+        });
+        return;
+      }
+    }
+
+    // ── Time chip for pending question ──
     if (pendingQuestion && TIME_CHIPS.includes(chip)) {
       addMsg({ role: "user", content: chip });
       setLoading(true);
       setPendingQuestion(null);
 
       try {
-        // Parse the time period from the chip
         const { period } = detectTimePeriod(chip);
-        // Re-run the original question with the forced time period
         const result = await processQuestion(pendingQuestion, period || undefined);
         addMsg({
           role: "assistant",
           content: result.content,
           needs_clarification: result.needs_clarification,
           clarification_type: result.clarification_type,
+          reply_chips: result.reply_chips,
         });
       } catch {
         addMsg({ role: "assistant", content: "صار خطأ، جرب مرة ثانية 😕" });
@@ -2007,7 +2068,7 @@ export function AssistantBubble() {
       // Generic chip → send as new question
       callAssistant(chip);
     }
-  }, [pendingQuestion, processQuestion, callAssistant]);
+  }, [pendingQuestion, pendingExpense, accountsList, processQuestion, callAssistant]);
 
   const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
