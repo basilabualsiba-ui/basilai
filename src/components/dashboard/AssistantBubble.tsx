@@ -290,7 +290,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── TOP SPENDING PLACES ───────────────────────────────────────────────────
   intents.push({
     id: "top_spending_places",
-    keywords: ["أكثر مكان", "وين صرفت", "وين أكثر", "أكثر مكان صرفت", "اكثر مكان"],
+    keywords: ["أكثر مكان", "وين صرفت", "وين أكثر", "أكثر مكان صرفت", "اكثر مكان", "حسب الأماكن", "حسب الاماكن"],
     needsTime: true,
     priority: 90,
     handler: async (period) => {
@@ -314,7 +314,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── TOP SPENDING CATEGORIES ───────────────────────────────────────────────
   intents.push({
     id: "top_spending_categories",
-    keywords: ["أكثر فئة", "أكثر فئات", "اكثر فئة", "فئات المصاريف"],
+    keywords: ["أكثر فئة", "أكثر فئات", "اكثر فئة", "فئات المصاريف", "حسب الفئات"],
     needsTime: true,
     priority: 85,
     handler: async (period) => {
@@ -1810,6 +1810,7 @@ export function AssistantBubble() {
   const [catSubData, setCatSubData] = useState<{ cats: CategoryRef[]; subs: SubcategoryRef[] }>({ cats: [], subs: [] });
   const [pendingExpense, setPendingExpense] = useState<PendingExpense | null>(null);
   const [accountsList, setAccountsList] = useState<{ id: string; name: string }[]>([]);
+  const lastPeriodRef = useRef<TimePeriod | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -1845,13 +1846,19 @@ export function AssistantBubble() {
 
   // ── Core: process question locally ──────────────────────────────────────
   const processQuestion = useCallback(async (text: string, forcedPeriod?: TimePeriod) => {
-    // Convert Arabic/Eastern numerals to Western before processing
+    // Convert Arabic/Eastern numerals to Western and strip emoji prefixes from chips
     const arabicToWestern = (s: string) => s.replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
-    const normalizedText = arabicToWestern(text);
+    const stripEmoji = (s: string) => s.replace(/^[\u{1F300}-\u{1FAD6}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{200D}\u{20E3}]+\s*/u, "");
+    const normalizedText = arabicToWestern(stripEmoji(text));
 
     const { period: detectedPeriod, cleaned } = detectTimePeriod(normalizedText);
-    const period = forcedPeriod || detectedPeriod;
+    const period = forcedPeriod || detectedPeriod || lastPeriodRef.current;
     const textForMatch = cleaned || normalizedText;
+    
+    // Store last used period for follow-up questions
+    if (forcedPeriod || detectedPeriod) {
+      lastPeriodRef.current = forcedPeriod || detectedPeriod;
+    }
 
     // ── Smart expense detection: "صرفت 50 على أكل" or "30 شيكل قهوة" ──
     const expensePatterns = [
@@ -2020,6 +2027,42 @@ export function AssistantBubble() {
         };
       }
       const reply = await intent.handler(period, undefined, normalizedText);
+      
+      // Add follow-up chips for spending-related intents
+      const spendingIntents = ["total_spending", "daily_average", "monthly_comparison", "top_spending_categories", "top_spending_places", "net_income_expense"];
+      if (spendingIntents.includes(intent.id) && period) {
+        // Fetch top subcategories for this period to suggest drill-down
+        let chipQ = supabase.from("transactions").select("subcategory_id, subcategories(name), amount").eq("type", "expense");
+        if (period.from) chipQ = chipQ.gte("date", period.from);
+        if (period.to) chipQ = chipQ.lte("date", period.to);
+        const { data: chipData } = await chipQ.limit(500);
+        if (chipData && chipData.length > 0) {
+          const bySub = new Map<string, { name: string; total: number }>();
+          for (const t of chipData as any[]) {
+            const subName = t.subcategories?.name;
+            if (subName) {
+              const prev = bySub.get(subName) || { name: subName, total: 0 };
+              prev.total += Number(t.amount);
+              bySub.set(subName, prev);
+            }
+          }
+          const topSubs = [...bySub.values()].sort((a, b) => b.total - a.total).slice(0, 5);
+          if (topSubs.length > 0) {
+            const chips = topSubs.map(s => `📍 ${s.name}`);
+            chips.push("📊 حسب الفئات");
+            chips.push("📍 حسب الأماكن");
+            return { content: reply, reply_chips: chips };
+          }
+        }
+      }
+      
+      // Add follow-up chips for specific subcategory/category spending
+      if ((intent.id.startsWith("spending_at_") || intent.id.startsWith("spending_cat_")) && period) {
+        const periodLabel = period.label || "";
+        const chips = [`📊 كم صرفت ${periodLabel}`, `📍 أكثر الأماكن ${periodLabel}`, `📊 أكثر الفئات ${periodLabel}`];
+        return { content: reply, reply_chips: chips };
+      }
+      
       return { content: reply };
     }
 
