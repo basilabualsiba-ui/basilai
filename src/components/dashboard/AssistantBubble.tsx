@@ -625,7 +625,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── ACTIVE DREAMS ─────────────────────────────────────────────────────────
   intents.push({
     id: "active_dreams",
-    keywords: ["أحلام", "احلام", "أحلامي", "احلامي"],
+    keywords: ["أحلام", "احلام", "أحلامي", "احلامي", "أهدافي", "اهدافي", "طموحاتي"],
     needsTime: false,
     priority: 70,
     handler: async () => {
