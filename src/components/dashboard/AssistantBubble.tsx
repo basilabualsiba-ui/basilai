@@ -1043,7 +1043,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── TRANSACTIONS COUNT ────────────────────────────────────────────────────
   intents.push({
     id: "transactions_count",
-    keywords: ["كم معاملة", "عدد المعاملات", "عدد معاملات"],
+    keywords: ["كم معاملة", "عدد المعاملات", "عدد معاملات", "كم عملية"],
     needsTime: true,
     priority: 79,
     handler: async (period) => {
