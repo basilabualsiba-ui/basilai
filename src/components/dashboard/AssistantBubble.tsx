@@ -1275,7 +1275,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── TOTAL WORKOUT HOURS ───────────────────────────────────────────────────
   intents.push({
     id: "total_workout_hours",
-    keywords: ["ساعة تمرين", "ساعات تمرين", "كم ساعة تمرين"],
+    keywords: ["ساعة تمرين", "ساعات تمرين", "كم ساعة تمرين", "كم ساعة اشتغلت"],
     needsTime: true,
     priority: 78,
     handler: async (period) => {
