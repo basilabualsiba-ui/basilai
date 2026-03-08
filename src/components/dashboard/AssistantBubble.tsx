@@ -658,7 +658,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── FAJR COUNT ────────────────────────────────────────────────────────────
   intents.push({
     id: "fajr_count",
-    keywords: ["فجر", "صلاة الفجر"],
+    keywords: ["فجر", "صلاة الفجر", "كم فجر صليت"],
     needsTime: true,
     priority: 78,
     handler: async (period) => {
