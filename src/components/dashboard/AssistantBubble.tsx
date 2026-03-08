@@ -1489,7 +1489,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── COMPLETED DREAMS ──────────────────────────────────────────────────────
-  intents.push({ id: "completed_dreams", keywords: ["كم حلم حققت", "أحلام محققة", "احلام محققة"], needsTime: false, priority: 72,
+  intents.push({ id: "completed_dreams", keywords: ["كم حلم حققت", "أحلام محققة", "احلام محققة", "كم هدف حققت"], needsTime: false, priority: 72,
     handler: async () => {
       const { data } = await supabase.from("dreams").select("title, completed_at, rating").eq("status", "completed").order("completed_at", { ascending: false });
       if (!data || data.length === 0) return "ما حققت أي حلم بعد 🌟";
