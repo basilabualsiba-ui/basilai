@@ -228,6 +228,8 @@ function fmtNum(n: number): string {
 }
 
 function iconToEmoji(icon: string): string {
+  if (!icon) return "💰";
+  if (icon.startsWith("http")) return `[img:${icon}]`;
   const map: Record<string, string> = {
     Wallet: "👛", PiggyBank: "🐷", CreditCard: "💳",
     Banknote: "💵", Building2: "🏢", Landmark: "🏛️",
@@ -235,7 +237,6 @@ function iconToEmoji(icon: string): string {
     Coffee: "☕", Gamepad2: "🎮", Gift: "🎁",
     Plane: "✈️", Music: "🎵", BookOpen: "📖", Camera: "📷",
   };
-  if (!icon || icon.startsWith("http")) return "💰";
   return map[icon] || "💰";
 }
 
