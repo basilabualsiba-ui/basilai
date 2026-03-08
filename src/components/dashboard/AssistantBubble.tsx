@@ -1524,7 +1524,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── DREAMS OVERALL PROGRESS ───────────────────────────────────────────────
-  intents.push({ id: "dreams_overall_progress", keywords: ["تقدم أحلامي", "تقدم احلامي", "إنجاز أحلامي", "معدل إنجاز", "معدل انجاز"], needsTime: false, priority: 72,
+  intents.push({ id: "dreams_overall_progress", keywords: ["تقدم أحلامي", "تقدم احلامي", "إنجاز أحلامي", "معدل إنجاز", "معدل انجاز", "تقدم أهدافي"], needsTime: false, priority: 72,
     handler: async () => {
       const { data } = await supabase.from("dreams").select("progress_percentage, status");
       if (!data || data.length === 0) return "ما في أحلام 🌟";
