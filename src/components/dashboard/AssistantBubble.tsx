@@ -307,6 +307,18 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
     },
   });
 
+  // ── COMPARE TWO CATEGORIES/SUBCATEGORIES ────────────────────────────────
+  intents.push({
+    id: "compare_categories",
+    keywords: ["قارن", "مقارنة", "مقابل", "مقارنة بين", "مقارنة ب"],
+    needsTime: true,
+    priority: 95,
+    handler: async (period, _matchedName) => {
+      // This handler gets the original cleaned text via a special flow
+      return ""; // placeholder, real logic is in processQuestion
+    },
+  });
+
   // ── MOST EXPENSIVE MONTH ──────────────────────────────────────────────────
   intents.push({
     id: "most_expensive_month",
