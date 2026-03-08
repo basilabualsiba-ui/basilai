@@ -1710,7 +1710,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
       return `🏋️ مقارنة:\nهالشهر: ${c.data?.length || 0}\nالفائت: ${p.data?.length || 0}\n${(c.data?.length || 0) > (p.data?.length || 0) ? "📈" : "📉"} فرق: ${Math.abs((c.data?.length || 0) - (p.data?.length || 0))}`;
     },
   });
-  intents.push({ id: "prayer_comparison", keywords: ["قارن صلواتي", "مقارنة صلوات", "صلوات هالأسبوع مع"], needsTime: false, priority: 83,
+  intents.push({ id: "prayer_comparison", keywords: ["قارن صلواتي", "مقارنة صلوات", "صلوات هالأسبوع مع", "قارن صلاتي"], needsTime: false, priority: 83,
     handler: async () => {
       const today = new Date();
       const ws = format(startOfWeek(today, { weekStartsOn: 6 }), "yyyy-MM-dd"), ts = format(today, "yyyy-MM-dd");
