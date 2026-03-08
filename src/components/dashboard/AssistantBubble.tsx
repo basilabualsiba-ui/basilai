@@ -1443,7 +1443,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
       return `🎮 مصاريف الألعاب: ${fmtNum(total)} ₪\n💸 أغلى: ${data[0].name} (${fmtNum(Number(data[0].user_price_ils))} ₪)`;
     },
   });
-  intents.push({ id: "most_expensive_game", keywords: ["اللعبة اللي أكثر صرفت", "اللعبة اللي اكثر", "أغلى لعبة", "اغلى لعبة"], needsTime: false, priority: 73,
+  intents.push({ id: "most_expensive_game", keywords: ["اللعبة اللي أكثر صرفت", "اللعبة اللي اكثر", "أغلى لعبة", "اغلى لعبة", "أغلى لعبة عندي"], needsTime: false, priority: 73,
     handler: async () => {
       const { data } = await supabase.from("games").select("name, user_price_ils, platform").order("user_price_ils", { ascending: false }).limit(3);
       if (!data || data.length === 0) return "ما في ألعاب 🎮";
