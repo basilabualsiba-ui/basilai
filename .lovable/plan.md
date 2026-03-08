@@ -1,151 +1,53 @@
 
 
-# Plan: Delete Closet/Cooking, Fix Stats, UI Polish, Add TV Tracker
+# Add Average Comparison + Per-Category Average Intents
 
-## 1. Delete Smart Closet & Smart Cooking (completely)
+## New Intents to Add (in `AssistantBubble.tsx`)
 
-**Delete files:**
-- `src/components/closet/` (5 files)
-- `src/components/cooking/` (5 files)
-- `src/pages/Closet.tsx`
-- `src/pages/Cooking.tsx`
-- `src/components/dashboard/closet-card.tsx`
-- `src/components/dashboard/cooking-card.tsx`
-- `supabase/functions/fetch-recipe-url/`
+### 1. Compare Daily Average Between Months
+**Intent ID**: `compare_daily_average`
+**Keywords**: `قارن المعدل اليومي`, `معدل يومي هالشهر مع`, `فرق المعدل اليومي`, `قارن المعدل لليوم`, `المعدل اليومي مقارنة`, `معدل يوم هالشهر والفائت`
+**Logic**: Fetch expenses for current month + previous month, compute `total / uniqueDays` for each, show both with arrow + percentage difference.
 
-**Clean references:**
-- `src/App.tsx`: Remove Closet/Cooking imports and routes
-- `src/pages/Index.tsx`: Remove ClosetCard/CookingCard from BentoGrid
+### 2. Compare Weekly Average Between Months
+**Intent ID**: `compare_weekly_average`
+**Keywords**: `قارن المعدل الأسبوعي`, `معدل أسبوعي هالشهر مع`, `فرق المعدل الاسبوعي`, `قارن المعدل للأسبوع`, `المعدل الاسبوعي مقارنة`
+**Logic**: Same as above but divide by weeks instead of days.
 
-**Drop Supabase tables** via migration:
-```sql
-DROP TABLE IF EXISTS recipe_ingredients;
-DROP TABLE IF EXISTS recipe_steps;
-DROP TABLE IF EXISTS recipes;
-DROP TABLE IF EXISTS user_ingredients;
-DROP TABLE IF EXISTS clothing_items;
-DROP TABLE IF EXISTS saved_outfits;
-DROP TABLE IF EXISTS shopping_list;
+### 3. Compare Monthly Average (Overall)
+**Intent ID**: `compare_monthly_average`
+**Keywords**: `قارن المعدل الشهري`, `قارن المعدل للشهور`, `معدلات الشهور`, `قارن المعدل لليومين والاسبوعين للاشهر`
+**Logic**: Show a combined view: daily avg this month vs last, weekly avg this month vs last, total this month vs last -- all in one response.
+
+### 4. Average Spending Per Category
+**Intent ID**: `avg_spending_by_category`
+**Keywords**: `معدل الصرف حسب الفئات`, `المعدل حسب الفئات`, `متوسط كل فئة`, `معدل كل فئة`, `كم المعدل حسب الفئات`, `معدل صرفي بكل فئة`
+**Logic**: Fetch all expenses for period, group by category, compute `categoryTotal / uniqueDays` for daily avg per category. Show sorted list.
+
+### 5. Expand Keywords on Existing Intents
+
+| Intent | New Keywords |
+|--------|-------------|
+| `daily_average` | `كم المعدل اليومي`, `المعدل باليوم`, `بالمعدل كل يوم`, `average يومي`, `كم بصرف باليوم` |
+| `weekly_average` | `كم المعدل الأسبوعي`, `المعدل بالأسبوع`, `بالمعدل كل أسبوع`, `كم بصرف بالأسبوع` |
+| `monthly_average` | `كم المعدل الشهري`, `المعدل بالشهر`, `بالمعدل كل شهر`, `كم بصرف بالشهر` |
+| `monthly_comparison` | `قارن الشهور`, `قارن مع الشهر الفائت`, `مقارنة شهرية` |
+
+### 6. Follow-up Chips for New Intents
+
+```typescript
+compare_daily_average: ["📊 قارن المعدل الأسبوعي", "📊 حسب الفئات", "💰 كم صرفت هالشهر؟"],
+compare_weekly_average: ["📊 قارن المعدل اليومي", "📊 حسب الفئات", "💰 كم صرفت هالشهر؟"],
+compare_monthly_average: ["📊 حسب الفئات", "📍 حسب الأماكن", "📊 المعدل حسب الفئات"],
+avg_spending_by_category: ["📊 حسب الفئات", "📍 حسب الأماكن", "📊 معدل يومي", "🔄 قارن المعدل لهالشهر مع الفائت"],
 ```
 
----
+### 7. Update SUGGESTION_GROUPS
 
-## 2. Fix Wallet Stats (Total Savings & Net Worth)
+Add to "📊 تحليل" group:
+- `"قارن المعدل اليومي مع الشهر الفائت"`
+- `"قارن المعدل الأسبوعي مع الفائت"`
+- `"كم المعدل حسب الفئات هالشهر؟"`
 
-**Current bug:** "Total Savings" sums each month independently. User wants cumulative total savings (running sum).
-
-**Fix in `stats-overview.tsx`:**
-
-- **For completed months** (before current month): 
-  - Total Savings for month X = sum of (income - expenses) for all months from start through X, excluding Aug 2025
-  - Net Worth for month X = use `net_worth_snapshots` table value (recorded at end of month)
-  
-- **For current (incomplete) month** (e.g., March 2026):
-  - Total Savings = current live calculation (sum all months including current, exclude Aug 2025)  
-  - Net Worth = live sum of all account balances
-
-- Update the "Total Savings" and "Net Worth" cards to show the selected month's values (not always current)
-- Update the savings trend chart to show cumulative savings per month
-- Update net worth trend to show per-month snapshots
-
----
-
-## 3. UI Fixes
-
-### 3A. Prayer card — match inner colors to card gradient
-The prayer card icon uses `from-amber-500 to-yellow-600`. The inner page (`Islamic.tsx`) header should use the same amber/yellow gradient colors for the icon and accents (currently uses generic styling).
-
-### 3B. Weight card & page — match colors
-- `WeightStatsCard`: currently uses `text-weight` and `bg-weight/20` — correct
-- `WeightStats.tsx` page: rename title from "Weight Stats" to "Weight", change icon from `Scale` to `PersonStanding` to match the card
-
-### 3C. All cards use loading skeleton
-Cards that don't fetch data (Prayer, Gym, Supplements, Dreams) should show a brief loading state matching the wallet card pattern. Add a small `useState` loading trick or `loading` prop to BentoCard for consistency.
-
----
-
-## 4. TV & Series Tracker (TMDB)
-
-### 4A. Store TMDB API key
-The TMDB API key is a public/free key. Store it as a Supabase secret and use it in an edge function to avoid exposing it client-side. Or since TMDB keys are public-ish, store as `VITE_TMDB_API_KEY` in code.
-
-**Decision:** Use an edge function `tmdb-proxy` to keep the key server-side and avoid CORS issues.
-
-### 4B. New Supabase tables
-
-```sql
-CREATE TABLE media (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  tmdb_id integer NOT NULL,
-  type text NOT NULL, -- 'movie' or 'series'
-  title text NOT NULL,
-  poster_url text,
-  rating numeric,
-  runtime integer,
-  total_seasons integer,
-  genres text[] DEFAULT '{}',
-  trailer_url text,
-  status text DEFAULT 'want_to_watch', -- want_to_watch/watching/watched
-  created_at timestamptz DEFAULT now(),
-  UNIQUE(tmdb_id, type)
-);
-
-CREATE TABLE episodes (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  series_id uuid REFERENCES media(id) ON DELETE CASCADE,
-  season_number integer NOT NULL,
-  episode_number integer NOT NULL,
-  title text,
-  watched boolean DEFAULT false,
-  created_at timestamptz DEFAULT now(),
-  UNIQUE(series_id, season_number, episode_number)
-);
-```
-
-RLS: permissive for all operations (matching existing pattern).
-
-### 4C. Edge function: `tmdb-proxy`
-- Accepts `path` and `query` parameters
-- Forwards to TMDB API with the stored API key
-- Returns JSON response
-- Handles search, details, season, videos endpoints
-
-### 4D. New files
-
-| File | Purpose |
-|------|---------|
-| `src/pages/TVTracker.tsx` | Main page with tabs: All, Want to Watch, Watching, Watched, Recommendations |
-| `src/components/tv/search-media-dialog.tsx` | Search TMDB, show results, add to library |
-| `src/components/tv/media-card.tsx` | Poster card with title, rating, status badge |
-| `src/components/tv/media-detail-dialog.tsx` | Full details: poster, trailer, episodes, mark watched |
-| `src/components/tv/episode-list.tsx` | Season/episode checklist for series |
-| `src/components/tv/recommendations.tsx` | Genre-based recommendations from TMDB |
-| `src/components/dashboard/tv-card.tsx` | Dashboard card |
-| `supabase/functions/tmdb-proxy/index.ts` | TMDB API proxy |
-
-### 4E. Dashboard & routing
-- Add `TVTrackerCard` to BentoGrid in Index.tsx
-- Add `/tv-tracker` route in App.tsx
-- Card order: Prayer, Weight, Wallet, Gym, TV Tracker, Supplements, Dreams
-
-### 4F. Recommendation logic (no AI)
-- Query user's `media` table, extract most frequent genres
-- Call TMDB `/movie/{id}/recommendations` or `/tv/{id}/recommendations` for top-rated watched items
-- Filter out items already in user's database
-- Display in "Suggested Next Watch" section
-
----
-
-## Implementation Order
-1. Delete closet & cooking (files + DB migration)
-2. Fix wallet stats (cumulative savings, month-specific net worth)
-3. UI fixes (prayer colors, weight naming, loading states)
-4. Create TV Tracker (DB tables, edge function, UI components, dashboard card)
-
----
-
-## Technical Notes
-- TMDB API key will need to be added as a Supabase secret — will prompt user for it
-- ~10 files deleted, ~10 new files created, ~5 files modified
-- No AI used anywhere — TMDB API + rule-based recommendations only
+All changes in a single file: `src/components/dashboard/AssistantBubble.tsx`.
 
