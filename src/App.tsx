@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { GymProvider } from "./contexts/GymContext";
 import { FirstTimePermissions } from "@/components/ui/first-time-permissions";
+import { OfflineIndicator } from "@/components/ui/offline-indicator";
 import { PrayerNotificationProvider } from "./contexts/PrayerContext";
 import { ScheduleProvider } from "./contexts/ScheduleContext";
 import { FinancialProvider } from "./contexts/FinancialContext";
