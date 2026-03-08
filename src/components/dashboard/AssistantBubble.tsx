@@ -386,7 +386,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── DAILY AVERAGE ─────────────────────────────────────────────────────────
   intents.push({
     id: "daily_average",
-    keywords: ["معدل يومي", "معدل صرف", "المعدل اليومي", "معدل صرفي اليومي", "متوسط صرفي", "متوسط يومي"],
+    keywords: ["معدل يومي", "معدل صرف", "المعدل اليومي", "معدل صرفي اليومي", "متوسط صرفي", "متوسط يومي", "كم المعدل اليومي", "المعدل باليوم", "بالمعدل كل يوم", "كم بصرف باليوم"],
     needsTime: true,
     priority: 80,
     handler: async (period) => {
