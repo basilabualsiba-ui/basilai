@@ -318,7 +318,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── TOP SPENDING PLACES ───────────────────────────────────────────────────
   intents.push({
     id: "top_spending_places",
-    keywords: ["أكثر مكان", "وين صرفت", "وين أكثر", "أكثر مكان صرفت", "اكثر مكان", "حسب الأماكن", "حسب الاماكن"],
+    keywords: ["أكثر مكان", "وين صرفت", "وين أكثر", "أكثر مكان صرفت", "اكثر مكان", "حسب الأماكن", "حسب الاماكن", "أكثر أماكن", "اكثر اماكن", "وين رحت صرفت"],
     needsTime: true,
     priority: 90,
     handler: async (period) => {
