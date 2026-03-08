@@ -2587,7 +2587,7 @@ export function AssistantBubble() {
       // Generic chip → send as new question
       callAssistant(chip);
     }
-  }, [pendingQuestion, pendingExpense, accountsList, processQuestion, callAssistant]);
+  }, [pendingQuestion, pendingExpense, pendingSuggestion, accountsList, processQuestion, callAssistant]);
 
   const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
