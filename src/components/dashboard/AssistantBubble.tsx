@@ -838,7 +838,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── LAST TRANSACTION (general) ────────────────────────────────────────────
   intents.push({
     id: "last_transaction",
-    keywords: ["آخر اشي صرفتو", "اخر اشي صرفتو", "آخر معاملة", "اخر معاملة", "آخر صرفة", "اخر صرفة", "آخر مصروف", "اخر مصروف"],
+    keywords: ["آخر اشي صرفتو", "اخر اشي صرفتو", "آخر معاملة", "اخر معاملة", "آخر صرفة", "اخر صرفة", "آخر مصروف", "اخر مصروف", "آخر صرفة عملتها", "شو آخر مصروف", "آخر اشي دفعتو"],
     needsTime: false,
     priority: 88,
     handler: async () => {
