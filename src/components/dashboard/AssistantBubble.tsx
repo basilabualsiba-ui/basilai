@@ -38,12 +38,12 @@ const SUGGESTION_GROUPS = [
     items: [
       "كم صرفت هاد الشهر؟",
       "كم صرفت اليوم؟",
-      "كم صرفت مبارح؟",
       "شو آخر اشي صرفتو؟",
       "شو صرفت اليوم؟",
-      "شو آخر اشي صرفتو بالكاش؟",
-      "وين أكثر مكان صرفت فيه هالشهر؟",
-      "كم صرفت بالطلعات هالشهر؟",
+      "شو آخر 5 معاملات؟",
+      "شو أغلى معاملة هالشهر؟",
+      "كم معاملة عملت هالشهر؟",
+      "أضف صرف",
     ],
   },
   {
@@ -51,11 +51,13 @@ const SUGGESTION_GROUPS = [
     items: [
       "شو أغلى شهر عندي؟",
       "كم معدل صرفي اليومي؟",
-      "شو الصافي هالشهر؟",
-      "كم رصيدي بالحسابات؟",
-      "أكثر فئة صرفت عليها هالشهر؟",
-      "كم دخلي هاد الشهر؟",
-      "قارن مصاريفي هالشهر مع الشهر الفائت",
+      "معدل صرفي الأسبوعي؟",
+      "نسبة كل فئة من المصاريف هالشهر",
+      "شو أكثر يوم صرفت فيه هالشهر؟",
+      "كم مكان صرفت فيه هالشهر؟",
+      "شو الحساب اللي أكثر صرفت منه؟",
+      "شو الفئة اللي ما صرفت عليها هالشهر؟",
+      "كم صرفت بالويكند هالشهر؟",
     ],
   },
   {
@@ -63,45 +65,102 @@ const SUGGESTION_GROUPS = [
     items: [
       "قارن الأكل مع الطلعات هالشهر",
       "قارن مصاريف هالشهر مع الشهر الفائت",
-      "كم صرفت على الأكل مقارنة بالطلعات؟",
-      "قارن الأكل مع المواصلات هالسنة",
+      "قارن وزني الشهر الفائت مع هالشهر",
+      "قارن تمارين هالشهر مع الفائت",
+      "قارن صلواتي هالأسبوع مع الفائت",
+      "قارن الأفلام مع المسلسلات",
     ],
   },
   {
-    label: "💪 صحة وجيم",
+    label: "💪 صحة",
     items: [
       "شو وزني هلق؟",
-      "كم مرة اشتغلت هاد الشهر؟",
-      "متى آخر تمرين؟",
+      "كم مرة تمرنت هالشهر؟",
       "شو آخر تدريب عملتو؟",
-      "شو كمالاتي اليومية؟",
+      "كم ساعة تمرين هالشهر؟",
+      "شو أكثر عضلة اشتغلت عليها؟",
+      "أقل وزن وصلتلو؟",
+      "أعلى وزن وصلتلو؟",
+      "شو آخر 3 أوزان سجلتها؟",
+      "معدل مدة التمرين؟",
+      "كم يوم متتالي تمرنت؟",
     ],
   },
   {
-    label: "🎮 ترفيه",
+    label: "💊 مكملات",
+    items: [
+      "شو كمالاتي اليومية؟",
+      "شو المكمل اللي أكثر استخدمتو؟",
+      "شو آخر مكمل أخذتو؟",
+      "كم سكوب بروتين أخذت هالشهر؟",
+      "كم يوم أخذت كمالات هالشهر؟",
+    ],
+  },
+  {
+    label: "🎬 ترفيه",
     items: [
       "شو بتشاهد هلق؟",
-      "شو أحسن فيلم شفته؟",
-      "كم لعبة عندي؟",
-      "كم فيلم ومسلسل عندي؟",
+      "كم فيلم شفت؟",
+      "كم حلقة شفت؟",
+      "شو آخر فيلم شفته؟",
       "شو أفلام بدي أشوفها؟",
-      "شو مسلسلات بدي أبلش فيها؟",
+      "شو المسلسل اللي أعلى تقييم؟",
+      "اقترح فيلم أشوفه",
+      "قارن الأفلام مع المسلسلات",
     ],
   },
   {
-    label: "🕌 صلاة وأحلام",
+    label: "🎮 ألعاب",
+    items: [
+      "كم لعبة عندي؟",
+      "كم صرفت على الألعاب؟",
+      "كم لعبة PS5 عندي؟",
+      "شو اللعبة اللي أكثر صرفت عليها؟",
+    ],
+  },
+  {
+    label: "🕌 صلاة",
     items: [
       "كم صلاة صليت هاد الشهر؟",
       "كم مرة صليت الفجر هالأسبوع؟",
-      "شو عندي اليوم بالجدول؟",
-      "شو أحلامي النشطة؟",
+      "كم مرة صليت الظهر هالشهر؟",
+      "شو أكثر صلاة صليتها هالشهر؟",
+      "كم يوم صليت فيه كل الصلوات هالشهر؟",
+      "كم يوم متتالي صليت الفجر؟",
+    ],
+  },
+  {
+    label: "🌟 أحلام",
+    items: [
       "شو أحلامي؟",
+      "كم حلم حققت؟",
+      "شو الحلم اللي أقرب للإكمال؟",
+      "شو تقدم أحلامي؟",
+      "كم خطوة باقي لأحقق أحلامي؟",
+      "شو آخر حلم أضفتو؟",
+    ],
+  },
+  {
+    label: "📋 جدول",
+    items: [
+      "شو عندي اليوم بالجدول؟",
+      "شو عندي بكرا بالجدول؟",
+      "كم مهمة خلصت هالأسبوع؟",
+    ],
+  },
+  {
+    label: "📈 ملخصات",
+    items: [
+      "لخصلي الشهر",
+      "كم رصيدي بالحسابات؟",
+      "كم دخلي هاد الشهر؟",
+      "شو الصافي هالشهر؟",
+      "كم صرفت هالسنة؟",
     ],
   },
 ];
-const TIME_CHIPS = ["هالشهر", "هالأسبوع", "الشهر الفائت", "هالسنة", "من البداية", "اليوم", "مبارح"];
 
-// ─── Time period detection ──────────────────────────────────────────────────
+const TIME_CHIPS = ["هالشهر", "هالأسبوع", "الشهر الفائت", "هالسنة", "من البداية", "اليوم", "مبارح"];
 function detectTimePeriod(text: string): { period: TimePeriod | null; cleaned: string } {
   const today = new Date();
   const todayStr = format(today, "yyyy-MM-dd");
@@ -782,6 +841,780 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
       if (exerciseCount > 0) result += `\n🔢 تمارين: ${exerciseCount}`;
       if (s.notes) result += `\n📝 ملاحظات: ${s.notes}`;
       return result;
+    },
+  });
+
+  // ── ADD EXPENSE (guidance) ──────────────────────────────────────────────
+  intents.push({
+    id: "add_expense",
+    keywords: ["أضف صرف", "اضف صرف", "سجلي مصروف", "سجلي صرفة", "بدي أسجل صرفة", "بدي اسجل صرفة", "أضف معاملة", "اضف معاملة", "بدي أضيف صرف"],
+    needsTime: false,
+    priority: 96,
+    handler: async () => "🧾 بدك تضيف صرفة؟\nروح لصفحة Wallet واختار أي فئة وابدأ بالتسجيل!\n\n💡 أو من الداشبورد اضغط على كارت المحفظة",
+  });
+
+  // ── MOST EXPENSIVE DAY ────────────────────────────────────────────────────
+  intents.push({
+    id: "most_expensive_day",
+    keywords: ["أكثر يوم صرفت", "اكثر يوم صرفت", "أغلى يوم", "اغلى يوم"],
+    needsTime: true,
+    priority: 84,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("amount, date").eq("type", "expense");
+      q = dateFilter(q, period);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في مصاريف بهالفترة 📭";
+      const byDay = new Map<string, number>();
+      for (const t of data) byDay.set(t.date, (byDay.get(t.date) || 0) + Number(t.amount));
+      const sorted = [...byDay.entries()].sort((a, b) => b[1] - a[1]);
+      const periodLabel = period?.label || "من البداية";
+      return `📅 أكثر يوم صرفت فيه ${periodLabel}:\n${sorted[0][0]} — ${fmtNum(sorted[0][1])} ₪`;
+    },
+  });
+
+  // ── CHEAPEST DAY ──────────────────────────────────────────────────────────
+  intents.push({
+    id: "cheapest_day",
+    keywords: ["أقل يوم صرفت", "اقل يوم صرفت", "أرخص يوم", "ارخص يوم"],
+    needsTime: true,
+    priority: 84,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("amount, date").eq("type", "expense");
+      q = dateFilter(q, period);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في مصاريف بهالفترة 📭";
+      const byDay = new Map<string, number>();
+      for (const t of data) byDay.set(t.date, (byDay.get(t.date) || 0) + Number(t.amount));
+      const sorted = [...byDay.entries()].sort((a, b) => a[1] - b[1]);
+      const periodLabel = period?.label || "من البداية";
+      return `📅 أقل يوم صرفت فيه ${periodLabel}:\n${sorted[0][0]} — ${fmtNum(sorted[0][1])} ₪`;
+    },
+  });
+
+  // ── WEEKLY AVERAGE ────────────────────────────────────────────────────────
+  intents.push({
+    id: "weekly_average",
+    keywords: ["معدل أسبوعي", "معدل اسبوعي", "معدل صرفي الأسبوعي", "معدل صرفي الاسبوعي"],
+    needsTime: true,
+    priority: 81,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("amount, date").eq("type", "expense");
+      q = dateFilter(q, period);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في مصاريف بهالفترة 📭";
+      const total = data.reduce((s, t) => s + Number(t.amount), 0);
+      const dates = data.map(t => new Date(t.date).getTime());
+      const daySpan = Math.max(1, Math.ceil((Math.max(...dates) - Math.min(...dates)) / 86400000));
+      const weeks = Math.max(1, daySpan / 7);
+      const periodLabel = period?.label || "من البداية";
+      return `📊 معدل صرفك الأسبوعي ${periodLabel}: ${fmtNum(total / weeks)} ₪`;
+    },
+  });
+
+  // ── CATEGORY PERCENTAGES ──────────────────────────────────────────────────
+  intents.push({
+    id: "category_percentages",
+    keywords: ["نسبة كل فئة", "نسب الفئات", "نسب المصاريف", "توزيع المصاريف", "توزيع الفئات"],
+    needsTime: true,
+    priority: 86,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("amount, category_id, categories(name)").eq("type", "expense").not("category_id", "is", null);
+      q = dateFilter(q, period);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في مصاريف بهالفترة 📭";
+      const byCat = new Map<string, number>();
+      const total = data.reduce((s, t) => s + Number(t.amount), 0);
+      for (const t of data) {
+        const name = (t as any).categories?.name || "غير محدد";
+        byCat.set(name, (byCat.get(name) || 0) + Number(t.amount));
+      }
+      const sorted = [...byCat.entries()].sort((a, b) => b[1] - a[1]);
+      const periodLabel = period?.label || "من البداية";
+      const lines = sorted.map(([name, amt]) => `📊 ${name}: ${fmtNum(amt)} ₪ (${((amt / total) * 100).toFixed(1)}%)`);
+      return `📊 توزيع المصاريف ${periodLabel}:\n${lines.join("\n")}\n\n💰 المجموع: ${fmtNum(total)} ₪`;
+    },
+  });
+
+  // ── TRANSACTIONS COUNT ────────────────────────────────────────────────────
+  intents.push({
+    id: "transactions_count",
+    keywords: ["كم معاملة", "عدد المعاملات", "عدد معاملات"],
+    needsTime: true,
+    priority: 79,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("id").eq("type", "expense");
+      q = dateFilter(q, period);
+      const { data } = await q.limit(1000);
+      const periodLabel = period?.label || "من البداية";
+      return `🧾 عملت ${data?.length || 0} معاملة صرف ${periodLabel}`;
+    },
+  });
+
+  // ── BIGGEST TRANSACTION ───────────────────────────────────────────────────
+  intents.push({
+    id: "biggest_transaction",
+    keywords: ["أغلى معاملة", "اغلى معاملة", "أكبر معاملة", "اكبر معاملة", "أكثر معاملة"],
+    needsTime: true,
+    priority: 87,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("amount, date, description, subcategories(name), categories(name)").eq("type", "expense");
+      q = dateFilter(q, period);
+      const { data } = await q.order("amount", { ascending: false }).limit(1);
+      if (!data || data.length === 0) return "ما في مصاريف بهالفترة 📭";
+      const t = data[0] as any;
+      const place = t.subcategories?.name || t.categories?.name || "";
+      const periodLabel = period?.label || "من البداية";
+      return `💸 أغلى معاملة ${periodLabel}:\n💰 ${fmtNum(Number(t.amount))} ₪${place ? `\n📍 ${place}` : ""}${t.description ? `\n📝 ${t.description}` : ""}\n📅 ${t.date}`;
+    },
+  });
+
+  // ── SMALLEST TRANSACTION ──────────────────────────────────────────────────
+  intents.push({
+    id: "smallest_transaction",
+    keywords: ["أرخص معاملة", "ارخص معاملة", "أصغر معاملة", "اصغر معاملة", "أقل معاملة"],
+    needsTime: true,
+    priority: 87,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("amount, date, description, subcategories(name), categories(name)").eq("type", "expense");
+      q = dateFilter(q, period);
+      const { data } = await q.order("amount", { ascending: true }).limit(1);
+      if (!data || data.length === 0) return "ما في مصاريف بهالفترة 📭";
+      const t = data[0] as any;
+      const place = t.subcategories?.name || t.categories?.name || "";
+      const periodLabel = period?.label || "من البداية";
+      return `🪙 أصغر معاملة ${periodLabel}:\n💰 ${fmtNum(Number(t.amount))} ₪${place ? `\n📍 ${place}` : ""}${t.description ? `\n📝 ${t.description}` : ""}\n📅 ${t.date}`;
+    },
+  });
+
+  // ── LAST 5 TRANSACTIONS ───────────────────────────────────────────────────
+  intents.push({
+    id: "last_5_transactions",
+    keywords: ["آخر 5 معاملات", "اخر 5 معاملات", "آخر خمس معاملات", "اخر خمس", "آخر ٥"],
+    needsTime: false,
+    priority: 89,
+    handler: async () => {
+      const { data } = await supabase.from("transactions").select("amount, date, description, subcategories(name), categories(name)").eq("type", "expense").order("date", { ascending: false }).order("time", { ascending: false }).limit(5);
+      if (!data || data.length === 0) return "ما في مصاريف مسجلة بعد 📭";
+      const lines = data.map((t: any, i: number) => {
+        const place = t.subcategories?.name || t.categories?.name || "";
+        return `${i + 1}. ${fmtNum(Number(t.amount))} ₪${place ? ` — ${place}` : ""}${t.description ? ` (${t.description})` : ""} 📅${t.date}`;
+      });
+      return `📋 آخر 5 معاملات:\n${lines.join("\n")}`;
+    },
+  });
+
+  // ── EVENING SPENDING ──────────────────────────────────────────────────────
+  intents.push({
+    id: "evening_spending",
+    keywords: ["بعد الساعة 6", "بعد الساعه 6", "بالمسا", "بالليل", "صرفت بالمسا"],
+    needsTime: true,
+    priority: 79,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("amount, time").eq("type", "expense").gte("time", "18:00:00");
+      q = dateFilter(q, period);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في مصاريف مسائية بهالفترة 🌙";
+      const total = data.reduce((s, t) => s + Number(t.amount), 0);
+      const periodLabel = period?.label || "من البداية";
+      return `🌙 مصاريفك المسائية ${periodLabel}: ${fmtNum(total)} ₪ (${data.length} معاملة)`;
+    },
+  });
+
+  // ── MORNING SPENDING ──────────────────────────────────────────────────────
+  intents.push({
+    id: "morning_spending",
+    keywords: ["صرفت الصبح", "بالصبح", "صباحية", "قبل الظهر"],
+    needsTime: true,
+    priority: 79,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("amount, time").eq("type", "expense").lt("time", "12:00:00");
+      q = dateFilter(q, period);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في مصاريف صباحية بهالفترة ☀️";
+      const total = data.reduce((s, t) => s + Number(t.amount), 0);
+      const periodLabel = period?.label || "من البداية";
+      return `☀️ مصاريفك الصباحية ${periodLabel}: ${fmtNum(total)} ₪ (${data.length} معاملة)`;
+    },
+  });
+
+  // ── WEEKEND SPENDING ──────────────────────────────────────────────────────
+  intents.push({
+    id: "weekend_spending",
+    keywords: ["بالويكند", "ويكند", "نهاية الأسبوع", "نهاية الاسبوع", "الجمعة والسبت"],
+    needsTime: true,
+    priority: 79,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("amount, date").eq("type", "expense");
+      q = dateFilter(q, period);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في مصاريف بهالفترة 📭";
+      const weekendData = data.filter(t => { const d = new Date(t.date).getDay(); return d === 5 || d === 6; });
+      if (weekendData.length === 0) return "ما في مصاريف بالويكند بهالفترة 🎉";
+      const total = weekendData.reduce((s, t) => s + Number(t.amount), 0);
+      const periodLabel = period?.label || "من البداية";
+      return `🎉 مصاريفك بالويكند ${periodLabel}: ${fmtNum(total)} ₪ (${weekendData.length} معاملة)`;
+    },
+  });
+
+  // ── UNIQUE PLACES COUNT ───────────────────────────────────────────────────
+  intents.push({
+    id: "unique_places_count",
+    keywords: ["كم مكان صرفت", "عدد الأماكن", "عدد اماكن"],
+    needsTime: true,
+    priority: 79,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("subcategory_id").eq("type", "expense").not("subcategory_id", "is", null);
+      q = dateFilter(q, period);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في أماكن صرف بهالفترة 📭";
+      const unique = new Set(data.map(t => t.subcategory_id)).size;
+      const periodLabel = period?.label || "من البداية";
+      return `📍 صرفت ب ${unique} مكان مختلف ${periodLabel}`;
+    },
+  });
+
+  // ── MOST USED ACCOUNT ─────────────────────────────────────────────────────
+  intents.push({
+    id: "most_used_account",
+    keywords: ["أكثر حساب صرفت", "اكثر حساب", "الحساب اللي أكثر", "الحساب اللي اكثر"],
+    needsTime: true,
+    priority: 80,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("amount, account_id, accounts(name)").eq("type", "expense");
+      q = dateFilter(q, period);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في مصاريف بهالفترة 📭";
+      const byAcc = new Map<string, { total: number; count: number }>();
+      for (const t of data) {
+        const name = (t as any).accounts?.name || "غير محدد";
+        const prev = byAcc.get(name) || { total: 0, count: 0 };
+        byAcc.set(name, { total: prev.total + Number(t.amount), count: prev.count + 1 });
+      }
+      const sorted = [...byAcc.entries()].sort((a, b) => b[1].total - a[1].total);
+      const periodLabel = period?.label || "من البداية";
+      const lines = sorted.map(([name, v]) => `🏦 ${name}: ${fmtNum(v.total)} ₪ (${v.count} معاملة)`);
+      return `🏦 الحسابات الأكثر استخداماً ${periodLabel}:\n${lines.join("\n")}`;
+    },
+  });
+
+  // ── UNUSED CATEGORIES ─────────────────────────────────────────────────────
+  intents.push({
+    id: "unused_categories",
+    keywords: ["فئة ما صرفت", "فئات ما صرفت", "الفئة اللي ما"],
+    needsTime: true,
+    priority: 79,
+    handler: async (period) => {
+      const [catRes, txRes] = await Promise.all([
+        supabase.from("categories").select("id, name").eq("type", "expense"),
+        (() => { let q = supabase.from("transactions").select("category_id").eq("type", "expense"); q = dateFilter(q, period); return q.limit(1000); })(),
+      ]);
+      const unused = (catRes.data || []).filter(c => !(new Set((txRes.data || []).map(t => t.category_id))).has(c.id));
+      const periodLabel = period?.label || "من البداية";
+      if (unused.length === 0) return `✅ صرفت على كل الفئات ${periodLabel}!`;
+      return `📭 فئات ما صرفت عليها ${periodLabel}:\n${unused.map(c => `⬜ ${c.name}`).join("\n")}`;
+    },
+  });
+
+  // ── TRANSFERS COUNT ───────────────────────────────────────────────────────
+  intents.push({
+    id: "transfers_count",
+    keywords: ["كم حولت", "تحويلات", "حوالات"],
+    needsTime: true,
+    priority: 67,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("id").eq("type", "transfer");
+      q = dateFilter(q, period);
+      const { data } = await q.limit(1000);
+      const count = Math.floor((data?.length || 0) / 2);
+      const periodLabel = period?.label || "من البداية";
+      return `🔄 عملت ${count} تحويل بين الحسابات ${periodLabel}`;
+    },
+  });
+
+  // ── MONTHLY AVERAGE SPENDING ──────────────────────────────────────────────
+  intents.push({
+    id: "monthly_average",
+    keywords: ["معدل شهري", "معدل صرفي الشهري"],
+    needsTime: false,
+    priority: 79,
+    handler: async () => {
+      const { data } = await supabase.from("transactions").select("amount, date").eq("type", "expense").limit(1000);
+      if (!data || data.length === 0) return "ما في مصاريف بعد 📭";
+      const total = data.reduce((s, t) => s + Number(t.amount), 0);
+      const months = new Set(data.map(t => t.date.substring(0, 7))).size;
+      return `📊 معدل صرفك الشهري: ${fmtNum(total / months)} ₪ (${months} شهر)`;
+    },
+  });
+
+  // ── MOST TRAINED MUSCLE ───────────────────────────────────────────────────
+  intents.push({
+    id: "most_trained_muscle",
+    keywords: ["أكثر عضلة", "اكثر عضلة", "أكثر عضلة اشتغلت"],
+    needsTime: true,
+    priority: 79,
+    handler: async (period) => {
+      let q = supabase.from("workout_sessions").select("muscle_groups").not("completed_at", "is", null);
+      if (period?.from) q = q.gte("scheduled_date", period.from);
+      if (period?.to) q = q.lte("scheduled_date", period.to);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في تمارين بهالفترة 🏋️";
+      const byMuscle = new Map<string, number>();
+      for (const s of data) for (const m of (s.muscle_groups || [])) byMuscle.set(m, (byMuscle.get(m) || 0) + 1);
+      const sorted = [...byMuscle.entries()].sort((a, b) => b[1] - a[1]);
+      const periodLabel = period?.label || "من البداية";
+      const lines = sorted.slice(0, 5).map(([m, c]) => `💪 ${m}: ${c} مرة`);
+      return `💪 العضلات الأكثر تدريباً ${periodLabel}:\n${lines.join("\n")}`;
+    },
+  });
+
+  // ── TOTAL WORKOUT HOURS ───────────────────────────────────────────────────
+  intents.push({
+    id: "total_workout_hours",
+    keywords: ["ساعة تمرين", "ساعات تمرين", "كم ساعة تمرين"],
+    needsTime: true,
+    priority: 78,
+    handler: async (period) => {
+      let q = supabase.from("workout_sessions").select("total_duration_minutes").not("completed_at", "is", null);
+      if (period?.from) q = q.gte("scheduled_date", period.from);
+      if (period?.to) q = q.lte("scheduled_date", period.to);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في تمارين بهالفترة 🏋️";
+      const totalMin = data.reduce((s, t) => s + (t.total_duration_minutes || 0), 0);
+      const periodLabel = period?.label || "من البداية";
+      return `⏱️ مجموع تمارينك ${periodLabel}: ${Math.floor(totalMin / 60)} ساعة و ${totalMin % 60} دقيقة`;
+    },
+  });
+
+  // ── AVG WORKOUT DURATION ──────────────────────────────────────────────────
+  intents.push({
+    id: "avg_workout_duration",
+    keywords: ["معدل مدة التمرين", "معدل مدة تمرين", "متوسط مدة"],
+    needsTime: false,
+    priority: 78,
+    handler: async () => {
+      const { data } = await supabase.from("workout_sessions").select("total_duration_minutes").not("completed_at", "is", null).not("total_duration_minutes", "is", null).limit(1000);
+      if (!data || data.length === 0) return "ما في تمارين بمدة محددة 🏋️";
+      const avg = data.reduce((s, t) => s + (t.total_duration_minutes || 0), 0) / data.length;
+      return `⏱️ معدل مدة تمرينك: ${Math.round(avg)} دقيقة`;
+    },
+  });
+
+  // ── WEIGHT CHANGE ─────────────────────────────────────────────────────────
+  intents.push({
+    id: "weight_change",
+    keywords: ["فرق وزني", "فرق الوزن", "تغير وزني", "تغيّر وزني"],
+    needsTime: false,
+    priority: 76,
+    handler: async () => {
+      const monthAgo = format(subMonths(new Date(), 1), "yyyy-MM-dd'T'HH:mm:ss");
+      const [curr, prev] = await Promise.all([
+        supabase.from("user_body_stats").select("weight").order("recorded_at", { ascending: false }).limit(1),
+        supabase.from("user_body_stats").select("weight").lte("recorded_at", monthAgo).order("recorded_at", { ascending: false }).limit(1),
+      ]);
+      if (!curr.data?.[0]) return "ما في بيانات وزن بعد ⚖️";
+      const currW = Number(curr.data[0].weight);
+      if (!prev.data?.[0]) return `⚖️ وزنك الحالي: ${fmtNum(currW)} كغ\nما في قراءة من شهر قبل`;
+      const prevW = Number(prev.data[0].weight);
+      const diff = currW - prevW;
+      return `⚖️ تغير وزنك:\nالحالي: ${fmtNum(currW)} كغ\nقبل شهر: ${fmtNum(prevW)} كغ\n${diff > 0 ? "📈 زيادة" : diff < 0 ? "📉 نقصان" : "↔️ ثابت"} ${fmtNum(Math.abs(diff))} كغ`;
+    },
+  });
+
+  // ── LOWEST / HIGHEST WEIGHT ───────────────────────────────────────────────
+  intents.push({ id: "lowest_weight", keywords: ["أقل وزن", "اقل وزن", "أخف وزن"], needsTime: false, priority: 76,
+    handler: async () => {
+      const { data } = await supabase.from("user_body_stats").select("weight, recorded_at").order("weight", { ascending: true }).limit(1);
+      if (!data?.[0]) return "ما في بيانات وزن ⚖️";
+      return `⚖️ أقل وزن: ${fmtNum(Number(data[0].weight))} كغ (${format(new Date(data[0].recorded_at), "yyyy-MM-dd")})`;
+    },
+  });
+  intents.push({ id: "highest_weight", keywords: ["أعلى وزن", "اعلى وزن", "أثقل وزن"], needsTime: false, priority: 76,
+    handler: async () => {
+      const { data } = await supabase.from("user_body_stats").select("weight, recorded_at").order("weight", { ascending: false }).limit(1);
+      if (!data?.[0]) return "ما في بيانات وزن ⚖️";
+      return `⚖️ أعلى وزن: ${fmtNum(Number(data[0].weight))} كغ (${format(new Date(data[0].recorded_at), "yyyy-MM-dd")})`;
+    },
+  });
+
+  // ── LAST 3 WEIGHTS ────────────────────────────────────────────────────────
+  intents.push({ id: "last_3_weights", keywords: ["آخر 3 أوزان", "اخر 3 اوزان", "آخر ثلاث أوزان", "آخر ٣"], needsTime: false, priority: 77,
+    handler: async () => {
+      const { data } = await supabase.from("user_body_stats").select("weight, recorded_at").order("recorded_at", { ascending: false }).limit(3);
+      if (!data || data.length === 0) return "ما في بيانات وزن ⚖️";
+      const lines = data.map((d, i) => `${i + 1}. ${fmtNum(Number(d.weight))} كغ — ${format(new Date(d.recorded_at), "yyyy-MM-dd")}`);
+      return `⚖️ آخر قياسات:\n${lines.join("\n")}`;
+    },
+  });
+
+  // ── SUPPLEMENT DOSES COUNT ────────────────────────────────────────────────
+  intents.push({ id: "supplement_doses_count", keywords: ["كم سكوب", "سكوب بروتين", "جرعات بروتين"], needsTime: true, priority: 77,
+    handler: async (period) => {
+      let q = supabase.from("supplement_logs").select("doses_taken");
+      if (period?.from) q = q.gte("logged_date", period.from);
+      if (period?.to) q = q.lte("logged_date", period.to);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في جرعات مسجلة بهالفترة 💊";
+      const total = data.reduce((s, t) => s + Number(t.doses_taken), 0);
+      return `💊 أخذت ${fmtNum(total)} جرعة مكملات ${period?.label || "من البداية"}`;
+    },
+  });
+
+  // ── MOST USED SUPPLEMENT ──────────────────────────────────────────────────
+  intents.push({ id: "most_used_supplement", keywords: ["أكثر مكمل", "اكثر مكمل", "المكمل اللي أكثر", "المكمل اللي اكثر"], needsTime: true, priority: 77,
+    handler: async (period) => {
+      let q = supabase.from("supplement_logs").select("doses_taken, supplements(name)");
+      if (period?.from) q = q.gte("logged_date", period.from);
+      if (period?.to) q = q.lte("logged_date", period.to);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في جرعات مسجلة بهالفترة 💊";
+      const bySupp = new Map<string, number>();
+      for (const t of data) { const name = (t as any).supplements?.name || "?"; bySupp.set(name, (bySupp.get(name) || 0) + Number(t.doses_taken)); }
+      const sorted = [...bySupp.entries()].sort((a, b) => b[1] - a[1]);
+      return `💊 المكملات الأكثر استخداماً ${period?.label || "من البداية"}:\n${sorted.map(([n, d]) => `💊 ${n}: ${fmtNum(d)} جرعة`).join("\n")}`;
+    },
+  });
+
+  // ── LAST SUPPLEMENT ───────────────────────────────────────────────────────
+  intents.push({ id: "last_supplement", keywords: ["آخر مكمل", "اخر مكمل", "آخر كمال"], needsTime: false, priority: 77,
+    handler: async () => {
+      const { data } = await supabase.from("supplement_logs").select("logged_date, logged_time, doses_taken, supplements(name)").order("logged_date", { ascending: false }).order("logged_time", { ascending: false }).limit(1);
+      if (!data?.[0]) return "ما في مكملات مسجلة بعد 💊";
+      const t = data[0] as any;
+      return `💊 آخر مكمل: ${t.supplements?.name || "?"} — ${t.doses_taken} جرعة\n📅 ${t.logged_date}`;
+    },
+  });
+
+  // ── SUPPLEMENT DAYS COUNT ─────────────────────────────────────────────────
+  intents.push({ id: "supplement_days_count", keywords: ["كم يوم أخذت كمالات", "كم يوم اخذت كمالات", "أيام المكملات"], needsTime: true, priority: 77,
+    handler: async (period) => {
+      let q = supabase.from("supplement_logs").select("logged_date");
+      if (period?.from) q = q.gte("logged_date", period.from);
+      if (period?.to) q = q.lte("logged_date", period.to);
+      const { data } = await q.limit(1000);
+      return `💊 أخذت مكملات ب ${new Set((data || []).map(t => t.logged_date)).size} يوم ${period?.label || "من البداية"}`;
+    },
+  });
+
+  // ── MOVIES WATCHED / EPISODES WATCHED ─────────────────────────────────────
+  intents.push({ id: "movies_watched", keywords: ["كم فيلم شفت", "عدد أفلام شفت", "كم فلم شفت"], needsTime: false, priority: 73,
+    handler: async () => { const { data } = await supabase.from("media").select("id").eq("type", "movie").eq("status", "completed"); return `🎬 شفت ${data?.length || 0} فيلم`; },
+  });
+  intents.push({ id: "episodes_watched", keywords: ["كم حلقة شفت", "عدد حلقات", "كم حلقة"], needsTime: false, priority: 73,
+    handler: async () => { const { data } = await supabase.from("episodes").select("id").eq("watched", true); return `📺 شفت ${data?.length || 0} حلقة`; },
+  });
+
+  // ── LAST MOVIE / LAST SERIES ──────────────────────────────────────────────
+  intents.push({ id: "last_movie", keywords: ["آخر فيلم شفته", "اخر فيلم شفته", "آخر فيلم", "اخر فلم"], needsTime: false, priority: 74,
+    handler: async () => {
+      const { data } = await supabase.from("media").select("title, rating, user_rating").eq("type", "movie").eq("status", "completed").order("created_at", { ascending: false }).limit(1);
+      if (!data?.[0]) return "ما شفت أي فيلم بعد 🎬";
+      return `🎬 آخر فيلم: ${data[0].title}${data[0].user_rating ? ` ⭐${data[0].user_rating}/10` : ""}${data[0].rating ? ` (TMDB: ${data[0].rating})` : ""}`;
+    },
+  });
+  intents.push({ id: "last_series", keywords: ["آخر مسلسل", "اخر مسلسل", "آخر مسلسل بلشته"], needsTime: false, priority: 74,
+    handler: async () => {
+      const { data } = await supabase.from("media").select("title, rating, status").eq("type", "tv").order("created_at", { ascending: false }).limit(1);
+      if (!data?.[0]) return "ما في مسلسلات بعد 📺";
+      const st: Record<string, string> = { watching: "بتشاهده", completed: "خلصته", want_to_watch: "بدك تبلشه" };
+      return `📺 آخر مسلسل: ${data[0].title} — ${st[data[0].status || ""] || data[0].status}`;
+    },
+  });
+
+  // ── GAMES BY PLATFORM / TOTAL SPENT / MOST EXPENSIVE ──────────────────────
+  intents.push({ id: "games_by_platform", keywords: ["لعبة PS5", "لعبة PS4", "لعبة PC", "ألعاب PS5", "العاب PS5", "ألعاب PC", "العاب PC", "كم لعبة PS", "كم لعبة بي سي"], needsTime: false, priority: 73,
+    handler: async () => {
+      const { data } = await supabase.from("games").select("platform");
+      if (!data || data.length === 0) return "ما في ألعاب 🎮";
+      const byPlat = new Map<string, number>();
+      for (const g of data) byPlat.set(g.platform, (byPlat.get(g.platform) || 0) + 1);
+      return `🎮 ألعابك:\n${[...byPlat.entries()].map(([p, c]) => `${p}: ${c} لعبة`).join("\n")}`;
+    },
+  });
+  intents.push({ id: "games_total_spent", keywords: ["صرفت على الألعاب", "صرفت على العاب", "تكلفة الألعاب", "مصاريف ألعاب"], needsTime: false, priority: 73,
+    handler: async () => {
+      const { data } = await supabase.from("games").select("user_price_ils, name").order("user_price_ils", { ascending: false });
+      if (!data || data.length === 0) return "ما في ألعاب 🎮";
+      const total = data.reduce((s, g) => s + Number(g.user_price_ils || 0), 0);
+      return `🎮 مصاريف الألعاب: ${fmtNum(total)} ₪\n💸 أغلى: ${data[0].name} (${fmtNum(Number(data[0].user_price_ils))} ₪)`;
+    },
+  });
+  intents.push({ id: "most_expensive_game", keywords: ["اللعبة اللي أكثر صرفت", "اللعبة اللي اكثر", "أغلى لعبة", "اغلى لعبة"], needsTime: false, priority: 73,
+    handler: async () => {
+      const { data } = await supabase.from("games").select("name, user_price_ils, platform").order("user_price_ils", { ascending: false }).limit(3);
+      if (!data || data.length === 0) return "ما في ألعاب 🎮";
+      return `💸 أغلى ألعابك:\n${data.map((g, i) => `${i + 1}. ${g.name} (${g.platform}) — ${fmtNum(Number(g.user_price_ils))} ₪`).join("\n")}`;
+    },
+  });
+
+  // ── HIGHEST RATED MOVIE / SERIES ──────────────────────────────────────────
+  intents.push({ id: "highest_rated_movie", keywords: ["أعلى تقييم IMDB", "اعلى تقييم", "أعلى تقييم فيلم", "فيلم أعلى"], needsTime: false, priority: 73,
+    handler: async () => {
+      const { data } = await supabase.from("media").select("title, rating, user_rating").eq("type", "movie").not("rating", "is", null).order("rating", { ascending: false }).limit(3);
+      if (!data || data.length === 0) return "ما في أفلام بتقييم 🎬";
+      return `🎬 أعلى تقييماً:\n${data.map((m, i) => `${i + 1}. ${m.title} ⭐${m.rating}`).join("\n")}`;
+    },
+  });
+  intents.push({ id: "highest_rated_series", keywords: ["المسلسل اللي أعلى", "المسلسل اللي اعلى", "مسلسل أعلى تقييم", "أعلى مسلسل"], needsTime: false, priority: 73,
+    handler: async () => {
+      const { data } = await supabase.from("media").select("title, rating").eq("type", "tv").not("rating", "is", null).order("rating", { ascending: false }).limit(3);
+      if (!data || data.length === 0) return "ما في مسلسلات بتقييم 📺";
+      return `📺 أعلى المسلسلات:\n${data.map((m, i) => `${i + 1}. ${m.title} ⭐${m.rating}`).join("\n")}`;
+    },
+  });
+
+  // ── SUGGEST MOVIE ─────────────────────────────────────────────────────────
+  intents.push({ id: "suggest_movie", keywords: ["اقترح فيلم", "اقترحلي فيلم", "نصحني فيلم", "شو أشوف"], needsTime: false, priority: 73,
+    handler: async () => {
+      const { data } = await supabase.from("media").select("title, rating, genres").eq("status", "want_to_watch").not("rating", "is", null).order("rating", { ascending: false }).limit(5);
+      if (!data || data.length === 0) return "ما عندك أفلام بقائمة المشاهدة 🎬";
+      const pick = data[Math.floor(Math.random() * data.length)];
+      return `🎬 اقتراحي: ${pick.title} ⭐${pick.rating}${pick.genres?.length ? `\n🎭 ${pick.genres.slice(0, 3).join(", ")}` : ""}`;
+    },
+  });
+
+  // ── COMPARE MEDIA TYPES ───────────────────────────────────────────────────
+  intents.push({ id: "compare_media_types", keywords: ["قارن الأفلام مع المسلسلات", "الأفلام مقابل المسلسلات", "أفلام ولا مسلسلات"], needsTime: false, priority: 83,
+    handler: async () => {
+      const { data } = await supabase.from("media").select("type, status");
+      if (!data || data.length === 0) return "ما في أفلام أو مسلسلات 📺";
+      const movies = data.filter(m => m.type === "movie");
+      const series = data.filter(m => m.type === "tv");
+      return `🔄 مقارنة:\n🎬 أفلام: ${movies.length} (خلصت ${movies.filter(m => m.status === "completed").length})\n📺 مسلسلات: ${series.length} (خلصت ${series.filter(m => m.status === "completed").length})`;
+    },
+  });
+
+  // ── COMPLETED DREAMS ──────────────────────────────────────────────────────
+  intents.push({ id: "completed_dreams", keywords: ["كم حلم حققت", "أحلام محققة", "احلام محققة"], needsTime: false, priority: 72,
+    handler: async () => {
+      const { data } = await supabase.from("dreams").select("title, completed_at, rating").eq("status", "completed").order("completed_at", { ascending: false });
+      if (!data || data.length === 0) return "ما حققت أي حلم بعد 🌟";
+      return `🌟 أحلام حققتها (${data.length}):\n${data.map((d, i) => `${i + 1}. ✅ ${d.title}${d.rating ? ` ⭐${d.rating}` : ""}`).join("\n")}`;
+    },
+  });
+
+  // ── CLOSEST TO COMPLETE DREAM ─────────────────────────────────────────────
+  intents.push({ id: "closest_to_complete", keywords: ["أقرب للإكمال", "اقرب للاكمال", "أقرب حلم", "الحلم اللي أقرب"], needsTime: false, priority: 72,
+    handler: async () => {
+      const { data } = await supabase.from("dreams").select("title, progress_percentage").eq("status", "in_progress").order("progress_percentage", { ascending: false }).limit(3);
+      if (!data || data.length === 0) return "ما في أحلام نشطة 🌟";
+      return `🌟 أقرب للإكمال:\n${data.map((d, i) => `${i + 1}. ${d.title} — ${d.progress_percentage || 0}%`).join("\n")}`;
+    },
+  });
+
+  // ── REMAINING DREAM STEPS ─────────────────────────────────────────────────
+  intents.push({ id: "remaining_steps", keywords: ["كم خطوة باقي", "خطوات باقية", "خطوات أحلام"], needsTime: false, priority: 72,
+    handler: async () => {
+      const { data } = await supabase.from("dream_steps").select("dream_id, dreams(title, status)").eq("is_completed", false);
+      if (!data || data.length === 0) return "ما في خطوات باقية ✨";
+      const byDream = new Map<string, { title: string; count: number }>();
+      for (const s of data) {
+        const d = (s as any).dreams;
+        if (d?.status !== "in_progress") continue;
+        const prev = byDream.get(d.title) || { title: d.title, count: 0 };
+        byDream.set(d.title, { ...prev, count: prev.count + 1 });
+      }
+      const total = [...byDream.values()].reduce((s, d) => s + d.count, 0);
+      return `📋 خطوات باقية:\n${[...byDream.values()].map(d => `🌟 ${d.title}: ${d.count} خطوة`).join("\n")}\n🔢 المجموع: ${total}`;
+    },
+  });
+
+  // ── DREAMS OVERALL PROGRESS ───────────────────────────────────────────────
+  intents.push({ id: "dreams_overall_progress", keywords: ["تقدم أحلامي", "تقدم احلامي", "إنجاز أحلامي", "معدل إنجاز", "معدل انجاز"], needsTime: false, priority: 72,
+    handler: async () => {
+      const { data } = await supabase.from("dreams").select("progress_percentage, status");
+      if (!data || data.length === 0) return "ما في أحلام 🌟";
+      const active = data.filter(d => d.status === "in_progress");
+      const avg = active.length > 0 ? active.reduce((s, d) => s + (d.progress_percentage || 0), 0) / active.length : 0;
+      return `🌟 تقدم أحلامك:\n📊 معدل: ${avg.toFixed(0)}%\n✅ محققة: ${data.filter(d => d.status === "completed").length}\n🔄 نشطة: ${active.length}`;
+    },
+  });
+
+  // ── LAST ADDED DREAM ──────────────────────────────────────────────────────
+  intents.push({ id: "last_added_dream", keywords: ["آخر حلم أضفتو", "اخر حلم اضفتو", "آخر حلم"], needsTime: false, priority: 72,
+    handler: async () => {
+      const { data } = await supabase.from("dreams").select("title, status, progress_percentage, created_at").order("created_at", { ascending: false }).limit(1);
+      if (!data?.[0]) return "ما في أحلام 🌟";
+      const st: Record<string, string> = { in_progress: "🔄 نشط", completed: "✅ محقق", paused: "⏸️ موقوف", cancelled: "❌ ملغي" };
+      return `🌟 آخر حلم: ${data[0].title}\n${st[data[0].status] || data[0].status} — ${data[0].progress_percentage || 0}%`;
+    },
+  });
+
+  // ── PRAYER BY NAME ────────────────────────────────────────────────────────
+  intents.push({ id: "prayer_dhuhr", keywords: ["صليت الظهر", "كم مرة صليت الظهر"], needsTime: true, priority: 79,
+    handler: async (period) => {
+      let q = supabase.from("prayer_completions").select("id").eq("prayer_name", "dhuhr");
+      if (period?.from) q = q.gte("completion_date", period.from);
+      if (period?.to) q = q.lte("completion_date", period.to);
+      const { data } = await q.limit(1000);
+      return `🕌 صليت الظهر ${data?.length || 0} مرة ${period?.label || "من البداية"}`;
+    },
+  });
+  intents.push({ id: "prayer_asr", keywords: ["صليت العصر", "كم مرة صليت العصر"], needsTime: true, priority: 79,
+    handler: async (period) => {
+      let q = supabase.from("prayer_completions").select("id").eq("prayer_name", "asr");
+      if (period?.from) q = q.gte("completion_date", period.from);
+      if (period?.to) q = q.lte("completion_date", period.to);
+      const { data } = await q.limit(1000);
+      return `🕌 صليت العصر ${data?.length || 0} مرة ${period?.label || "من البداية"}`;
+    },
+  });
+  intents.push({ id: "prayer_maghrib", keywords: ["صليت المغرب", "كم مرة صليت المغرب"], needsTime: true, priority: 79,
+    handler: async (period) => {
+      let q = supabase.from("prayer_completions").select("id").eq("prayer_name", "maghrib");
+      if (period?.from) q = q.gte("completion_date", period.from);
+      if (period?.to) q = q.lte("completion_date", period.to);
+      const { data } = await q.limit(1000);
+      return `🕌 صليت المغرب ${data?.length || 0} مرة ${period?.label || "من البداية"}`;
+    },
+  });
+  intents.push({ id: "prayer_isha", keywords: ["صليت العشاء", "صليت العشا", "كم مرة صليت العشاء"], needsTime: true, priority: 79,
+    handler: async (period) => {
+      let q = supabase.from("prayer_completions").select("id").eq("prayer_name", "isha");
+      if (period?.from) q = q.gte("completion_date", period.from);
+      if (period?.to) q = q.lte("completion_date", period.to);
+      const { data } = await q.limit(1000);
+      return `🕌 صليت العشاء ${data?.length || 0} مرة ${period?.label || "من البداية"}`;
+    },
+  });
+
+  // ── MOST PRAYED ───────────────────────────────────────────────────────────
+  intents.push({ id: "most_prayed", keywords: ["أكثر صلاة صليتها", "اكثر صلاة", "أكثر صلاة"], needsTime: true, priority: 79,
+    handler: async (period) => {
+      let q = supabase.from("prayer_completions").select("prayer_name");
+      if (period?.from) q = q.gte("completion_date", period.from);
+      if (period?.to) q = q.lte("completion_date", period.to);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في صلوات بهالفترة 🕌";
+      const byP = new Map<string, number>();
+      for (const p of data) byP.set(p.prayer_name, (byP.get(p.prayer_name) || 0) + 1);
+      const nameMap: Record<string, string> = { fajr: "الفجر", dhuhr: "الظهر", asr: "العصر", maghrib: "المغرب", isha: "العشاء" };
+      const sorted = [...byP.entries()].sort((a, b) => b[1] - a[1]);
+      return `🕌 صلواتك ${period?.label || "من البداية"}:\n${sorted.map(([p, c]) => `${nameMap[p] || p}: ${c} مرة`).join("\n")}`;
+    },
+  });
+
+  // ── FULL PRAYER DAYS ──────────────────────────────────────────────────────
+  intents.push({ id: "full_prayer_days", keywords: ["كل الصلوات", "صليت كل الصلوات", "كم يوم صليت فيه كل", "5 صلوات", "خمس صلوات"], needsTime: true, priority: 80,
+    handler: async (period) => {
+      let q = supabase.from("prayer_completions").select("completion_date, prayer_name");
+      if (period?.from) q = q.gte("completion_date", period.from);
+      if (period?.to) q = q.lte("completion_date", period.to);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في صلوات بهالفترة 🕌";
+      const byDay = new Map<string, Set<string>>();
+      for (const p of data) { if (!byDay.has(p.completion_date)) byDay.set(p.completion_date, new Set()); byDay.get(p.completion_date)!.add(p.prayer_name); }
+      const fullDays = [...byDay.entries()].filter(([_, s]) => s.size >= 5).length;
+      return `🕌 صليت كل الصلوات ب ${fullDays} يوم من ${byDay.size} ${period?.label || "من البداية"}`;
+    },
+  });
+
+  // ── TOMORROW SCHEDULE ─────────────────────────────────────────────────────
+  intents.push({ id: "tomorrow_schedule", keywords: ["بكرا بالجدول", "بكره بالجدول", "جدول بكرا", "شو عندي بكرا"], needsTime: false, priority: 70,
+    handler: async () => {
+      const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+      const tStr = format(tomorrow, "yyyy-MM-dd");
+      const dow = tomorrow.getDay() || 7;
+      const { data } = await supabase.from("daily_activities").select("title, start_time, is_recurring, days_of_week").or(`date.eq.${tStr},and(is_recurring.eq.true)`);
+      const items = (data || []).filter(a => !a.is_recurring || a.days_of_week?.includes(dow));
+      if (items.length === 0) return "ما عندك شي بكرا 📋";
+      return `📋 جدولك بكرا:\n${items.map(a => `${a.start_time ? a.start_time.substring(0, 5) + " " : ""}${a.title}`).join("\n")}`;
+    },
+  });
+
+  // ── COMPLETED TASKS ───────────────────────────────────────────────────────
+  intents.push({ id: "completed_tasks", keywords: ["مهمة خلصت", "مهام خلصت", "كم مهمة خلصت"], needsTime: true, priority: 70,
+    handler: async (period) => {
+      let q = supabase.from("activity_completions").select("id");
+      if (period?.from) q = q.gte("completion_date", period.from);
+      if (period?.to) q = q.lte("completion_date", period.to);
+      const { data } = await q.limit(1000);
+      return `✅ خلصت ${data?.length || 0} مهمة ${period?.label || "من البداية"}`;
+    },
+  });
+
+  // ── WORKOUT STREAK ────────────────────────────────────────────────────────
+  intents.push({ id: "workout_streak", keywords: ["يوم متتالي تمرنت", "أيام متتالية تمرين", "ستريك تمارين", "streak"], needsTime: false, priority: 77,
+    handler: async () => {
+      const { data } = await supabase.from("workout_sessions").select("scheduled_date").not("completed_at", "is", null).order("scheduled_date", { ascending: false }).limit(100);
+      if (!data || data.length === 0) return "ما في تمارين 🏋️";
+      const dates = [...new Set(data.map(d => d.scheduled_date))].sort().reverse();
+      let streak = 1;
+      for (let i = 1; i < dates.length; i++) {
+        if ((new Date(dates[i - 1]).getTime() - new Date(dates[i]).getTime()) / 86400000 <= 1) streak++; else break;
+      }
+      return `🔥 ${streak} يوم متتالي تمرنت!`;
+    },
+  });
+
+  // ── FAJR STREAK ───────────────────────────────────────────────────────────
+  intents.push({ id: "fajr_streak", keywords: ["يوم متتالي صليت الفجر", "ستريك فجر", "أيام متتالية فجر"], needsTime: false, priority: 79,
+    handler: async () => {
+      const { data } = await supabase.from("prayer_completions").select("completion_date").eq("prayer_name", "fajr").order("completion_date", { ascending: false }).limit(100);
+      if (!data || data.length === 0) return "ما في فجر مسجل 🌅";
+      const dates = [...new Set(data.map(d => d.completion_date))].sort().reverse();
+      let streak = 1;
+      for (let i = 1; i < dates.length; i++) {
+        if ((new Date(dates[i - 1]).getTime() - new Date(dates[i]).getTime()) / 86400000 <= 1) streak++; else break;
+      }
+      return `🌅 ${streak} يوم متتالي صليت الفجر!`;
+    },
+  });
+
+  // ── MONTHLY SUMMARY ───────────────────────────────────────────────────────
+  intents.push({ id: "monthly_summary", keywords: ["لخصلي الشهر", "ملخص الشهر", "تقرير الشهر", "لخصلي", "ملخص"], needsTime: false, priority: 91,
+    handler: async () => {
+      const today = new Date();
+      const ms = format(startOfMonth(today), "yyyy-MM-dd");
+      const ts = format(today, "yyyy-MM-dd");
+      const [exp, inc, wo, pr, su] = await Promise.all([
+        supabase.from("transactions").select("amount").eq("type", "expense").gte("date", ms).lte("date", ts).limit(1000),
+        supabase.from("transactions").select("amount").eq("type", "income").gte("date", ms).lte("date", ts).limit(1000),
+        supabase.from("workout_sessions").select("id").not("completed_at", "is", null).gte("scheduled_date", ms).lte("scheduled_date", ts).limit(100),
+        supabase.from("prayer_completions").select("id").gte("completion_date", ms).lte("completion_date", ts).limit(1000),
+        supabase.from("supplement_logs").select("id").gte("logged_date", ms).lte("logged_date", ts).limit(1000),
+      ]);
+      const tExp = (exp.data || []).reduce((s, t) => s + Number(t.amount), 0);
+      const tInc = (inc.data || []).reduce((s, t) => s + Number(t.amount), 0);
+      return `📊 ملخص الشهر:\n\n💰 دخل: ${fmtNum(tInc)} ₪\n💳 مصاريف: ${fmtNum(tExp)} ₪\n${tInc - tExp >= 0 ? "✅" : "⚠️"} صافي: ${fmtNum(tInc - tExp)} ₪\n\n💪 تمارين: ${wo.data?.length || 0}\n💊 جرعات: ${su.data?.length || 0}\n🕌 صلوات: ${pr.data?.length || 0}`;
+    },
+  });
+
+  // ── WEIGHT/WORKOUT/PRAYER COMPARISONS ─────────────────────────────────────
+  intents.push({ id: "weight_comparison", keywords: ["قارن وزني", "مقارنة وزن", "وزن الشهر الفائت"], needsTime: false, priority: 83,
+    handler: async () => {
+      const monthAgo = format(subMonths(new Date(), 1), "yyyy-MM-dd'T'HH:mm:ss");
+      const [curr, prev] = await Promise.all([
+        supabase.from("user_body_stats").select("weight").order("recorded_at", { ascending: false }).limit(1),
+        supabase.from("user_body_stats").select("weight").lte("recorded_at", monthAgo).order("recorded_at", { ascending: false }).limit(1),
+      ]);
+      if (!curr.data?.[0]) return "ما في بيانات وزن ⚖️";
+      const c = Number(curr.data[0].weight), p = prev.data?.[0] ? Number(prev.data[0].weight) : null;
+      if (!p) return `⚖️ وزنك: ${fmtNum(c)} كغ (ما في قراءة سابقة)`;
+      const d = c - p;
+      return `⚖️ مقارنة:\nالحالي: ${fmtNum(c)} كغ\nقبل شهر: ${fmtNum(p)} كغ\n${d > 0 ? "📈" : d < 0 ? "📉" : "↔️"} فرق: ${fmtNum(Math.abs(d))} كغ`;
+    },
+  });
+  intents.push({ id: "workout_comparison", keywords: ["قارن تمارين", "مقارنة تمارين", "تمارين الشهر الفائت مع"], needsTime: false, priority: 83,
+    handler: async () => {
+      const today = new Date();
+      const ms = format(startOfMonth(today), "yyyy-MM-dd"), ts = format(today, "yyyy-MM-dd"), ps = format(startOfMonth(subMonths(today, 1)), "yyyy-MM-dd");
+      const [c, p] = await Promise.all([
+        supabase.from("workout_sessions").select("id").not("completed_at", "is", null).gte("scheduled_date", ms).lte("scheduled_date", ts).limit(100),
+        supabase.from("workout_sessions").select("id").not("completed_at", "is", null).gte("scheduled_date", ps).lt("scheduled_date", ms).limit(100),
+      ]);
+      return `🏋️ مقارنة:\nهالشهر: ${c.data?.length || 0}\nالفائت: ${p.data?.length || 0}\n${(c.data?.length || 0) > (p.data?.length || 0) ? "📈" : "📉"} فرق: ${Math.abs((c.data?.length || 0) - (p.data?.length || 0))}`;
+    },
+  });
+  intents.push({ id: "prayer_comparison", keywords: ["قارن صلواتي", "مقارنة صلوات", "صلوات هالأسبوع مع"], needsTime: false, priority: 83,
+    handler: async () => {
+      const today = new Date();
+      const ws = format(startOfWeek(today, { weekStartsOn: 6 }), "yyyy-MM-dd"), ts = format(today, "yyyy-MM-dd");
+      const lws = format(subDays(new Date(ws), 7), "yyyy-MM-dd");
+      const [c, p] = await Promise.all([
+        supabase.from("prayer_completions").select("id").gte("completion_date", ws).lte("completion_date", ts).limit(100),
+        supabase.from("prayer_completions").select("id").gte("completion_date", lws).lt("completion_date", ws).limit(100),
+      ]);
+      return `🕌 مقارنة:\nهالأسبوع: ${c.data?.length || 0}\nالفائت: ${p.data?.length || 0}`;
     },
   });
 
