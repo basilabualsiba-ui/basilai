@@ -228,7 +228,7 @@ function fmtNum(n: number): string {
 }
 
 // ─── Intent matching engine ─────────────────────────────────────────────────
-type IntentHandler = (period: TimePeriod | null, matchedName?: string) => Promise<string>;
+type IntentHandler = (period: TimePeriod | null, matchedName?: string, originalText?: string) => Promise<string>;
 
 interface IntentDef {
   id: string;
