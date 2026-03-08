@@ -1365,7 +1365,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── MOST USED SUPPLEMENT ──────────────────────────────────────────────────
-  intents.push({ id: "most_used_supplement", keywords: ["أكثر مكمل", "اكثر مكمل", "المكمل اللي أكثر", "المكمل اللي اكثر"], needsTime: true, priority: 77,
+  intents.push({ id: "most_used_supplement", keywords: ["أكثر مكمل", "اكثر مكمل", "المكمل اللي أكثر", "المكمل اللي اكثر", "أكثر مكمل استخدمتو"], needsTime: true, priority: 77,
     handler: async (period) => {
       let q = supabase.from("supplement_logs").select("doses_taken, supplements(name)");
       if (period?.from) q = q.gte("logged_date", period.from);
