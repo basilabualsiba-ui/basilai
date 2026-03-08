@@ -10,12 +10,12 @@ interface Msg {
   role: Role;
   content: string;
   needs_clarification?: boolean;
-  clarification_type?: "time";
+  clarification_type?: "time" | "account" | "confirm_expense";
   reply_chips?: string[];
 }
 
 interface TimePeriod {
-  from: string | null; // ISO date string yyyy-MM-dd
+  from: string | null;
   to: string | null;
   label: string;
 }
@@ -31,6 +31,17 @@ interface CategoryRef {
   name: string;
 }
 
+interface PendingExpense {
+  amount: number;
+  category_id?: string;
+  category_name?: string;
+  subcategory_id?: string;
+  subcategory_name?: string;
+  account_id?: string;
+  account_name?: string;
+  description?: string;
+}
+
 // ─── Suggestion groups ──────────────────────────────────────────────────────
 const SUGGESTION_GROUPS = [
   {
@@ -43,6 +54,7 @@ const SUGGESTION_GROUPS = [
       "شو آخر 5 معاملات؟",
       "شو أغلى معاملة هالشهر؟",
       "كم معاملة عملت هالشهر؟",
+      "صرفت 50 على أكل",
       "أضف صرف",
     ],
   },
@@ -844,13 +856,13 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
     },
   });
 
-  // ── ADD EXPENSE (guidance) ──────────────────────────────────────────────
+  // ── ADD EXPENSE (now just a trigger for the smart flow - handled in processQuestion) ──
   intents.push({
     id: "add_expense",
     keywords: ["أضف صرف", "اضف صرف", "سجلي مصروف", "سجلي صرفة", "بدي أسجل صرفة", "بدي اسجل صرفة", "أضف معاملة", "اضف معاملة", "بدي أضيف صرف"],
     needsTime: false,
     priority: 96,
-    handler: async () => "🧾 بدك تضيف صرفة؟\nروح لصفحة Wallet واختار أي فئة وابدأ بالتسجيل!\n\n💡 أو من الداشبورد اضغط على كارت المحفظة",
+    handler: async () => "🧾 بدك تضيف صرفة؟\nاكتبلي بهالشكل:\n\"صرفت 50 على أكل\"\n\"صرفت 120 شيكل بنزين\"\n\"30 شيكل قهوة\"\n\nوأنا بسجلها مباشرة! 💰",
   });
 
   // ── MOST EXPENSIVE DAY ────────────────────────────────────────────────────
@@ -1682,11 +1694,22 @@ function MsgBubble({ msg, onChipClick }: { msg: Msg; onChipClick: (text: string)
 
       {msg.reply_chips && msg.reply_chips.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          {msg.reply_chips.map((chip) => (
-            <button key={chip} onClick={() => onChipClick(chip)} className="text-[11px] px-3 py-1.5 rounded-full font-medium transition-all active:scale-95 hover:brightness-110" style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.65)" }}>
-              {chip}
-            </button>
-          ))}
+          {msg.reply_chips.map((chip) => {
+            const isConfirm = chip.startsWith("✅");
+            const isCancel = chip.startsWith("❌");
+            const chipStyle = isConfirm
+              ? { background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.4)", color: "#22c55e" }
+              : isCancel
+              ? { background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.4)", color: "#ef4444" }
+              : msg.clarification_type === "account"
+              ? { background: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.35)", color: "#60a5fa" }
+              : { background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.65)" };
+            return (
+              <button key={chip} onClick={() => onChipClick(chip)} className="text-[11px] px-3 py-1.5 rounded-full font-medium transition-all active:scale-95 hover:brightness-110" style={chipStyle}>
+                {chip}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
@@ -1712,19 +1735,23 @@ export function AssistantBubble() {
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
   const [intents, setIntents] = useState<IntentDef[]>([]);
   const [catSubData, setCatSubData] = useState<{ cats: CategoryRef[]; subs: SubcategoryRef[] }>({ cats: [], subs: [] });
+  const [pendingExpense, setPendingExpense] = useState<PendingExpense | null>(null);
+  const [accountsList, setAccountsList] = useState<{ id: string; name: string }[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load categories + subcategories on mount to build dynamic intents
+  // Load categories + subcategories + accounts on mount
   useEffect(() => {
     (async () => {
-      const [catRes, subRes] = await Promise.all([
+      const [catRes, subRes, accRes] = await Promise.all([
         supabase.from("categories").select("id, name"),
         supabase.from("subcategories").select("id, name, category_id"),
+        supabase.from("accounts").select("id, name"),
       ]);
       const cats: CategoryRef[] = catRes.data || [];
       const subs: SubcategoryRef[] = subRes.data || [];
       setCatSubData({ cats, subs });
+      setAccountsList(accRes.data || []);
       setIntents(buildIntents(cats, subs));
     })();
   }, []);
@@ -1748,6 +1775,70 @@ export function AssistantBubble() {
     const { period: detectedPeriod, cleaned } = detectTimePeriod(text);
     const period = forcedPeriod || detectedPeriod;
     const textForMatch = cleaned || text;
+
+    // ── Smart expense detection: "صرفت 50 على أكل" or "30 شيكل قهوة" ──
+    const expensePatterns = [
+      /صرفت\s+(\d+(?:\.\d+)?)\s*(?:شيكل|شيقل|₪)?\s*(?:على|ع|ب|في|فـ)?\s*(.+)/i,
+      /(\d+(?:\.\d+)?)\s*(?:شيكل|شيقل|₪)\s*(?:على|ع|ب|في|فـ)?\s*(.+)/i,
+      /سجل(?:ي|لي)?\s+(\d+(?:\.\d+)?)\s*(?:شيكل|شيقل|₪)?\s*(?:على|ع|ب|في|فـ)?\s*(.+)/i,
+      /حط(?:لي)?\s+(\d+(?:\.\d+)?)\s*(?:شيكل|شيقل|₪)?\s*(?:على|ع|ب|في|فـ)?\s*(.+)/i,
+    ];
+
+    for (const pat of expensePatterns) {
+      const match = text.match(pat);
+      if (match) {
+        const amount = parseFloat(match[1]);
+        const target = match[2].trim().replace(/[؟?!\.]/g, "").trim();
+        if (amount > 0 && target.length > 0) {
+          // Try to match target to subcategory first, then category
+          const allNames = [
+            ...catSubData.subs.map(s => ({ name: s.name.toLowerCase(), type: "sub" as const, id: s.id, displayName: s.name, category_id: s.category_id })),
+            ...catSubData.cats.map(c => ({ name: c.name.toLowerCase(), type: "cat" as const, id: c.id, displayName: c.name, category_id: c.id })),
+          ].sort((a, b) => b.name.length - a.name.length);
+
+          const lower = target.toLowerCase();
+          let matched = allNames.find(n => lower.includes(n.name) || n.name.includes(lower));
+
+          const expense: PendingExpense = { amount, description: target };
+          if (matched) {
+            if (matched.type === "sub") {
+              expense.subcategory_id = matched.id;
+              expense.subcategory_name = matched.displayName;
+              expense.category_id = matched.category_id;
+              const parentCat = catSubData.cats.find(c => c.id === matched!.category_id);
+              expense.category_name = parentCat?.name;
+            } else {
+              expense.category_id = matched.id;
+              expense.category_name = matched.displayName;
+            }
+          }
+
+          // If only one account, auto-select it
+          if (accountsList.length === 1) {
+            expense.account_id = accountsList[0].id;
+            expense.account_name = accountsList[0].name;
+            setPendingExpense(expense);
+            const catLabel = expense.subcategory_name || expense.category_name || target;
+            return {
+              content: `🧾 تأكيد الصرفة:\n💰 ${fmtNum(amount)} ₪\n📍 ${catLabel}\n🏦 ${accountsList[0].name}\n📅 ${format(new Date(), "yyyy-MM-dd")}\n\nمتأكد؟`,
+              needs_clarification: true,
+              clarification_type: "confirm_expense" as const,
+              reply_chips: ["✅ أكيد سجلها", "❌ لا إلغاء"],
+            };
+          }
+
+          // Multiple accounts → ask which one
+          setPendingExpense(expense);
+          const catLabel = expense.subcategory_name || expense.category_name || target;
+          return {
+            content: `🧾 صرفة ${fmtNum(amount)} ₪ على ${catLabel}\nمن أي حساب بدك تسجلها؟ 🏦`,
+            needs_clarification: true,
+            clarification_type: "account" as const,
+            reply_chips: accountsList.map(a => a.name),
+          };
+        }
+      }
+    }
 
     // Try to match an intent
     const intent = matchIntent(textForMatch, intents);
@@ -1873,7 +1964,7 @@ export function AssistantBubble() {
     }
 
     return { content: "ما عندي جواب لهالسؤال بعد 🤔\nجرب تسأل بطريقة ثانية أو اختار من الأسئلة المقترحة!" };
-  }, [intents, catSubData]);
+  }, [intents, catSubData, accountsList]);
 
   const callAssistant = useCallback(async (text: string) => {
     if (!text.trim() || loading) return;
@@ -1890,6 +1981,7 @@ export function AssistantBubble() {
         content: result.content,
         needs_clarification: result.needs_clarification,
         clarification_type: result.clarification_type,
+        reply_chips: result.reply_chips,
       });
     } catch (err) {
       console.error("Assistant error:", err);
@@ -1901,22 +1993,83 @@ export function AssistantBubble() {
 
   // ── Chip click: for time clarification, re-run with original question + time period ──
   const handleChipClick = useCallback(async (chip: string) => {
-    // Check if this is a time chip for a pending question
+    // ── Handle expense confirmation ──
+    if (pendingExpense && (chip === "✅ أكيد سجلها" || chip === "❌ لا إلغاء")) {
+      addMsg({ role: "user", content: chip });
+      if (chip === "❌ لا إلغاء") {
+        setPendingExpense(null);
+        addMsg({ role: "assistant", content: "تم الإلغاء ❌" });
+        return;
+      }
+      // Insert the transaction
+      setLoading(true);
+      try {
+        const now = new Date();
+        const { error } = await supabase.from("transactions").insert({
+          amount: pendingExpense.amount,
+          type: "expense",
+          date: format(now, "yyyy-MM-dd"),
+          time: format(now, "HH:mm:ss"),
+          account_id: pendingExpense.account_id!,
+          category_id: pendingExpense.category_id || null,
+          subcategory_id: pendingExpense.subcategory_id || null,
+          description: pendingExpense.description || null,
+        });
+        if (error) throw error;
+
+        // Update account balance
+        const { data: acc } = await supabase.from("accounts").select("amount").eq("id", pendingExpense.account_id!).single();
+        if (acc) {
+          await supabase.from("accounts").update({ amount: Number(acc.amount) - pendingExpense.amount }).eq("id", pendingExpense.account_id!);
+        }
+
+        const catLabel = pendingExpense.subcategory_name || pendingExpense.category_name || pendingExpense.description || "";
+        addMsg({ role: "assistant", content: `✅ تم تسجيل ${fmtNum(pendingExpense.amount)} ₪ على ${catLabel} من ${pendingExpense.account_name}!\n📅 ${format(now, "yyyy-MM-dd")} ${format(now, "HH:mm")}` });
+        setPendingExpense(null);
+      } catch (err) {
+        console.error("Insert error:", err);
+        addMsg({ role: "assistant", content: "صار خطأ بالتسجيل 😕 جرب مرة ثانية" });
+        setPendingExpense(null);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // ── Handle account selection for pending expense ──
+    if (pendingExpense && !pendingExpense.account_id) {
+      const selectedAcc = accountsList.find(a => a.name === chip);
+      if (selectedAcc) {
+        addMsg({ role: "user", content: chip });
+        const updated = { ...pendingExpense, account_id: selectedAcc.id, account_name: selectedAcc.name };
+        setPendingExpense(updated);
+        const catLabel = updated.subcategory_name || updated.category_name || updated.description || "";
+        addMsg({
+          role: "assistant",
+          content: `🧾 تأكيد الصرفة:\n💰 ${fmtNum(updated.amount)} ₪\n📍 ${catLabel}\n🏦 ${selectedAcc.name}\n📅 ${format(new Date(), "yyyy-MM-dd")}\n\nمتأكد؟`,
+          needs_clarification: true,
+          clarification_type: "confirm_expense",
+          reply_chips: ["✅ أكيد سجلها", "❌ لا إلغاء"],
+        });
+        return;
+      }
+    }
+
+    // ── Time chip for pending question ──
     if (pendingQuestion && TIME_CHIPS.includes(chip)) {
       addMsg({ role: "user", content: chip });
       setLoading(true);
       setPendingQuestion(null);
 
       try {
-        // Parse the time period from the chip
         const { period } = detectTimePeriod(chip);
-        // Re-run the original question with the forced time period
         const result = await processQuestion(pendingQuestion, period || undefined);
         addMsg({
           role: "assistant",
           content: result.content,
           needs_clarification: result.needs_clarification,
           clarification_type: result.clarification_type,
+          reply_chips: result.reply_chips,
         });
       } catch {
         addMsg({ role: "assistant", content: "صار خطأ، جرب مرة ثانية 😕" });
@@ -1927,7 +2080,7 @@ export function AssistantBubble() {
       // Generic chip → send as new question
       callAssistant(chip);
     }
-  }, [pendingQuestion, processQuestion, callAssistant]);
+  }, [pendingQuestion, pendingExpense, accountsList, processQuestion, callAssistant]);
 
   const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
