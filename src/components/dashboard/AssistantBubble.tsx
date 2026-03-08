@@ -1254,7 +1254,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── MOST TRAINED MUSCLE ───────────────────────────────────────────────────
   intents.push({
     id: "most_trained_muscle",
-    keywords: ["أكثر عضلة", "اكثر عضلة", "أكثر عضلة اشتغلت"],
+    keywords: ["أكثر عضلة", "اكثر عضلة", "أكثر عضلة اشتغلت", "أكثر عضلة اشتغلت عليها"],
     needsTime: true,
     priority: 79,
     handler: async (period) => {
