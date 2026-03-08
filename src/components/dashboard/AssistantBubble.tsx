@@ -1380,7 +1380,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── LAST SUPPLEMENT ───────────────────────────────────────────────────────
-  intents.push({ id: "last_supplement", keywords: ["آخر مكمل", "اخر مكمل", "آخر كمال"], needsTime: false, priority: 77,
+  intents.push({ id: "last_supplement", keywords: ["آخر مكمل", "اخر مكمل", "آخر كمال", "آخر مكمل أخذتو"], needsTime: false, priority: 77,
     handler: async () => {
       const { data } = await supabase.from("supplement_logs").select("logged_date, logged_time, doses_taken, supplements(name)").order("logged_date", { ascending: false }).order("logged_time", { ascending: false }).limit(1);
       if (!data?.[0]) return "ما في مكملات مسجلة بعد 💊";
