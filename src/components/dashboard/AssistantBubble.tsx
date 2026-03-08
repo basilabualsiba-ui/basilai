@@ -1019,7 +1019,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── CATEGORY PERCENTAGES ──────────────────────────────────────────────────
   intents.push({
     id: "category_percentages",
-    keywords: ["نسبة كل فئة", "نسب الفئات", "نسب المصاريف", "توزيع المصاريف", "توزيع الفئات"],
+    keywords: ["نسبة كل فئة", "نسب الفئات", "نسب المصاريف", "توزيع المصاريف", "توزيع الفئات", "توزيع مصاريفي"],
     needsTime: true,
     priority: 86,
     handler: async (period) => {
