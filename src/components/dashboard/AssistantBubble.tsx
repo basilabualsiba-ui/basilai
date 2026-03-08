@@ -164,6 +164,10 @@ interface IntentDef {
 
 function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]): IntentDef[] {
   const catMap = new Map(categories.map(c => [c.id, c.name]));
+  const allNames = [
+    ...categories.map(c => ({ name: c.name.toLowerCase(), type: "cat" as const, id: c.id })),
+    ...subcategories.map(s => ({ name: s.name.toLowerCase(), type: "sub" as const, id: s.id })),
+  ];
 
   // Helper: build date filter for supabase query
   const dateFilter = (query: any, period: TimePeriod | null, col = "date") => {
@@ -171,6 +175,25 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
     if (period.from) query = query.gte(col, period.from);
     if (period.to) query = query.lte(col, period.to);
     return query;
+  };
+
+  // Helper: find a category/subcategory name in text
+  const findNamesInText = (text: string): { name: string; type: "cat" | "sub"; id: string }[] => {
+    const lower = text.toLowerCase();
+    // Sort by name length descending to match longest first
+    const sorted = [...allNames].sort((a, b) => b.name.length - a.name.length);
+    const found: { name: string; type: "cat" | "sub"; id: string; idx: number }[] = [];
+    for (const item of sorted) {
+      const idx = lower.indexOf(item.name);
+      if (idx !== -1) {
+        // Avoid overlapping matches
+        const overlaps = found.some(f => Math.abs(f.idx - idx) < Math.max(f.name.length, item.name.length));
+        if (!overlaps) {
+          found.push({ ...item, idx });
+        }
+      }
+    }
+    return found.sort((a, b) => a.idx - b.idx);
   };
 
   const intents: IntentDef[] = [];
