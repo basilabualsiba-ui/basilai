@@ -1652,7 +1652,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── FAJR STREAK ───────────────────────────────────────────────────────────
-  intents.push({ id: "fajr_streak", keywords: ["يوم متتالي صليت الفجر", "ستريك فجر", "أيام متتالية فجر"], needsTime: false, priority: 79,
+  intents.push({ id: "fajr_streak", keywords: ["يوم متتالي صليت الفجر", "ستريك فجر", "أيام متتالية فجر", "كم يوم متتالي صليت الفجر"], needsTime: false, priority: 79,
     handler: async () => {
       const { data } = await supabase.from("prayer_completions").select("completion_date").eq("prayer_name", "fajr").order("completion_date", { ascending: false }).limit(100);
       if (!data || data.length === 0) return "ما في فجر مسجل 🌅";
