@@ -75,6 +75,9 @@ const SUGGESTION_GROUPS = [
       "كم صرفت بالويكند هالشهر؟",
       "وين أكثر صرفت هالشهر؟",
       "توزيع مصاريفي هالشهر",
+      "قارن المعدل اليومي مع الشهر الفائت",
+      "قارن المعدل الأسبوعي مع الفائت",
+      "كم المعدل حسب الفئات هالشهر؟",
     ],
   },
   {
@@ -383,7 +386,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── DAILY AVERAGE ─────────────────────────────────────────────────────────
   intents.push({
     id: "daily_average",
-    keywords: ["معدل يومي", "معدل صرف", "المعدل اليومي", "معدل صرفي اليومي", "متوسط صرفي", "متوسط يومي"],
+    keywords: ["معدل يومي", "معدل صرف", "المعدل اليومي", "معدل صرفي اليومي", "متوسط صرفي", "متوسط يومي", "كم المعدل اليومي", "المعدل باليوم", "بالمعدل كل يوم", "كم بصرف باليوم"],
     needsTime: true,
     priority: 80,
     handler: async (period) => {
@@ -400,7 +403,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── MONTHLY COMPARISON ────────────────────────────────────────────────────
   intents.push({
     id: "monthly_comparison",
-    keywords: ["قارن", "مقارنة", "مقارن", "قارن المصاريف"],
+    keywords: ["قارن", "مقارنة", "مقارن", "قارن المصاريف", "قارن الشهور", "قارن مع الشهر الفائت", "مقارنة شهرية"],
     needsTime: false,
     priority: 82,
     handler: async () => {
@@ -999,7 +1002,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── WEEKLY AVERAGE ────────────────────────────────────────────────────────
   intents.push({
     id: "weekly_average",
-    keywords: ["معدل أسبوعي", "معدل اسبوعي", "معدل صرفي الأسبوعي", "معدل صرفي الاسبوعي", "متوسط أسبوعي"],
+    keywords: ["معدل أسبوعي", "معدل اسبوعي", "معدل صرفي الأسبوعي", "معدل صرفي الاسبوعي", "متوسط أسبوعي", "كم المعدل الأسبوعي", "المعدل بالأسبوع", "بالمعدل كل أسبوع", "كم بصرف بالأسبوع", "المعدل بالاسبوع", "بالمعدل كل اسبوع", "كم بصرف بالاسبوع"],
     needsTime: true,
     priority: 81,
     handler: async (period) => {
@@ -1239,7 +1242,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── MONTHLY AVERAGE SPENDING ──────────────────────────────────────────────
   intents.push({
     id: "monthly_average",
-    keywords: ["معدل شهري", "معدل صرفي الشهري", "متوسط شهري"],
+    keywords: ["معدل شهري", "معدل صرفي الشهري", "متوسط شهري", "كم المعدل الشهري", "المعدل بالشهر", "بالمعدل كل شهر", "كم بصرف بالشهر"],
     needsTime: false,
     priority: 79,
     handler: async () => {
@@ -1248,6 +1251,141 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
       const total = data.reduce((s, t) => s + Number(t.amount), 0);
       const months = new Set(data.map(t => t.date.substring(0, 7))).size;
       return `📊 معدل صرفك الشهري: ${fmtNum(total / months)} ₪ (${months} شهر)`;
+    },
+  });
+
+  // ── COMPARE DAILY AVERAGE BETWEEN MONTHS ──────────────────────────────────
+  intents.push({
+    id: "compare_daily_average",
+    keywords: ["قارن المعدل اليومي", "معدل يومي هالشهر مع", "فرق المعدل اليومي", "قارن المعدل لليوم", "المعدل اليومي مقارنة", "معدل يوم هالشهر والفائت"],
+    needsTime: false,
+    priority: 84,
+    handler: async () => {
+      const today = new Date();
+      const thisMonthFrom = format(startOfMonth(today), "yyyy-MM-dd");
+      const todayStr = format(today, "yyyy-MM-dd");
+      const prevMonthStart = format(startOfMonth(subMonths(today, 1)), "yyyy-MM-dd");
+
+      const [curr, prev] = await Promise.all([
+        supabase.from("transactions").select("amount, date").eq("type", "expense").gte("date", thisMonthFrom).lte("date", todayStr).limit(1000),
+        supabase.from("transactions").select("amount, date").eq("type", "expense").gte("date", prevMonthStart).lt("date", thisMonthFrom).limit(1000),
+      ]);
+
+      const currTotal = (curr.data || []).reduce((s, t) => s + Number(t.amount), 0);
+      const prevTotal = (prev.data || []).reduce((s, t) => s + Number(t.amount), 0);
+      const currDays = new Set((curr.data || []).map(t => t.date)).size || 1;
+      const prevDays = new Set((prev.data || []).map(t => t.date)).size || 1;
+      const currAvg = currTotal / currDays;
+      const prevAvg = prevTotal / prevDays;
+      const diff = currAvg - prevAvg;
+      const pct = prevAvg > 0 ? ((diff / prevAvg) * 100).toFixed(1) : "∞";
+      const arrow = diff > 0 ? "📈 زيادة" : diff < 0 ? "📉 نقصان" : "↔️ نفس الشي";
+
+      return `📊 مقارنة المعدل اليومي:\n\nهالشهر: ${fmtNum(currAvg)} ₪/يوم (${currDays} يوم)\nالشهر الفائت: ${fmtNum(prevAvg)} ₪/يوم (${prevDays} يوم)\n\n${arrow} بنسبة ${pct}% (${fmtNum(Math.abs(diff))} ₪)`;
+    },
+  });
+
+  // ── COMPARE WEEKLY AVERAGE BETWEEN MONTHS ─────────────────────────────────
+  intents.push({
+    id: "compare_weekly_average",
+    keywords: ["قارن المعدل الأسبوعي", "قارن المعدل الاسبوعي", "معدل أسبوعي هالشهر مع", "معدل اسبوعي هالشهر مع", "فرق المعدل الاسبوعي", "فرق المعدل الأسبوعي", "قارن المعدل للأسبوع", "قارن المعدل للاسبوع", "المعدل الاسبوعي مقارنة", "المعدل الأسبوعي مقارنة"],
+    needsTime: false,
+    priority: 84,
+    handler: async () => {
+      const today = new Date();
+      const thisMonthFrom = format(startOfMonth(today), "yyyy-MM-dd");
+      const todayStr = format(today, "yyyy-MM-dd");
+      const prevMonthStart = format(startOfMonth(subMonths(today, 1)), "yyyy-MM-dd");
+
+      const [curr, prev] = await Promise.all([
+        supabase.from("transactions").select("amount, date").eq("type", "expense").gte("date", thisMonthFrom).lte("date", todayStr).limit(1000),
+        supabase.from("transactions").select("amount, date").eq("type", "expense").gte("date", prevMonthStart).lt("date", thisMonthFrom).limit(1000),
+      ]);
+
+      const currTotal = (curr.data || []).reduce((s, t) => s + Number(t.amount), 0);
+      const prevTotal = (prev.data || []).reduce((s, t) => s + Number(t.amount), 0);
+      const currDates = (curr.data || []).map(t => new Date(t.date).getTime());
+      const prevDates = (prev.data || []).map(t => new Date(t.date).getTime());
+      const currWeeks = currDates.length > 0 ? Math.max(1, Math.ceil((Math.max(...currDates) - Math.min(...currDates)) / 86400000) / 7) : 1;
+      const prevWeeks = prevDates.length > 0 ? Math.max(1, Math.ceil((Math.max(...prevDates) - Math.min(...prevDates)) / 86400000) / 7) : 1;
+      const currAvg = currTotal / currWeeks;
+      const prevAvg = prevTotal / prevWeeks;
+      const diff = currAvg - prevAvg;
+      const pct = prevAvg > 0 ? ((diff / prevAvg) * 100).toFixed(1) : "∞";
+      const arrow = diff > 0 ? "📈 زيادة" : diff < 0 ? "📉 نقصان" : "↔️ نفس الشي";
+
+      return `📊 مقارنة المعدل الأسبوعي:\n\nهالشهر: ${fmtNum(currAvg)} ₪/أسبوع (${currWeeks.toFixed(1)} أسبوع)\nالشهر الفائت: ${fmtNum(prevAvg)} ₪/أسبوع (${prevWeeks.toFixed(1)} أسبوع)\n\n${arrow} بنسبة ${pct}% (${fmtNum(Math.abs(diff))} ₪)`;
+    },
+  });
+
+  // ── COMPARE MONTHLY AVERAGE (COMBINED VIEW) ───────────────────────────────
+  intents.push({
+    id: "compare_monthly_average",
+    keywords: ["قارن المعدل الشهري", "قارن المعدل للشهور", "معدلات الشهور", "قارن المعدل لليومين والاسبوعين للاشهر", "قارن المعدلات", "مقارنة المعدلات", "قارن معدلات الشهور"],
+    needsTime: false,
+    priority: 85,
+    handler: async () => {
+      const today = new Date();
+      const thisMonthFrom = format(startOfMonth(today), "yyyy-MM-dd");
+      const todayStr = format(today, "yyyy-MM-dd");
+      const prevMonthStart = format(startOfMonth(subMonths(today, 1)), "yyyy-MM-dd");
+
+      const [curr, prev] = await Promise.all([
+        supabase.from("transactions").select("amount, date").eq("type", "expense").gte("date", thisMonthFrom).lte("date", todayStr).limit(1000),
+        supabase.from("transactions").select("amount, date").eq("type", "expense").gte("date", prevMonthStart).lt("date", thisMonthFrom).limit(1000),
+      ]);
+
+      const currTotal = (curr.data || []).reduce((s, t) => s + Number(t.amount), 0);
+      const prevTotal = (prev.data || []).reduce((s, t) => s + Number(t.amount), 0);
+      const currDays = new Set((curr.data || []).map(t => t.date)).size || 1;
+      const prevDays = new Set((prev.data || []).map(t => t.date)).size || 1;
+      const currDates = (curr.data || []).map(t => new Date(t.date).getTime());
+      const prevDates = (prev.data || []).map(t => new Date(t.date).getTime());
+      const currWeeks = currDates.length > 0 ? Math.max(1, Math.ceil((Math.max(...currDates) - Math.min(...currDates)) / 86400000) / 7) : 1;
+      const prevWeeks = prevDates.length > 0 ? Math.max(1, Math.ceil((Math.max(...prevDates) - Math.min(...prevDates)) / 86400000) / 7) : 1;
+
+      const dailyCurr = currTotal / currDays;
+      const dailyPrev = prevTotal / prevDays;
+      const weeklyCurr = currTotal / currWeeks;
+      const weeklyPrev = prevTotal / prevWeeks;
+
+      const dailyDiff = dailyCurr - dailyPrev;
+      const weeklyDiff = weeklyCurr - weeklyPrev;
+      const totalDiff = currTotal - prevTotal;
+
+      const pctD = dailyPrev > 0 ? ((dailyDiff / dailyPrev) * 100).toFixed(1) : "∞";
+      const pctW = weeklyPrev > 0 ? ((weeklyDiff / weeklyPrev) * 100).toFixed(1) : "∞";
+      const pctT = prevTotal > 0 ? ((totalDiff / prevTotal) * 100).toFixed(1) : "∞";
+
+      const arrowD = dailyDiff > 0 ? "📈" : dailyDiff < 0 ? "📉" : "↔️";
+      const arrowW = weeklyDiff > 0 ? "📈" : weeklyDiff < 0 ? "📉" : "↔️";
+      const arrowT = totalDiff > 0 ? "📈" : totalDiff < 0 ? "📉" : "↔️";
+
+      return `📊 مقارنة شاملة — هالشهر vs الفائت:\n\n📅 المعدل اليومي:\n  هالشهر: ${fmtNum(dailyCurr)} ₪ | الفائت: ${fmtNum(dailyPrev)} ₪\n  ${arrowD} ${pctD}%\n\n📆 المعدل الأسبوعي:\n  هالشهر: ${fmtNum(weeklyCurr)} ₪ | الفائت: ${fmtNum(weeklyPrev)} ₪\n  ${arrowW} ${pctW}%\n\n💰 المجموع:\n  هالشهر: ${fmtNum(currTotal)} ₪ | الفائت: ${fmtNum(prevTotal)} ₪\n  ${arrowT} ${pctT}%`;
+    },
+  });
+
+  // ── AVERAGE SPENDING PER CATEGORY ─────────────────────────────────────────
+  intents.push({
+    id: "avg_spending_by_category",
+    keywords: ["معدل الصرف حسب الفئات", "المعدل حسب الفئات", "متوسط كل فئة", "معدل كل فئة", "كم المعدل حسب الفئات", "معدل صرفي بكل فئة", "المعدل لكل فئة", "معدل الفئات"],
+    needsTime: true,
+    priority: 86,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("amount, date, category_id, categories(name)").eq("type", "expense").not("category_id", "is", null);
+      q = dateFilter(q, period);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في مصاريف بهالفترة 📭";
+      const days = new Set(data.map(t => t.date)).size || 1;
+      const byCat = new Map<string, number>();
+      for (const t of data) {
+        const name = (t as any).categories?.name || "غير محدد";
+        byCat.set(name, (byCat.get(name) || 0) + Number(t.amount));
+      }
+      const sorted = [...byCat.entries()].sort((a, b) => b[1] - a[1]);
+      const periodLabel = period?.label || "من البداية";
+      const lines = sorted.map(([name, total]) => `📊 ${name}: ${fmtNum(total / days)} ₪/يوم (مجموع ${fmtNum(total)} ₪)`);
+      return `📊 معدل الصرف اليومي حسب الفئات ${periodLabel} (${days} يوم):\n${lines.join("\n")}`;
     },
   });
 
@@ -2108,10 +2246,14 @@ export function AssistantBubble() {
       const followUpMap: Record<string, string[]> = {
         // Finance
         total_spending: ["📊 حسب الفئات", "📍 حسب الأماكن", "💳 آخر 5 معاملات", "🔄 قارن مصاريف هالشهر مع الشهر الفائت", "⏰ متى آخر مرة صرفت؟"],
-        daily_average: ["📊 حسب الفئات", "📍 حسب الأماكن", "📊 معدل أسبوعي"],
-        weekly_average: ["📊 معدل يومي", "📊 حسب الفئات"],
-        monthly_average: ["📊 معدل يومي", "📈 لخصلي الشهر"],
+        daily_average: ["📊 حسب الفئات", "📍 حسب الأماكن", "📊 معدل أسبوعي", "🔄 قارن المعدل اليومي"],
+        weekly_average: ["📊 معدل يومي", "📊 حسب الفئات", "🔄 قارن المعدل الأسبوعي"],
+        monthly_average: ["📊 معدل يومي", "📈 لخصلي الشهر", "🔄 قارن المعدلات"],
         monthly_comparison: ["📊 حسب الفئات", "📍 حسب الأماكن", "💳 آخر 5 معاملات"],
+        compare_daily_average: ["📊 قارن المعدل الأسبوعي", "📊 المعدل حسب الفئات", "💰 كم صرفت هالشهر؟"],
+        compare_weekly_average: ["📊 قارن المعدل اليومي", "📊 المعدل حسب الفئات", "💰 كم صرفت هالشهر؟"],
+        compare_monthly_average: ["📊 المعدل حسب الفئات", "📍 حسب الأماكن", "📊 معدل الصرف حسب الفئات"],
+        avg_spending_by_category: ["📊 حسب الفئات", "📍 حسب الأماكن", "📊 معدل يومي", "🔄 قارن المعدل اليومي"],
         top_spending_categories: ["📍 حسب الأماكن", "💰 كم صرفت هالشهر؟", "🔄 قارن مصاريف هالشهر مع الشهر الفائت"],
         top_spending_places: ["📊 حسب الفئات", "💰 كم صرفت هالشهر؟", "🔄 قارن مصاريف هالشهر مع الشهر الفائت"],
         category_percentages: ["📍 حسب الأماكن", "💳 آخر 5 معاملات", "💰 كم صرفت هالشهر؟"],
