@@ -961,7 +961,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── MOST EXPENSIVE DAY ────────────────────────────────────────────────────
   intents.push({
     id: "most_expensive_day",
-    keywords: ["أكثر يوم صرفت", "اكثر يوم صرفت", "أغلى يوم", "اغلى يوم"],
+    keywords: ["أكثر يوم صرفت", "اكثر يوم صرفت", "أغلى يوم", "اغلى يوم", "أكثر يوم مصاريف"],
     needsTime: true,
     priority: 84,
     handler: async (period) => {
