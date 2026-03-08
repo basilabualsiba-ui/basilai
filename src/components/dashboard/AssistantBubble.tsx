@@ -1583,7 +1583,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── MOST PRAYED ───────────────────────────────────────────────────────────
-  intents.push({ id: "most_prayed", keywords: ["أكثر صلاة صليتها", "اكثر صلاة", "أكثر صلاة"], needsTime: true, priority: 79,
+  intents.push({ id: "most_prayed", keywords: ["أكثر صلاة صليتها", "اكثر صلاة", "أكثر صلاة", "شو أكثر صلاة"], needsTime: true, priority: 79,
     handler: async (period) => {
       let q = supabase.from("prayer_completions").select("prayer_name");
       if (period?.from) q = q.gte("completion_date", period.from);
