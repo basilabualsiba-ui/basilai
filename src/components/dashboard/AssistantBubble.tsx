@@ -85,7 +85,7 @@ const SUGGESTION_GROUPS = [
   },
 ];
 
-const TIME_CHIPS = ["هالشهر", "هالأسبوع", "الشهر الفائت", "من البداية", "اليوم", "مبارح"];
+const TIME_CHIPS = ["هالشهر", "هالأسبوع", "الشهر الفائت", "هالسنة", "من البداية", "اليوم", "مبارح"];
 
 // ─── Time period detection ──────────────────────────────────────────────────
 function detectTimePeriod(text: string): { period: TimePeriod | null; cleaned: string } {
