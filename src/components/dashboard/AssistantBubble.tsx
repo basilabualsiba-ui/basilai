@@ -1426,7 +1426,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── GAMES BY PLATFORM / TOTAL SPENT / MOST EXPENSIVE ──────────────────────
-  intents.push({ id: "games_by_platform", keywords: ["لعبة PS5", "لعبة PS4", "لعبة PC", "ألعاب PS5", "العاب PS5", "ألعاب PC", "العاب PC", "كم لعبة PS", "كم لعبة بي سي"], needsTime: false, priority: 73,
+  intents.push({ id: "games_by_platform", keywords: ["لعبة PS5", "لعبة PS4", "لعبة PC", "ألعاب PS5", "العاب PS5", "ألعاب PC", "العاب PC", "كم لعبة PS", "كم لعبة بي سي", "ألعاب بلايستيشن"], needsTime: false, priority: 73,
     handler: async () => {
       const { data } = await supabase.from("games").select("platform");
       if (!data || data.length === 0) return "ما في ألعاب 🎮";
