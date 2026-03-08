@@ -583,7 +583,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── WATCHING NOW ──────────────────────────────────────────────────────────
   intents.push({
     id: "watching_now",
-    keywords: ["بتشاهد", "بشاهد", "مسلسل", "مسلسلات"],
+    keywords: ["بتشاهد", "بشاهد", "مسلسل", "مسلسلات", "شو عم بشاهد", "شو بشوف", "ايش بتابع", "شو بتابع"],
     needsTime: false,
     priority: 72,
     handler: async () => {
