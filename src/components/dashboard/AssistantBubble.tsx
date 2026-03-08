@@ -1723,6 +1723,8 @@ export function AssistantBubble() {
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
   const [intents, setIntents] = useState<IntentDef[]>([]);
   const [catSubData, setCatSubData] = useState<{ cats: CategoryRef[]; subs: SubcategoryRef[] }>({ cats: [], subs: [] });
+  const [pendingExpense, setPendingExpense] = useState<PendingExpense | null>(null);
+  const [accountsList, setAccountsList] = useState<{ id: string; name: string }[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
