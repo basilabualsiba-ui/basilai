@@ -1535,7 +1535,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── LAST ADDED DREAM ──────────────────────────────────────────────────────
-  intents.push({ id: "last_added_dream", keywords: ["آخر حلم أضفتو", "اخر حلم اضفتو", "آخر حلم"], needsTime: false, priority: 72,
+  intents.push({ id: "last_added_dream", keywords: ["آخر حلم أضفتو", "اخر حلم اضفتو", "آخر حلم", "آخر هدف أضفتو"], needsTime: false, priority: 72,
     handler: async () => {
       const { data } = await supabase.from("dreams").select("title, status, progress_percentage, created_at").order("created_at", { ascending: false }).limit(1);
       if (!data?.[0]) return "ما في أحلام 🌟";
