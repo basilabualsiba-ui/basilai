@@ -19,6 +19,7 @@ import { WeightStatsCard } from "@/components/dashboard/weight-stats-card";
 import { TVCard } from "@/components/dashboard/tv-card";
 import { GamesCard } from "@/components/dashboard/games-card";
 import { SoccerCard } from "@/components/dashboard/soccer-card";
+import { AssistantBubble } from "@/components/dashboard/AssistantBubble";
 
 const Index = () => {
   const { click } = useSound();
