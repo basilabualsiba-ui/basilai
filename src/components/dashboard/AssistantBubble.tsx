@@ -1764,6 +1764,70 @@ export function AssistantBubble() {
     const period = forcedPeriod || detectedPeriod;
     const textForMatch = cleaned || text;
 
+    // ── Smart expense detection: "صرفت 50 على أكل" or "30 شيكل قهوة" ──
+    const expensePatterns = [
+      /صرفت\s+(\d+(?:\.\d+)?)\s*(?:شيكل|شيقل|₪)?\s*(?:على|ع|ب|في|فـ)?\s*(.+)/i,
+      /(\d+(?:\.\d+)?)\s*(?:شيكل|شيقل|₪)\s*(?:على|ع|ب|في|فـ)?\s*(.+)/i,
+      /سجل(?:ي|لي)?\s+(\d+(?:\.\d+)?)\s*(?:شيكل|شيقل|₪)?\s*(?:على|ع|ب|في|فـ)?\s*(.+)/i,
+      /حط(?:لي)?\s+(\d+(?:\.\d+)?)\s*(?:شيكل|شيقل|₪)?\s*(?:على|ع|ب|في|فـ)?\s*(.+)/i,
+    ];
+
+    for (const pat of expensePatterns) {
+      const match = text.match(pat);
+      if (match) {
+        const amount = parseFloat(match[1]);
+        const target = match[2].trim().replace(/[؟?!\.]/g, "").trim();
+        if (amount > 0 && target.length > 0) {
+          // Try to match target to subcategory first, then category
+          const allNames = [
+            ...catSubData.subs.map(s => ({ name: s.name.toLowerCase(), type: "sub" as const, id: s.id, displayName: s.name, category_id: s.category_id })),
+            ...catSubData.cats.map(c => ({ name: c.name.toLowerCase(), type: "cat" as const, id: c.id, displayName: c.name, category_id: c.id })),
+          ].sort((a, b) => b.name.length - a.name.length);
+
+          const lower = target.toLowerCase();
+          let matched = allNames.find(n => lower.includes(n.name) || n.name.includes(lower));
+
+          const expense: PendingExpense = { amount, description: target };
+          if (matched) {
+            if (matched.type === "sub") {
+              expense.subcategory_id = matched.id;
+              expense.subcategory_name = matched.displayName;
+              expense.category_id = matched.category_id;
+              const parentCat = catSubData.cats.find(c => c.id === matched!.category_id);
+              expense.category_name = parentCat?.name;
+            } else {
+              expense.category_id = matched.id;
+              expense.category_name = matched.displayName;
+            }
+          }
+
+          // If only one account, auto-select it
+          if (accountsList.length === 1) {
+            expense.account_id = accountsList[0].id;
+            expense.account_name = accountsList[0].name;
+            setPendingExpense(expense);
+            const catLabel = expense.subcategory_name || expense.category_name || target;
+            return {
+              content: `🧾 تأكيد الصرفة:\n💰 ${fmtNum(amount)} ₪\n📍 ${catLabel}\n🏦 ${accountsList[0].name}\n📅 ${format(new Date(), "yyyy-MM-dd")}\n\nمتأكد؟`,
+              needs_clarification: true,
+              clarification_type: "confirm_expense" as const,
+              reply_chips: ["✅ أكيد سجلها", "❌ لا إلغاء"],
+            };
+          }
+
+          // Multiple accounts → ask which one
+          setPendingExpense(expense);
+          const catLabel = expense.subcategory_name || expense.category_name || target;
+          return {
+            content: `🧾 صرفة ${fmtNum(amount)} ₪ على ${catLabel}\nمن أي حساب بدك تسجلها؟ 🏦`,
+            needs_clarification: true,
+            clarification_type: "account" as const,
+            reply_chips: accountsList.map(a => a.name),
+          };
+        }
+      }
+    }
+
     // Try to match an intent
     const intent = matchIntent(textForMatch, intents);
 
