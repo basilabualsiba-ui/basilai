@@ -671,6 +671,120 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
     },
   });
 
+  // ── LAST TRANSACTION (general) ────────────────────────────────────────────
+  intents.push({
+    id: "last_transaction",
+    keywords: ["آخر اشي صرفتو", "اخر اشي صرفتو", "آخر معاملة", "اخر معاملة", "آخر صرفة", "اخر صرفة", "آخر مصروف", "اخر مصروف"],
+    needsTime: false,
+    priority: 88,
+    handler: async () => {
+      const { data } = await supabase.from("transactions").select("amount, date, time, description, type, account_id, category_id, subcategory_id, accounts(name), categories(name), subcategories(name)").eq("type", "expense").order("date", { ascending: false }).order("time", { ascending: false }).limit(1);
+      if (!data || data.length === 0) return "ما في مصاريف مسجلة بعد 📭";
+      const t = data[0] as any;
+      const place = t.subcategories?.name || t.categories?.name || "غير محدد";
+      const acc = t.accounts?.name || "";
+      const desc = t.description || "";
+      return `💳 آخر مصروف:\n💰 ${fmtNum(Number(t.amount))} ₪\n📍 ${place}${desc ? `\n📝 ${desc}` : ""}\n🏦 من: ${acc}\n📅 ${t.date}${t.time ? " " + t.time.substring(0, 5) : ""}`;
+    },
+  });
+
+  // ── LAST TRANSACTION BY ACCOUNT ───────────────────────────────────────────
+  intents.push({
+    id: "last_transaction_by_account",
+    keywords: ["آخر اشي صرفتو بال", "اخر اشي صرفتو بال", "آخر صرفة بال", "اخر صرفة بال", "آخر اشي من ال", "اخر اشي من ال"],
+    needsTime: false,
+    priority: 92,
+    handler: async (_period, matchedName) => {
+      // This gets handled in processQuestion with account matching
+      return "";
+    },
+  });
+
+  // ── TODAY'S TRANSACTIONS DETAIL ───────────────────────────────────────────
+  intents.push({
+    id: "today_transactions",
+    keywords: ["شو صرفت اليوم", "مصاريف اليوم", "صرفيات اليوم", "تفاصيل مصاريف اليوم"],
+    needsTime: false,
+    priority: 86,
+    handler: async () => {
+      const todayStr = format(new Date(), "yyyy-MM-dd");
+      const { data } = await supabase.from("transactions").select("amount, time, description, type, subcategory_id, category_id, subcategories(name), categories(name)").eq("type", "expense").eq("date", todayStr).order("time", { ascending: false }).limit(50);
+      if (!data || data.length === 0) return "ما صرفت شي اليوم 🎉";
+      const total = data.reduce((s, t) => s + Number(t.amount), 0);
+      const lines = data.map((t: any) => {
+        const place = t.subcategories?.name || t.categories?.name || "";
+        const time = t.time ? t.time.substring(0, 5) : "";
+        return `💳 ${fmtNum(Number(t.amount))} ₪${place ? ` — ${place}` : ""}${t.description ? ` (${t.description})` : ""}${time ? ` 🕐${time}` : ""}`;
+      });
+      return `📋 مصاريفك اليوم:\n${lines.join("\n")}\n\n💰 المجموع: ${fmtNum(total)} ₪`;
+    },
+  });
+
+  // ── WANT TO WATCH (movies) ────────────────────────────────────────────────
+  intents.push({
+    id: "want_to_watch_movies",
+    keywords: ["أفلام بدي", "افلام بدي", "بدي اشوف", "بدي أشوف", "أفلام ما شفتها", "افلام ما شفتها", "أفلام محفوظة"],
+    needsTime: false,
+    priority: 72,
+    handler: async () => {
+      const { data } = await supabase.from("media").select("title, rating, genres").eq("type", "movie").eq("status", "want_to_watch").order("created_at", { ascending: false }).limit(10);
+      if (!data || data.length === 0) return "ما عندك أفلام بقائمة المشاهدة 🎬";
+      const lines = data.map((m, i) => `${i + 1}. ${m.title}${m.rating ? ` ⭐${m.rating}` : ""}${m.genres?.length ? ` (${m.genres.slice(0, 2).join(", ")})` : ""}`);
+      return `🎬 أفلام بدك تشوفها:\n${lines.join("\n")}`;
+    },
+  });
+
+  // ── WANT TO WATCH (series) ────────────────────────────────────────────────
+  intents.push({
+    id: "want_to_watch_series",
+    keywords: ["مسلسلات بدي", "بدي ابلش", "بدي أبلش", "مسلسلات محفوظة", "مسلسلات ما بلشت"],
+    needsTime: false,
+    priority: 72,
+    handler: async () => {
+      const { data } = await supabase.from("media").select("title, rating, genres").eq("type", "tv").eq("status", "want_to_watch").order("created_at", { ascending: false }).limit(10);
+      if (!data || data.length === 0) return "ما عندك مسلسلات بقائمة المشاهدة 📺";
+      const lines = data.map((m, i) => `${i + 1}. ${m.title}${m.rating ? ` ⭐${m.rating}` : ""}${m.genres?.length ? ` (${m.genres.slice(0, 2).join(", ")})` : ""}`);
+      return `📺 مسلسلات بدك تبلش فيها:\n${lines.join("\n")}`;
+    },
+  });
+
+  // ── ALL DREAMS (not just active) ──────────────────────────────────────────
+  intents.push({
+    id: "all_dreams",
+    keywords: ["شو أحلامي", "شو احلامي", "كل أحلامي", "كل احلامي", "قائمة أحلام", "قائمة احلام"],
+    needsTime: false,
+    priority: 71,
+    handler: async () => {
+      const { data } = await supabase.from("dreams").select("title, status, progress_percentage, target_date").order("created_at", { ascending: false });
+      if (!data || data.length === 0) return "ما في أحلام مسجلة بعد 🌟";
+      const statusMap: Record<string, string> = { in_progress: "🔄", completed: "✅", paused: "⏸️", cancelled: "❌" };
+      const lines = data.map(d => `${statusMap[d.status] || "🌟"} ${d.title} — ${d.progress_percentage || 0}%${d.target_date ? ` (${d.target_date})` : ""}`);
+      const active = data.filter(d => d.status === "in_progress").length;
+      const done = data.filter(d => d.status === "completed").length;
+      return `🌟 أحلامك (${data.length}):\n${lines.join("\n")}\n\n🔄 نشطة: ${active} | ✅ محققة: ${done}`;
+    },
+  });
+
+  // ── LAST WORKOUT DETAIL ───────────────────────────────────────────────────
+  intents.push({
+    id: "last_workout_detail",
+    keywords: ["آخر تدريب", "اخر تدريب", "آخر تدريب عملتو", "اخر تدريب عملتو", "تفاصيل آخر تمرين"],
+    needsTime: false,
+    priority: 77,
+    handler: async () => {
+      const { data } = await supabase.from("workout_sessions").select("id, scheduled_date, muscle_groups, total_duration_minutes, notes, exercise_ids").not("completed_at", "is", null).order("scheduled_date", { ascending: false }).limit(1);
+      if (!data || data.length === 0) return "ما في تمارين مسجلة بعد 🏋️";
+      const s = data[0];
+      const muscles = s.muscle_groups?.join("، ") || "غير محدد";
+      const dur = s.total_duration_minutes ? `${s.total_duration_minutes} دقيقة` : "غير محدد";
+      const exerciseCount = s.exercise_ids?.length || 0;
+      let result = `🏋️ آخر تدريب:\n📅 ${s.scheduled_date}\n💪 عضلات: ${muscles}\n⏱️ مدة: ${dur}`;
+      if (exerciseCount > 0) result += `\n🔢 تمارين: ${exerciseCount}`;
+      if (s.notes) result += `\n📝 ملاحظات: ${s.notes}`;
+      return result;
+    },
+  });
+
   // Sort by priority descending
   intents.sort((a, b) => b.priority - a.priority);
   return intents;
