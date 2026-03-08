@@ -901,7 +901,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── WANT TO WATCH (series) ────────────────────────────────────────────────
   intents.push({
     id: "want_to_watch_series",
-    keywords: ["مسلسلات بدي", "بدي ابلش", "بدي أبلش", "مسلسلات محفوظة", "مسلسلات ما بلشت"],
+    keywords: ["مسلسلات بدي", "بدي ابلش", "بدي أبلش", "مسلسلات محفوظة", "مسلسلات ما بلشت", "مسلسل بدي ابلشو"],
     needsTime: false,
     priority: 72,
     handler: async () => {
