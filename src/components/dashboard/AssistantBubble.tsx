@@ -366,7 +366,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── TOTAL SPENDING ────────────────────────────────────────────────────────
   intents.push({
     id: "total_spending",
-    keywords: ["كم صرفت", "مجموع مصاريف", "مجموع صرف", "كيف مصاريفي", "مصاريف"],
+    keywords: ["كم صرفت", "مجموع مصاريف", "مجموع صرف", "كيف مصاريفي", "مصاريف", "مصاريفي", "اجمالي مصاريف", "قديش صرفت", "أديش صرفت", "كم مصاريفي", "مجموع الصرف"],
     needsTime: true,
     priority: 50,
     handler: async (period) => {
