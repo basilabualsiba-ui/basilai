@@ -88,7 +88,15 @@ export const DreamCard = ({ dream, onEdit }: DreamCardProps) => {
 
   const formatValue = (value: number, unit: string) => {
     if (unit === 'kg') return `${value.toFixed(1)} kg`;
+    if (unit === 'workouts') return `${value} workouts`;
     return `${unit}${value.toFixed(0)}`;
+  };
+
+  const linkedModuleConfig: Record<string, { icon: React.ElementType; label: string; color: string }> = {
+    weight: { icon: Scale, label: 'Weight Stats', color: 'bg-blue-500/15 text-blue-600 border-blue-500/30' },
+    financial: { icon: Wallet, label: 'Financial', color: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30' },
+    gym: { icon: Dumbbell, label: 'Gym', color: 'bg-orange-500/15 text-orange-600 border-orange-500/30' },
+    supplements: { icon: Pill, label: 'Supplements', color: 'bg-purple-500/15 text-purple-600 border-purple-500/30' },
   };
 
   const isCompleted = dream.status === 'completed';
