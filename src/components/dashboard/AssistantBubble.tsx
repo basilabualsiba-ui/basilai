@@ -2020,6 +2020,41 @@ export function AssistantBubble() {
         };
       }
       const reply = await intent.handler(period, undefined, normalizedText);
+      
+      // Add follow-up chips for spending-related intents
+      const spendingIntents = ["total_spending", "daily_average", "monthly_comparison", "top_spending_categories", "top_spending_places", "net_income_expense"];
+      if (spendingIntents.includes(intent.id) && period) {
+        // Fetch top subcategories for this period to suggest drill-down
+        let chipQ = supabase.from("transactions").select("subcategory_id, subcategories(name), amount").eq("type", "expense");
+        chipQ = dateFilter(chipQ, period);
+        const { data: chipData } = await chipQ.limit(500);
+        if (chipData && chipData.length > 0) {
+          const bySub = new Map<string, { name: string; total: number }>();
+          for (const t of chipData as any[]) {
+            const subName = t.subcategories?.name;
+            if (subName) {
+              const prev = bySub.get(subName) || { name: subName, total: 0 };
+              prev.total += Number(t.amount);
+              bySub.set(subName, prev);
+            }
+          }
+          const topSubs = [...bySub.values()].sort((a, b) => b.total - a.total).slice(0, 5);
+          if (topSubs.length > 0) {
+            const chips = topSubs.map(s => `📍 ${s.name}`);
+            chips.push("📊 حسب الفئات");
+            chips.push("📍 حسب الأماكن");
+            return { content: reply, reply_chips: chips };
+          }
+        }
+      }
+      
+      // Add follow-up chips for specific subcategory/category spending
+      if ((intent.id.startsWith("spending_at_") || intent.id.startsWith("spending_cat_")) && period) {
+        const periodLabel = period.label || "";
+        const chips = [`📊 كم صرفت ${periodLabel}`, `📍 أكثر الأماكن ${periodLabel}`, `📊 أكثر الفئات ${periodLabel}`];
+        return { content: reply, reply_chips: chips };
+      }
+      
       return { content: reply };
     }
 
