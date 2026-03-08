@@ -36,9 +36,11 @@ const SUGGESTION_GROUPS = [
   {
     label: "💰 مصاريف",
     items: [
-      "كم صرفت بالحشاش هالشهر؟",
+      "كم صرفت هاد الشهر؟",
       "وين أكثر مكان صرفت فيه هالشهر؟",
       "كم صرفت بالطلعات هالشهر؟",
+      "كم صرفت اليوم؟",
+      "كم صرفت مبارح؟",
       "قارن مصاريفي هالشهر مع الشهر الفائت",
     ],
   },
@@ -49,12 +51,15 @@ const SUGGESTION_GROUPS = [
       "كم معدل صرفي اليومي؟",
       "شو الصافي هالشهر؟",
       "كم رصيدي بالحسابات؟",
+      "أكثر فئة صرفت عليها هالشهر؟",
+      "كم دخلي هاد الشهر؟",
     ],
   },
   {
     label: "💪 صحة وجيم",
     items: [
-      "شو وزني هلق وكيف الاتجاه؟",
+      "شو وزني هلق؟",
+      "كم مرة اشتغلت هاد الشهر؟",
       "كم مرة اشتغلت هالأسبوع؟",
       "متى آخر تمرين؟",
       "شو كمالاتي اليومية؟",
@@ -70,9 +75,9 @@ const SUGGESTION_GROUPS = [
     ],
   },
   {
-    label: "🕌 صلوات وجدول",
+    label: "🕌 صلاة وأحلام",
     items: [
-      "كم صلاة صليت هالشهر؟",
+      "كم صلاة صليت هاد الشهر؟",
       "كم مرة صليت الفجر هالأسبوع؟",
       "شو عندي اليوم بالجدول؟",
       "شو أحلامي النشطة؟",
@@ -80,7 +85,7 @@ const SUGGESTION_GROUPS = [
   },
 ];
 
-const TIME_CHIPS = ["هالشهر", "هالأسبوع", "الشهر الفائت", "من البداية", "اليوم", "مبارح"];
+const TIME_CHIPS = ["هالشهر", "هالأسبوع", "الشهر الفائت", "هالسنة", "من البداية", "اليوم", "مبارح"];
 
 // ─── Time period detection ──────────────────────────────────────────────────
 function detectTimePeriod(text: string): { period: TimePeriod | null; cleaned: string } {
@@ -88,34 +93,38 @@ function detectTimePeriod(text: string): { period: TimePeriod | null; cleaned: s
   const todayStr = format(today, "yyyy-MM-dd");
   const patterns: { re: RegExp; build: () => TimePeriod }[] = [
     {
-      re: /هال(شهر|شهري)/,
+      re: /هال(شهر|شهري)|هاد الشهر|هاذ الشهر/,
       build: () => ({ from: format(startOfMonth(today), "yyyy-MM-dd"), to: todayStr, label: "هالشهر" }),
     },
     {
-      re: /هال(أسبوع|اسبوع)/,
+      re: /هال(أسبوع|اسبوع)|هاد الأسبوع|هاد الاسبوع|هاذ الأسبوع/,
       build: () => ({ from: format(startOfWeek(today, { weekStartsOn: 6 }), "yyyy-MM-dd"), to: todayStr, label: "هالأسبوع" }),
     },
     {
-      re: /(الشهر الفائت|الشهر الماضي|الشهر اللي قبل)/,
+      re: /(الشهر الفائت|الشهر الماضي|الشهر اللي قبل|الشهر اللي فات)/,
       build: () => {
         const prev = subMonths(today, 1);
         return { from: format(startOfMonth(prev), "yyyy-MM-dd"), to: format(startOfMonth(today), "yyyy-MM-dd"), label: "الشهر الفائت" };
       },
     },
     {
-      re: /من البداي[ةه]/,
+      re: /من البداي[ةه]|من أول|من اول/,
       build: () => ({ from: null, to: null, label: "من البداية" }),
     },
     {
-      re: /\bاليوم\b/,
+      re: /\bاليوم\b|هاد اليوم|هاذ اليوم/,
       build: () => ({ from: todayStr, to: todayStr, label: "اليوم" }),
     },
     {
-      re: /مبارح|أمس|امس/,
+      re: /مبارح|أمس|امس|إمبارح|امبارح/,
       build: () => {
         const y = format(subDays(today, 1), "yyyy-MM-dd");
         return { from: y, to: y, label: "مبارح" };
       },
+    },
+    {
+      re: /هالسنة|هاد السنة|هاذ السنة|السنة هاي/,
+      build: () => ({ from: format(new Date(today.getFullYear(), 0, 1), "yyyy-MM-dd"), to: todayStr, label: "هالسنة" }),
     },
   ];
 
