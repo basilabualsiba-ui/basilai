@@ -1927,6 +1927,55 @@ function matchIntent(text: string, intents: IntentDef[]): IntentDef | null {
   return null;
 }
 
+// ─── Learned aliases (localStorage) ─────────────────────────────────────────
+const LEARNED_KEY = "assistant_learned_aliases";
+function getLearnedAliases(): Record<string, string> {
+  try { return JSON.parse(localStorage.getItem(LEARNED_KEY) || "{}"); } catch { return {}; }
+}
+function saveLearnedAlias(userText: string, intentId: string) {
+  const aliases = getLearnedAliases();
+  aliases[userText.toLowerCase().trim()] = intentId;
+  localStorage.setItem(LEARNED_KEY, JSON.stringify(aliases));
+}
+function matchLearnedAlias(text: string, intents: IntentDef[]): IntentDef | null {
+  const aliases = getLearnedAliases();
+  const intentId = aliases[text.toLowerCase().trim()];
+  if (intentId) return intents.find(i => i.id === intentId) || null;
+  return null;
+}
+
+// ─── Fuzzy similarity ───────────────────────────────────────────────────────
+function wordSimilarity(a: string, b: string): number {
+  const wordsA = a.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+  const wordsB = b.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+  if (wordsA.length === 0 || wordsB.length === 0) return 0;
+  
+  let matches = 0;
+  for (const wa of wordsA) {
+    for (const wb of wordsB) {
+      if (wa === wb) { matches += 1; break; }
+      // Partial match: one contains the other
+      if (wa.length > 2 && wb.length > 2 && (wa.includes(wb) || wb.includes(wa))) { matches += 0.7; break; }
+    }
+  }
+  return matches / Math.max(wordsA.length, wordsB.length);
+}
+
+interface FuzzyMatch { intent: IntentDef; keyword: string; score: number; }
+function findClosestIntent(text: string, intents: IntentDef[]): FuzzyMatch | null {
+  if (text.trim().length < 3) return null;
+  let best: FuzzyMatch | null = null;
+  for (const intent of intents) {
+    for (const kw of intent.keywords) {
+      const score = wordSimilarity(text, kw);
+      if (score > 0.5 && (!best || score > best.score)) {
+        best = { intent, keyword: kw, score };
+      }
+    }
+  }
+  return best;
+}
+
 // ─── Typing dots ────────────────────────────────────────────────────────────
 function TypingDots() {
   return (
@@ -2024,6 +2073,7 @@ export function AssistantBubble() {
   const [catSubData, setCatSubData] = useState<{ cats: CategoryRef[]; subs: SubcategoryRef[] }>({ cats: [], subs: [] });
   const [pendingExpense, setPendingExpense] = useState<PendingExpense | null>(null);
   const [accountsList, setAccountsList] = useState<{ id: string; name: string }[]>([]);
+  const [pendingSuggestion, setPendingSuggestion] = useState<{ userText: string; intentId: string; keyword: string } | null>(null);
   const lastPeriodRef = useRef<TimePeriod | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -2138,8 +2188,8 @@ export function AssistantBubble() {
       }
     }
 
-    // Try to match an intent
-    const intent = matchIntent(textForMatch, intents);
+    // Try learned aliases first, then exact match
+    const intent = matchLearnedAlias(textForMatch, intents) || matchIntent(textForMatch, intents);
 
     if (intent) {
       // ── Special handling for comparison intent ──
@@ -2381,6 +2431,16 @@ export function AssistantBubble() {
       }
     }
 
+    // ── Fuzzy matching: suggest closest intent ──
+    const fuzzy = findClosestIntent(textForMatch, intents);
+    if (fuzzy) {
+      setPendingSuggestion({ userText: textForMatch, intentId: fuzzy.intent.id, keyword: fuzzy.keyword });
+      return {
+        content: `هل تقصد: "${fuzzy.keyword}"؟ 🤔`,
+        reply_chips: ["✅ أيوا", "❌ لا"],
+      };
+    }
+
     return { content: "ما عندي جواب لهالسؤال بعد 🤔\nجرب تسأل بطريقة ثانية أو اختار من الأسئلة المقترحة!" };
   }, [intents, catSubData, accountsList]);
 
@@ -2411,6 +2471,35 @@ export function AssistantBubble() {
 
   // ── Chip click: for time clarification, re-run with original question + time period ──
   const handleChipClick = useCallback(async (chip: string) => {
+    // ── Handle fuzzy suggestion confirmation ──
+    if (pendingSuggestion && (chip === "✅ أيوا" || chip === "❌ لا")) {
+      addMsg({ role: "user", content: chip });
+      if (chip === "❌ لا") {
+        setPendingSuggestion(null);
+        addMsg({ role: "assistant", content: "ما فهمت سؤالك، جرب بطريقة ثانية 🤔" });
+        return;
+      }
+      // Save the alias and execute
+      saveLearnedAlias(pendingSuggestion.userText, pendingSuggestion.intentId);
+      setLoading(true);
+      try {
+        const result = await processQuestion(pendingSuggestion.keyword);
+        addMsg({
+          role: "assistant",
+          content: result.content,
+          needs_clarification: result.needs_clarification,
+          clarification_type: result.clarification_type,
+          reply_chips: result.reply_chips,
+        });
+      } catch {
+        addMsg({ role: "assistant", content: "صار خطأ، جرب مرة ثانية 😕" });
+      } finally {
+        setLoading(false);
+        setPendingSuggestion(null);
+      }
+      return;
+    }
+
     // ── Handle expense confirmation ──
     if (pendingExpense && (chip === "✅ أكيد سجلها" || chip === "❌ لا إلغاء")) {
       addMsg({ role: "user", content: chip });
@@ -2498,7 +2587,7 @@ export function AssistantBubble() {
       // Generic chip → send as new question
       callAssistant(chip);
     }
-  }, [pendingQuestion, pendingExpense, accountsList, processQuestion, callAssistant]);
+  }, [pendingQuestion, pendingExpense, pendingSuggestion, accountsList, processQuestion, callAssistant]);
 
   const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
