@@ -1969,6 +1969,7 @@ export function AssistantBubble() {
         content: result.content,
         needs_clarification: result.needs_clarification,
         clarification_type: result.clarification_type,
+        reply_chips: result.reply_chips,
       });
     } catch (err) {
       console.error("Assistant error:", err);
