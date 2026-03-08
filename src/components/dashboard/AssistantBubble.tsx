@@ -2188,8 +2188,8 @@ export function AssistantBubble() {
       }
     }
 
-    // Try to match an intent
-    const intent = matchIntent(textForMatch, intents);
+    // Try learned aliases first, then exact match
+    const intent = matchLearnedAlias(textForMatch, intents) || matchIntent(textForMatch, intents);
 
     if (intent) {
       // ── Special handling for comparison intent ──
