@@ -782,7 +782,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── GAMES COUNT ───────────────────────────────────────────────────────────
   intents.push({
     id: "games_count",
-    keywords: ["كم لعبة", "عدد ألعاب", "عدد العاب", "ألعابي", "العابي"],
+    keywords: ["كم لعبة", "عدد ألعاب", "عدد العاب", "ألعابي", "العابي", "شو ألعابي", "ألعاب عندي"],
     needsTime: false,
     priority: 67,
     handler: async () => {
