@@ -1404,7 +1404,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   intents.push({ id: "movies_watched", keywords: ["كم فيلم شفت", "عدد أفلام شفت", "كم فلم شفت", "كم فيلم خلصت"], needsTime: false, priority: 73,
     handler: async () => { const { data } = await supabase.from("media").select("id").eq("type", "movie").eq("status", "completed"); return `🎬 شفت ${data?.length || 0} فيلم`; },
   });
-  intents.push({ id: "episodes_watched", keywords: ["كم حلقة شفت", "عدد حلقات", "كم حلقة"], needsTime: false, priority: 73,
+  intents.push({ id: "episodes_watched", keywords: ["كم حلقة شفت", "عدد حلقات", "كم حلقة", "كم حلقة خلصت"], needsTime: false, priority: 73,
     handler: async () => { const { data } = await supabase.from("episodes").select("id").eq("watched", true); return `📺 شفت ${data?.length || 0} حلقة`; },
   });
 
