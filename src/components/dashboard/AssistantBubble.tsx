@@ -801,6 +801,64 @@ export function AssistantBubble() {
     const intent = matchIntent(textForMatch, intents);
 
     if (intent) {
+      // ── Special handling for comparison intent ──
+      if (intent.id === "compare_categories") {
+        // Find two names in the text
+        const allNames = [
+          ...catSubData.cats.map(c => ({ name: c.name.toLowerCase(), type: "cat" as const, id: c.id, displayName: c.name })),
+          ...catSubData.subs.map(s => ({ name: s.name.toLowerCase(), type: "sub" as const, id: s.id, displayName: s.name })),
+        ].sort((a, b) => b.name.length - a.name.length);
+
+        const lower = textForMatch.toLowerCase();
+        const found: { name: string; type: "cat" | "sub"; id: string; displayName: string; idx: number }[] = [];
+        for (const item of allNames) {
+          const idx = lower.indexOf(item.name);
+          if (idx !== -1) {
+            const overlaps = found.some(f => Math.abs(f.idx - idx) < Math.max(f.name.length, item.name.length));
+            if (!overlaps) found.push({ ...item, idx });
+          }
+        }
+        found.sort((a, b) => a.idx - b.idx);
+
+        if (found.length < 2) {
+          return { content: "عشان أقارن، لازم تذكر فئتين أو مكانين 🔄\nمثال: قارن الأكل مع الطلعات هالشهر" };
+        }
+
+        if (intent.needsTime && !period) {
+          setPendingQuestion(text);
+          return { content: "لأي فترة بدك تقارن؟ 📅", needs_clarification: true, clarification_type: "time" as const };
+        }
+
+        const [a, b] = [found[0], found[1]];
+        const colA = a.type === "cat" ? "category_id" : "subcategory_id";
+        const colB = b.type === "cat" ? "category_id" : "subcategory_id";
+
+        let qA = supabase.from("transactions").select("amount").eq("type", "expense").eq(colA, a.id);
+        let qB = supabase.from("transactions").select("amount").eq("type", "expense").eq(colB, b.id);
+        if (period?.from) { qA = qA.gte("date", period.from); qB = qB.gte("date", period.from); }
+        if (period?.to) { qA = qA.lte("date", period.to); qB = qB.lte("date", period.to); }
+
+        const [resA, resB] = await Promise.all([qA.limit(1000), qB.limit(1000)]);
+        const totalA = (resA.data || []).reduce((s, t) => s + Number(t.amount), 0);
+        const totalB = (resB.data || []).reduce((s, t) => s + Number(t.amount), 0);
+        const countA = resA.data?.length || 0;
+        const countB = resB.data?.length || 0;
+        const periodLabel = period?.label || "من البداية";
+        const diff = totalA - totalB;
+        const winner = diff > 0 ? a.displayName : diff < 0 ? b.displayName : null;
+        const pct = Math.min(totalA, totalB) > 0 ? ((Math.abs(diff) / Math.min(totalA, totalB)) * 100).toFixed(0) : "—";
+
+        let result = `🔄 مقارنة ${periodLabel}:\n\n`;
+        result += `📁 ${a.displayName}: ${fmtNum(totalA)} ₪ (${countA} معاملة)\n`;
+        result += `📁 ${b.displayName}: ${fmtNum(totalB)} ₪ (${countB} معاملة)\n\n`;
+        if (winner) {
+          result += `${diff > 0 ? "⬆️" : "⬇️"} ${winner} أكثر بـ ${fmtNum(Math.abs(diff))} ₪ (${pct}%)`;
+        } else {
+          result += "↔️ نفس المبلغ بالظبط!";
+        }
+        return { content: result };
+      }
+
       // If intent needs time and none provided, ask for clarification
       if (intent.needsTime && !period) {
         setPendingQuestion(text);
