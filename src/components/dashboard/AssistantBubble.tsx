@@ -1145,7 +1145,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── WEEKEND SPENDING ──────────────────────────────────────────────────────
   intents.push({
     id: "weekend_spending",
-    keywords: ["بالويكند", "ويكند", "نهاية الأسبوع", "نهاية الاسبوع", "الجمعة والسبت"],
+    keywords: ["بالويكند", "ويكند", "نهاية الأسبوع", "نهاية الاسبوع", "الجمعة والسبت", "صرفت بالويكند"],
     needsTime: true,
     priority: 79,
     handler: async (period) => {
