@@ -1614,7 +1614,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── TOMORROW SCHEDULE ─────────────────────────────────────────────────────
-  intents.push({ id: "tomorrow_schedule", keywords: ["بكرا بالجدول", "بكره بالجدول", "جدول بكرا", "شو عندي بكرا"], needsTime: false, priority: 70,
+  intents.push({ id: "tomorrow_schedule", keywords: ["بكرا بالجدول", "بكره بالجدول", "جدول بكرا", "شو عندي بكرا", "ايش عندي بكرا", "برنامج بكرا"], needsTime: false, priority: 70,
     handler: async () => {
       const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
       const tStr = format(tomorrow, "yyyy-MM-dd");
