@@ -2073,6 +2073,7 @@ export function AssistantBubble() {
   const [catSubData, setCatSubData] = useState<{ cats: CategoryRef[]; subs: SubcategoryRef[] }>({ cats: [], subs: [] });
   const [pendingExpense, setPendingExpense] = useState<PendingExpense | null>(null);
   const [accountsList, setAccountsList] = useState<{ id: string; name: string }[]>([]);
+  const [pendingSuggestion, setPendingSuggestion] = useState<{ userText: string; intentId: string; keyword: string } | null>(null);
   const lastPeriodRef = useRef<TimePeriod | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
