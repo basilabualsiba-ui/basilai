@@ -1368,7 +1368,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── AVERAGE SPENDING PER CATEGORY ─────────────────────────────────────────
   intents.push({
     id: "avg_spending_by_category",
-    keywords: ["معدل الصرف حسب الفئات", "المعدل حسب الفئات", "متوسط كل فئة", "معدل كل فئة", "كم المعدل حسب الفئات", "معدل صرفي بكل فئة", "المعدل لكل فئة", "معدل الفئات"],
+    keywords: ["معدل الصرف حسب الفئات", "المعدل حسب الفئات", "متوسط كل فئة", "معدل كل فئة", "كم المعدل حسب الفئات", "معدل صرفي بكل فئة", "المعدل لكل فئة", "معدل الفئات", "معدل حسب الزيارات", "معدل الزيارة", "معدل كل زيارة", "المعدل لكل زيارة", "كم بصرف بالزيارة", "معدل الصرف بالزيارة", "average per visit", "معدل بكل مرة"],
     needsTime: true,
     priority: 86,
     handler: async (period) => {
@@ -1376,16 +1376,16 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
       q = dateFilter(q, period);
       const { data } = await q.limit(1000);
       if (!data || data.length === 0) return "ما في مصاريف بهالفترة 📭";
-      const days = new Set(data.map(t => t.date)).size || 1;
-      const byCat = new Map<string, number>();
+      const byCat = new Map<string, { total: number; count: number }>();
       for (const t of data) {
         const name = (t as any).categories?.name || "غير محدد";
-        byCat.set(name, (byCat.get(name) || 0) + Number(t.amount));
+        const prev = byCat.get(name) || { total: 0, count: 0 };
+        byCat.set(name, { total: prev.total + Number(t.amount), count: prev.count + 1 });
       }
-      const sorted = [...byCat.entries()].sort((a, b) => b[1] - a[1]);
+      const sorted = [...byCat.entries()].sort((a, b) => b[1].total - a[1].total);
       const periodLabel = period?.label || "من البداية";
-      const lines = sorted.map(([name, total]) => `📊 ${name}: ${fmtNum(total / days)} ₪/يوم (مجموع ${fmtNum(total)} ₪)`);
-      return `📊 معدل الصرف اليومي حسب الفئات ${periodLabel} (${days} يوم):\n${lines.join("\n")}`;
+      const lines = sorted.map(([name, { total, count }]) => `📊 ${name}: ${fmtNum(total / count)} ₪/زيارة (${count} زيارة، مجموع ${fmtNum(total)} ₪)`);
+      return `📊 معدل الصرف حسب الزيارات ${periodLabel}:\n${lines.join("\n")}`;
     },
   });
 
