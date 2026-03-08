@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Edit, Trash2, TrendingUp, TrendingDown, Target, Calendar, MapPin, Star as StarIcon } from "lucide-react";
+import { CheckCircle2, Edit, Trash2, TrendingUp, TrendingDown, Target, Calendar, MapPin, Star as StarIcon, Dumbbell, Wallet, Scale, Pill } from "lucide-react";
 import { useState, useEffect } from "react";
 import { DreamCompletionDialog } from "./dream-completion-dialog";
 import { DreamDetailDialog } from "./dream-detail-dialog";
