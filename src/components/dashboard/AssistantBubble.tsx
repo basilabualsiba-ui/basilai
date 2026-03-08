@@ -1927,6 +1927,55 @@ function matchIntent(text: string, intents: IntentDef[]): IntentDef | null {
   return null;
 }
 
+// ─── Learned aliases (localStorage) ─────────────────────────────────────────
+const LEARNED_KEY = "assistant_learned_aliases";
+function getLearnedAliases(): Record<string, string> {
+  try { return JSON.parse(localStorage.getItem(LEARNED_KEY) || "{}"); } catch { return {}; }
+}
+function saveLearnedAlias(userText: string, intentId: string) {
+  const aliases = getLearnedAliases();
+  aliases[userText.toLowerCase().trim()] = intentId;
+  localStorage.setItem(LEARNED_KEY, JSON.stringify(aliases));
+}
+function matchLearnedAlias(text: string, intents: IntentDef[]): IntentDef | null {
+  const aliases = getLearnedAliases();
+  const intentId = aliases[text.toLowerCase().trim()];
+  if (intentId) return intents.find(i => i.id === intentId) || null;
+  return null;
+}
+
+// ─── Fuzzy similarity ───────────────────────────────────────────────────────
+function wordSimilarity(a: string, b: string): number {
+  const wordsA = a.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+  const wordsB = b.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+  if (wordsA.length === 0 || wordsB.length === 0) return 0;
+  
+  let matches = 0;
+  for (const wa of wordsA) {
+    for (const wb of wordsB) {
+      if (wa === wb) { matches += 1; break; }
+      // Partial match: one contains the other
+      if (wa.length > 2 && wb.length > 2 && (wa.includes(wb) || wb.includes(wa))) { matches += 0.7; break; }
+    }
+  }
+  return matches / Math.max(wordsA.length, wordsB.length);
+}
+
+interface FuzzyMatch { intent: IntentDef; keyword: string; score: number; }
+function findClosestIntent(text: string, intents: IntentDef[]): FuzzyMatch | null {
+  if (text.trim().length < 3) return null;
+  let best: FuzzyMatch | null = null;
+  for (const intent of intents) {
+    for (const kw of intent.keywords) {
+      const score = wordSimilarity(text, kw);
+      if (score > 0.5 && (!best || score > best.score)) {
+        best = { intent, keyword: kw, score };
+      }
+    }
+  }
+  return best;
+}
+
 // ─── Typing dots ────────────────────────────────────────────────────────────
 function TypingDots() {
   return (
