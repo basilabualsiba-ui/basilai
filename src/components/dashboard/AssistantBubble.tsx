@@ -1599,7 +1599,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── FULL PRAYER DAYS ──────────────────────────────────────────────────────
-  intents.push({ id: "full_prayer_days", keywords: ["كل الصلوات", "صليت كل الصلوات", "كم يوم صليت فيه كل", "5 صلوات", "خمس صلوات"], needsTime: true, priority: 80,
+  intents.push({ id: "full_prayer_days", keywords: ["كل الصلوات", "صليت كل الصلوات", "كم يوم صليت فيه كل", "5 صلوات", "خمس صلوات", "كم يوم كل الصلوات"], needsTime: true, priority: 80,
     handler: async (period) => {
       let q = supabase.from("prayer_completions").select("completion_date, prayer_name");
       if (period?.from) q = q.gte("completion_date", period.from);
