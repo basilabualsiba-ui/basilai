@@ -1772,9 +1772,13 @@ export function AssistantBubble() {
 
   // ── Core: process question locally ──────────────────────────────────────
   const processQuestion = useCallback(async (text: string, forcedPeriod?: TimePeriod) => {
-    const { period: detectedPeriod, cleaned } = detectTimePeriod(text);
+    // Convert Arabic/Eastern numerals to Western before processing
+    const arabicToWestern = (s: string) => s.replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
+    const normalizedText = arabicToWestern(text);
+
+    const { period: detectedPeriod, cleaned } = detectTimePeriod(normalizedText);
     const period = forcedPeriod || detectedPeriod;
-    const textForMatch = cleaned || text;
+    const textForMatch = cleaned || normalizedText;
 
     // ── Smart expense detection: "صرفت 50 على أكل" or "30 شيكل قهوة" ──
     const expensePatterns = [
@@ -1785,7 +1789,7 @@ export function AssistantBubble() {
     ];
 
     for (const pat of expensePatterns) {
-      const match = text.match(pat);
+      const match = normalizedText.match(pat);
       if (match) {
         const amount = parseFloat(match[1]);
         const target = match[2].trim().replace(/[؟?!\.]/g, "").trim();
