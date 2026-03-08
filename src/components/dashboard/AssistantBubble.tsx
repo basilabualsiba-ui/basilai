@@ -1094,7 +1094,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── LAST 5 TRANSACTIONS ───────────────────────────────────────────────────
   intents.push({
     id: "last_5_transactions",
-    keywords: ["آخر 5 معاملات", "اخر 5 معاملات", "آخر خمس معاملات", "اخر خمس", "آخر ٥"],
+    keywords: ["آخر 5 معاملات", "اخر 5 معاملات", "آخر خمس معاملات", "اخر خمس", "آخر ٥", "آخر خمس صرفات"],
     needsTime: false,
     priority: 89,
     handler: async () => {
