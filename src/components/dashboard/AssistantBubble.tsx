@@ -227,6 +227,18 @@ function fmtNum(n: number): string {
   return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
 }
 
+function iconToEmoji(icon: string): string {
+  const map: Record<string, string> = {
+    Wallet: "👛", PiggyBank: "🐷", CreditCard: "💳",
+    Banknote: "💵", Building2: "🏢", Landmark: "🏛️",
+    Car: "🚗", Home: "🏠", ShoppingCart: "🛒",
+    Coffee: "☕", Gamepad2: "🎮", Gift: "🎁",
+    Plane: "✈️", Music: "🎵", BookOpen: "📖", Camera: "📷",
+  };
+  if (!icon || icon.startsWith("http")) return "💰";
+  return map[icon] || "💰";
+}
+
 // ─── Intent matching engine ─────────────────────────────────────────────────
 type IntentHandler = (period: TimePeriod | null, matchedName?: string, originalText?: string) => Promise<string>;
 
