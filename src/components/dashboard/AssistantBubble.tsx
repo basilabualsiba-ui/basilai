@@ -1352,7 +1352,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── SUPPLEMENT DOSES COUNT ────────────────────────────────────────────────
-  intents.push({ id: "supplement_doses_count", keywords: ["كم سكوب", "سكوب بروتين", "جرعات بروتين"], needsTime: true, priority: 77,
+  intents.push({ id: "supplement_doses_count", keywords: ["كم سكوب", "سكوب بروتين", "جرعات بروتين", "كم جرعة أخذت"], needsTime: true, priority: 77,
     handler: async (period) => {
       let q = supabase.from("supplement_logs").select("doses_taken");
       if (period?.from) q = q.gte("logged_date", period.from);
