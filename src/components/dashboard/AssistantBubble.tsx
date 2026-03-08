@@ -1333,7 +1333,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
       return `⚖️ أقل وزن: ${fmtNum(Number(data[0].weight))} كغ (${format(new Date(data[0].recorded_at), "yyyy-MM-dd")})`;
     },
   });
-  intents.push({ id: "highest_weight", keywords: ["أعلى وزن", "اعلى وزن", "أثقل وزن"], needsTime: false, priority: 76,
+  intents.push({ id: "highest_weight", keywords: ["أعلى وزن", "اعلى وزن", "أثقل وزن", "أعلى وزن وصلتلو"], needsTime: false, priority: 76,
     handler: async () => {
       const { data } = await supabase.from("user_body_stats").select("weight, recorded_at").order("weight", { ascending: false }).limit(1);
       if (!data?.[0]) return "ما في بيانات وزن ⚖️";
