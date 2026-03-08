@@ -1685,7 +1685,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── WEIGHT/WORKOUT/PRAYER COMPARISONS ─────────────────────────────────────
-  intents.push({ id: "weight_comparison", keywords: ["قارن وزني", "مقارنة وزن", "وزن الشهر الفائت"], needsTime: false, priority: 83,
+  intents.push({ id: "weight_comparison", keywords: ["قارن وزني", "مقارنة وزن", "وزن الشهر الفائت", "قارن وزني الشهر"], needsTime: false, priority: 83,
     handler: async () => {
       const monthAgo = format(subMonths(new Date(), 1), "yyyy-MM-dd'T'HH:mm:ss");
       const [curr, prev] = await Promise.all([
