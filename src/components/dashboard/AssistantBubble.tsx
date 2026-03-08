@@ -1468,7 +1468,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── SUGGEST MOVIE ─────────────────────────────────────────────────────────
-  intents.push({ id: "suggest_movie", keywords: ["اقترح فيلم", "اقترحلي فيلم", "نصحني فيلم", "شو أشوف"], needsTime: false, priority: 73,
+  intents.push({ id: "suggest_movie", keywords: ["اقترح فيلم", "اقترحلي فيلم", "نصحني فيلم", "شو أشوف", "اقتراح فيلم"], needsTime: false, priority: 73,
     handler: async () => {
       const { data } = await supabase.from("media").select("title, rating, genres").eq("status", "want_to_watch").not("rating", "is", null).order("rating", { ascending: false }).limit(5);
       if (!data || data.length === 0) return "ما عندك أفلام بقائمة المشاهدة 🎬";
