@@ -1638,7 +1638,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── WORKOUT STREAK ────────────────────────────────────────────────────────
-  intents.push({ id: "workout_streak", keywords: ["يوم متتالي تمرنت", "أيام متتالية تمرين", "ستريك تمارين", "streak"], needsTime: false, priority: 77,
+  intents.push({ id: "workout_streak", keywords: ["يوم متتالي تمرنت", "أيام متتالية تمرين", "ستريك تمارين", "streak", "كم يوم متتالي تمرنت"], needsTime: false, priority: 77,
     handler: async () => {
       const { data } = await supabase.from("workout_sessions").select("scheduled_date").not("completed_at", "is", null).order("scheduled_date", { ascending: false }).limit(100);
       if (!data || data.length === 0) return "ما في تمارين 🏋️";
