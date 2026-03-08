@@ -1409,7 +1409,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── LAST MOVIE / LAST SERIES ──────────────────────────────────────────────
-  intents.push({ id: "last_movie", keywords: ["آخر فيلم شفته", "اخر فيلم شفته", "آخر فيلم", "اخر فلم"], needsTime: false, priority: 74,
+  intents.push({ id: "last_movie", keywords: ["آخر فيلم شفته", "اخر فيلم شفته", "آخر فيلم", "اخر فلم", "آخر فلم شفتو"], needsTime: false, priority: 74,
     handler: async () => {
       const { data } = await supabase.from("media").select("title, rating, user_rating").eq("type", "movie").eq("status", "completed").order("created_at", { ascending: false }).limit(1);
       if (!data?.[0]) return "ما شفت أي فيلم بعد 🎬";
