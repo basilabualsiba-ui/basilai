@@ -1627,7 +1627,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── COMPLETED TASKS ───────────────────────────────────────────────────────
-  intents.push({ id: "completed_tasks", keywords: ["مهمة خلصت", "مهام خلصت", "كم مهمة خلصت"], needsTime: true, priority: 70,
+  intents.push({ id: "completed_tasks", keywords: ["مهمة خلصت", "مهام خلصت", "كم مهمة خلصت", "كم مهمه خلصت"], needsTime: true, priority: 70,
     handler: async (period) => {
       let q = supabase.from("activity_completions").select("id");
       if (period?.from) q = q.gte("completion_date", period.from);
