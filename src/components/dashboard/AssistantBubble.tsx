@@ -56,6 +56,15 @@ const SUGGESTION_GROUPS = [
     ],
   },
   {
+    label: "🔄 مقارنات",
+    items: [
+      "قارن الأكل مع الطلعات هالشهر",
+      "قارن مصاريف هالشهر مع الشهر الفائت",
+      "كم صرفت على الأكل مقارنة بالطلعات؟",
+      "قارن الأكل مع المواصلات هالسنة",
+    ],
+  },
+  {
     label: "💪 صحة وجيم",
     items: [
       "شو وزني هلق؟",
@@ -155,6 +164,10 @@ interface IntentDef {
 
 function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]): IntentDef[] {
   const catMap = new Map(categories.map(c => [c.id, c.name]));
+  const allNames = [
+    ...categories.map(c => ({ name: c.name.toLowerCase(), type: "cat" as const, id: c.id })),
+    ...subcategories.map(s => ({ name: s.name.toLowerCase(), type: "sub" as const, id: s.id })),
+  ];
 
   // Helper: build date filter for supabase query
   const dateFilter = (query: any, period: TimePeriod | null, col = "date") => {
@@ -162,6 +175,25 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
     if (period.from) query = query.gte(col, period.from);
     if (period.to) query = query.lte(col, period.to);
     return query;
+  };
+
+  // Helper: find a category/subcategory name in text
+  const findNamesInText = (text: string): { name: string; type: "cat" | "sub"; id: string }[] => {
+    const lower = text.toLowerCase();
+    // Sort by name length descending to match longest first
+    const sorted = [...allNames].sort((a, b) => b.name.length - a.name.length);
+    const found: { name: string; type: "cat" | "sub"; id: string; idx: number }[] = [];
+    for (const item of sorted) {
+      const idx = lower.indexOf(item.name);
+      if (idx !== -1) {
+        // Avoid overlapping matches
+        const overlaps = found.some(f => Math.abs(f.idx - idx) < Math.max(f.name.length, item.name.length));
+        if (!overlaps) {
+          found.push({ ...item, idx });
+        }
+      }
+    }
+    return found.sort((a, b) => a.idx - b.idx);
   };
 
   const intents: IntentDef[] = [];
@@ -272,6 +304,18 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
       const arrow = diff > 0 ? "📈 زيادة" : diff < 0 ? "📉 نقصان" : "↔️ نفس الشي";
 
       return `📊 مقارنة الشهور:\nالشهر الحالي: ${fmtNum(currTotal)} ₪\nالشهر الفائت: ${fmtNum(prevTotal)} ₪\n${arrow} بنسبة ${pct}% (${fmtNum(Math.abs(diff))} ₪)`;
+    },
+  });
+
+  // ── COMPARE TWO CATEGORIES/SUBCATEGORIES ────────────────────────────────
+  intents.push({
+    id: "compare_categories",
+    keywords: ["قارن", "مقارنة", "مقابل", "مقارنة بين", "مقارنة ب"],
+    needsTime: true,
+    priority: 95,
+    handler: async (period, _matchedName) => {
+      // This handler gets the original cleaned text via a special flow
+      return ""; // placeholder, real logic is in processQuestion
     },
   });
 
@@ -715,6 +759,7 @@ export function AssistantBubble() {
   const [pulse, setPulse] = useState(true);
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
   const [intents, setIntents] = useState<IntentDef[]>([]);
+  const [catSubData, setCatSubData] = useState<{ cats: CategoryRef[]; subs: SubcategoryRef[] }>({ cats: [], subs: [] });
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -727,6 +772,7 @@ export function AssistantBubble() {
       ]);
       const cats: CategoryRef[] = catRes.data || [];
       const subs: SubcategoryRef[] = subRes.data || [];
+      setCatSubData({ cats, subs });
       setIntents(buildIntents(cats, subs));
     })();
   }, []);
@@ -755,6 +801,74 @@ export function AssistantBubble() {
     const intent = matchIntent(textForMatch, intents);
 
     if (intent) {
+      // ── Special handling for comparison intent ──
+      if (intent.id === "compare_categories") {
+        // Find two names in the text
+        const allNames = [
+          ...catSubData.cats.map(c => ({ name: c.name.toLowerCase(), type: "cat" as const, id: c.id, displayName: c.name })),
+          ...catSubData.subs.map(s => ({ name: s.name.toLowerCase(), type: "sub" as const, id: s.id, displayName: s.name })),
+        ].sort((a, b) => b.name.length - a.name.length);
+
+        const lower = textForMatch.toLowerCase();
+        const found: { name: string; type: "cat" | "sub"; id: string; displayName: string; idx: number }[] = [];
+        for (const item of allNames) {
+          const idx = lower.indexOf(item.name);
+          if (idx !== -1) {
+            const overlaps = found.some(f => Math.abs(f.idx - idx) < Math.max(f.name.length, item.name.length));
+            if (!overlaps) found.push({ ...item, idx });
+          }
+        }
+        found.sort((a, b) => a.idx - b.idx);
+
+        if (found.length < 2) {
+          // Fall through to monthly_comparison or other intents
+          const fallbackIntent = intents.find(i => i.id !== "compare_categories" && i.keywords.some(kw => textForMatch.toLowerCase().includes(kw.toLowerCase())));
+          if (fallbackIntent) {
+            if (fallbackIntent.needsTime && !period) {
+              setPendingQuestion(text);
+              return { content: "لأي فترة بدك تعرف؟ 📅", needs_clarification: true, clarification_type: "time" as const };
+            }
+            const reply = await fallbackIntent.handler(period, undefined);
+            return { content: reply };
+          }
+          return { content: "عشان أقارن، لازم تذكر فئتين أو مكانين 🔄\nمثال: قارن الأكل مع الطلعات هالشهر" };
+        }
+
+        if (intent.needsTime && !period) {
+          setPendingQuestion(text);
+          return { content: "لأي فترة بدك تقارن؟ 📅", needs_clarification: true, clarification_type: "time" as const };
+        }
+
+        const [a, b] = [found[0], found[1]];
+        const colA = a.type === "cat" ? "category_id" : "subcategory_id";
+        const colB = b.type === "cat" ? "category_id" : "subcategory_id";
+
+        let qA = supabase.from("transactions").select("amount").eq("type", "expense").eq(colA, a.id);
+        let qB = supabase.from("transactions").select("amount").eq("type", "expense").eq(colB, b.id);
+        if (period?.from) { qA = qA.gte("date", period.from); qB = qB.gte("date", period.from); }
+        if (period?.to) { qA = qA.lte("date", period.to); qB = qB.lte("date", period.to); }
+
+        const [resA, resB] = await Promise.all([qA.limit(1000), qB.limit(1000)]);
+        const totalA = (resA.data || []).reduce((s, t) => s + Number(t.amount), 0);
+        const totalB = (resB.data || []).reduce((s, t) => s + Number(t.amount), 0);
+        const countA = resA.data?.length || 0;
+        const countB = resB.data?.length || 0;
+        const periodLabel = period?.label || "من البداية";
+        const diff = totalA - totalB;
+        const winner = diff > 0 ? a.displayName : diff < 0 ? b.displayName : null;
+        const pct = Math.min(totalA, totalB) > 0 ? ((Math.abs(diff) / Math.min(totalA, totalB)) * 100).toFixed(0) : "—";
+
+        let result = `🔄 مقارنة ${periodLabel}:\n\n`;
+        result += `📁 ${a.displayName}: ${fmtNum(totalA)} ₪ (${countA} معاملة)\n`;
+        result += `📁 ${b.displayName}: ${fmtNum(totalB)} ₪ (${countB} معاملة)\n\n`;
+        if (winner) {
+          result += `${diff > 0 ? "⬆️" : "⬇️"} ${winner} أكثر بـ ${fmtNum(Math.abs(diff))} ₪ (${pct}%)`;
+        } else {
+          result += "↔️ نفس المبلغ بالظبط!";
+        }
+        return { content: result };
+      }
+
       // If intent needs time and none provided, ask for clarification
       if (intent.needsTime && !period) {
         setPendingQuestion(text);
@@ -786,7 +900,7 @@ export function AssistantBubble() {
     }
 
     return { content: "ما عندي جواب لهالسؤال بعد 🤔\nجرب تسأل بطريقة ثانية أو اختار من الأسئلة المقترحة!" };
-  }, [intents]);
+  }, [intents, catSubData]);
 
   const callAssistant = useCallback(async (text: string) => {
     if (!text.trim() || loading) return;
