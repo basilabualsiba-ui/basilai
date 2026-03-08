@@ -999,7 +999,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── WEEKLY AVERAGE ────────────────────────────────────────────────────────
   intents.push({
     id: "weekly_average",
-    keywords: ["معدل أسبوعي", "معدل اسبوعي", "معدل صرفي الأسبوعي", "معدل صرفي الاسبوعي"],
+    keywords: ["معدل أسبوعي", "معدل اسبوعي", "معدل صرفي الأسبوعي", "معدل صرفي الاسبوعي", "متوسط أسبوعي"],
     needsTime: true,
     priority: 81,
     handler: async (period) => {
