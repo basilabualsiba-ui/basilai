@@ -867,7 +867,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── TODAY'S TRANSACTIONS DETAIL ───────────────────────────────────────────
   intents.push({
     id: "today_transactions",
-    keywords: ["شو صرفت اليوم", "مصاريف اليوم", "صرفيات اليوم", "تفاصيل مصاريف اليوم"],
+    keywords: ["شو صرفت اليوم", "مصاريف اليوم", "صرفيات اليوم", "تفاصيل مصاريف اليوم", "ايش صرفت اليوم"],
     needsTime: false,
     priority: 86,
     handler: async () => {
