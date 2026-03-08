@@ -1952,7 +1952,7 @@ export function AssistantBubble() {
     }
 
     return { content: "ما عندي جواب لهالسؤال بعد 🤔\nجرب تسأل بطريقة ثانية أو اختار من الأسئلة المقترحة!" };
-  }, [intents, catSubData]);
+  }, [intents, catSubData, accountsList]);
 
   const callAssistant = useCallback(async (text: string) => {
     if (!text.trim() || loading) return;
