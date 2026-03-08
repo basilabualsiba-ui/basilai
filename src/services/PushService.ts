@@ -30,7 +30,7 @@ async function getPushSubscription(): Promise<PushSubscription | null> {
     if (!sub) {
       sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlB64ToUint8Array(VAPID_PUBLIC),
+        applicationServerKey: urlB64ToUint8Array(VAPID_PUBLIC) as any,
       });
     }
     return sub;
