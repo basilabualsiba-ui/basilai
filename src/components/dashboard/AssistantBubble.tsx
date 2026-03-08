@@ -2104,39 +2104,119 @@ export function AssistantBubble() {
       }
       const reply = await intent.handler(period, undefined, normalizedText);
       
-      // Add follow-up chips for spending-related intents
-      const spendingIntents = ["total_spending", "daily_average", "monthly_comparison", "top_spending_categories", "top_spending_places", "net_income_expense"];
-      if (spendingIntents.includes(intent.id) && period) {
-        // Fetch top subcategories for this period to suggest drill-down
-        let chipQ = supabase.from("transactions").select("subcategory_id, subcategories(name), amount").eq("type", "expense");
-        if (period.from) chipQ = chipQ.gte("date", period.from);
-        if (period.to) chipQ = chipQ.lte("date", period.to);
-        const { data: chipData } = await chipQ.limit(500);
-        if (chipData && chipData.length > 0) {
-          const bySub = new Map<string, { name: string; total: number }>();
-          for (const t of chipData as any[]) {
-            const subName = t.subcategories?.name;
-            if (subName) {
-              const prev = bySub.get(subName) || { name: subName, total: 0 };
-              prev.total += Number(t.amount);
-              bySub.set(subName, prev);
-            }
-          }
-          const topSubs = [...bySub.values()].sort((a, b) => b.total - a.total).slice(0, 5);
-          if (topSubs.length > 0) {
-            const chips = topSubs.map(s => `📍 ${s.name}`);
-            chips.push("📊 حسب الفئات");
-            chips.push("📍 حسب الأماكن");
-            return { content: reply, reply_chips: chips };
-          }
-        }
+      // ── Universal follow-up chips system ──
+      const followUpMap: Record<string, string[]> = {
+        // Finance
+        total_spending: ["📊 حسب الفئات", "📍 حسب الأماكن", "💳 آخر 5 معاملات", "🔄 قارن مصاريف هالشهر مع الشهر الفائت", "⏰ متى آخر مرة صرفت؟"],
+        daily_average: ["📊 حسب الفئات", "📍 حسب الأماكن", "📊 معدل أسبوعي"],
+        weekly_average: ["📊 معدل يومي", "📊 حسب الفئات"],
+        monthly_average: ["📊 معدل يومي", "📈 لخصلي الشهر"],
+        monthly_comparison: ["📊 حسب الفئات", "📍 حسب الأماكن", "💳 آخر 5 معاملات"],
+        top_spending_categories: ["📍 حسب الأماكن", "💰 كم صرفت هالشهر؟", "🔄 قارن مصاريف هالشهر مع الشهر الفائت"],
+        top_spending_places: ["📊 حسب الفئات", "💰 كم صرفت هالشهر؟", "🔄 قارن مصاريف هالشهر مع الشهر الفائت"],
+        category_percentages: ["📍 حسب الأماكن", "💳 آخر 5 معاملات", "💰 كم صرفت هالشهر؟"],
+        total_income: ["💳 كم صرفت هالشهر؟", "📈 الصافي هالشهر", "📊 لخصلي الشهر"],
+        net_balance: ["📊 حسب الفئات", "📍 حسب الأماكن", "📈 لخصلي الشهر"],
+        last_transaction: ["💳 آخر 5 معاملات", "💰 كم صرفت اليوم؟", "📊 كم صرفت هالشهر؟"],
+        last_5_transactions: ["💰 كم صرفت هالشهر؟", "📊 حسب الفئات", "📍 أكثر مكان صرفت فيه"],
+        today_transactions: ["💰 كم صرفت هالشهر؟", "📊 حسب الفئات", "📊 معدل يومي"],
+        biggest_transaction: ["💳 آخر 5 معاملات", "📊 حسب الفئات"],
+        smallest_transaction: ["💳 آخر 5 معاملات", "💸 أغلى معاملة هالشهر"],
+        most_expensive_month: ["📊 لخصلي الشهر", "💰 كم صرفت هالسنة؟"],
+        most_expensive_day: ["💳 آخر 5 معاملات", "📊 معدل يومي"],
+        account_balances: ["💰 كم صرفت هالشهر؟", "📈 كم دخلي هالشهر؟", "📊 لخصلي الشهر"],
+        transactions_count: ["📊 حسب الفئات", "💳 آخر 5 معاملات"],
+        most_used_account: ["💳 كم رصيدي بالحسابات؟", "💰 كم صرفت هالشهر؟"],
+        unused_categories: ["📊 حسب الفئات", "💰 كم صرفت هالشهر؟"],
+        evening_spending: ["☀️ كم صرفت بالصبح؟", "💰 كم صرفت هالشهر؟"],
+        morning_spending: ["🌙 كم صرفت بالمسا؟", "💰 كم صرفت هالشهر؟"],
+        weekend_spending: ["📊 معدل يومي", "💰 كم صرفت هالشهر؟"],
+        transfers_count: ["💳 كم رصيدي بالحسابات؟"],
+        unique_places_count: ["📍 أكثر مكان صرفت فيه", "📊 حسب الفئات"],
+        last_time_expense: ["💳 آخر 5 معاملات", "💰 كم صرفت هالشهر؟", "📊 شو صرفت اليوم؟"],
+        // Health - Weight
+        current_weight: ["📉 أقل وزن وصلتلو", "📈 أعلى وزن وصلتلو", "⚖️ فرق وزني", "📋 آخر 3 أوزان", "⏰ متى آخر مرة سجلت وزني؟"],
+        weight_change: ["📉 أقل وزن وصلتلو", "📈 أعلى وزن وصلتلو", "📋 آخر 3 أوزان"],
+        weight_comparison: ["📉 أقل وزن وصلتلو", "📈 أعلى وزن وصلتلو", "⚖️ فرق وزني"],
+        lowest_weight: ["📈 أعلى وزن وصلتلو", "⚖️ شو وزني هلق؟", "📋 آخر 3 أوزان"],
+        highest_weight: ["📉 أقل وزن وصلتلو", "⚖️ شو وزني هلق؟", "📋 آخر 3 أوزان"],
+        last_3_weights: ["⚖️ شو وزني هلق؟", "⚖️ فرق وزني"],
+        last_time_weight: ["⚖️ شو وزني هلق؟", "📋 آخر 3 أوزان", "⚖️ فرق وزني"],
+        // Health - Workout
+        workouts_count: ["💪 أكثر عضلة اشتغلت عليها", "⏱️ كم ساعة تمرين", "📋 تفاصيل آخر تمرين", "🔥 كم يوم متتالي تمرنت؟", "⏰ متى آخر مرة تمرنت؟"],
+        last_workout: ["💪 أكثر عضلة اشتغلت عليها", "⏱️ كم ساعة تمرين", "📋 تفاصيل آخر تمرين"],
+        last_workout_detail: ["💪 أكثر عضلة اشتغلت عليها", "🔥 كم يوم متتالي تمرنت؟", "💪 كم مرة تمرنت هالشهر؟"],
+        most_trained_muscle: ["💪 كم مرة تمرنت هالشهر؟", "⏱️ كم ساعة تمرين", "📋 تفاصيل آخر تمرين"],
+        total_workout_hours: ["💪 كم مرة تمرنت هالشهر؟", "⏱️ معدل مدة التمرين"],
+        avg_workout_duration: ["💪 كم مرة تمرنت هالشهر؟", "⏱️ كم ساعة تمرين هالشهر؟"],
+        workout_streak: ["💪 كم مرة تمرنت هالشهر؟", "📋 تفاصيل آخر تمرين"],
+        workout_comparison: ["💪 كم مرة تمرنت هالشهر؟", "⏱️ كم ساعة تمرين"],
+        last_time_workout: ["📋 تفاصيل آخر تمرين", "💪 كم مرة تمرنت هالشهر؟", "🔥 كم يوم متتالي تمرنت؟"],
+        // Prayer
+        prayer_count: ["🌅 كم فجر صليت؟", "🕌 أكثر صلاة صليتها", "✅ كم يوم صليت كل الصلوات؟", "🔥 ستريك فجر"],
+        fajr_count: ["🕌 كم صلاة صليت هالشهر؟", "🔥 كم يوم متتالي صليت الفجر؟", "✅ كم يوم صليت كل الصلوات؟"],
+        prayer_dhuhr: ["🕌 كم صلاة صليت هالشهر؟", "🌅 كم فجر صليت؟"],
+        prayer_asr: ["🕌 كم صلاة صليت هالشهر؟", "🌅 كم فجر صليت؟"],
+        prayer_maghrib: ["🕌 كم صلاة صليت هالشهر؟", "🌅 كم فجر صليت؟"],
+        prayer_isha: ["🕌 كم صلاة صليت هالشهر؟", "🌅 كم فجر صليت؟"],
+        most_prayed: ["🌅 كم فجر صليت؟", "✅ كم يوم صليت كل الصلوات؟"],
+        full_prayer_days: ["🕌 كم صلاة صليت هالشهر؟", "🔥 ستريك فجر"],
+        fajr_streak: ["🌅 كم فجر صليت هالشهر؟", "✅ كم يوم صليت كل الصلوات؟"],
+        prayer_comparison: ["🌅 كم فجر صليت؟", "✅ كم يوم صليت كل الصلوات؟"],
+        last_time_fajr: ["🌅 كم فجر صليت هالشهر؟", "🔥 كم يوم متتالي صليت الفجر؟", "🕌 كم صلاة صليت هالشهر؟"],
+        // Supplements
+        supplements_today: ["💊 أكثر مكمل استخدمتو", "📅 كم يوم أخذت كمالات هالشهر؟", "💊 آخر مكمل أخذتو", "⏰ متى آخر مرة أخذت مكمل؟"],
+        most_used_supplement: ["💊 كم يوم أخذت كمالات هالشهر؟", "💊 آخر مكمل أخذتو"],
+        last_supplement: ["💊 أكثر مكمل استخدمتو", "📅 كم يوم أخذت كمالات هالشهر؟"],
+        supplement_doses_count: ["💊 أكثر مكمل استخدمتو", "💊 آخر مكمل أخذتو"],
+        supplement_days_count: ["💊 أكثر مكمل استخدمتو", "💊 كمالاتي اليوم"],
+        last_time_supplement: ["💊 كمالاتي اليوم", "💊 أكثر مكمل استخدمتو", "📅 كم يوم أخذت كمالات هالشهر؟"],
+        // Entertainment - Movies/Series
+        watching_now: ["🎬 آخر فيلم شفته", "📺 كم حلقة شفت؟", "⭐ أعلى تقييم فيلم"],
+        media_count: ["🎬 آخر فيلم شفته", "📺 شو بتشاهد هلق؟", "🎬 أفلام بدي أشوفها"],
+        movies_watched: ["🎬 آخر فيلم شفته", "⭐ أحسن فيلم", "🎬 اقترح فيلم أشوفه"],
+        episodes_watched: ["📺 شو بتشاهد هلق؟", "📺 آخر مسلسل بلشته"],
+        last_movie: ["⭐ أحسن فيلم", "🎬 اقترح فيلم أشوفه", "📺 كم فيلم شفت؟"],
+        last_series: ["📺 شو بتشاهد هلق؟", "📺 كم حلقة شفت؟"],
+        best_movie: ["🎬 آخر فيلم شفته", "🎬 اقترح فيلم أشوفه"],
+        highest_rated_movie: ["🎬 آخر فيلم شفته", "🎬 أحسن فيلم"],
+        highest_rated_series: ["📺 شو بتشاهد هلق؟", "📺 آخر مسلسل بلشته"],
+        suggest_movie: ["🎬 آخر فيلم شفته", "📺 شو بتشاهد هلق؟", "🎬 أفلام بدي أشوفها"],
+        want_to_watch_movies: ["🎬 اقترح فيلم أشوفه", "📺 شو بتشاهد هلق؟"],
+        want_to_watch_series: ["📺 شو بتشاهد هلق؟", "📺 كم حلقة شفت؟"],
+        compare_media_types: ["🎬 كم فيلم شفت؟", "📺 كم حلقة شفت؟"],
+        last_time_movie: ["🎬 آخر فيلم شفته", "🎬 اقترح فيلم أشوفه", "📺 شو بتشاهد هلق؟"],
+        // Games
+        games_count: ["🎮 كم صرفت على الألعاب؟", "🎮 أغلى لعبة عندي", "⭐ أعلى لعبة تقييم"],
+        games_by_platform: ["🎮 كم لعبة عندي؟", "🎮 كم صرفت على الألعاب؟"],
+        games_total_spent: ["🎮 أغلى لعبة عندي", "🎮 كم لعبة عندي؟"],
+        most_expensive_game: ["🎮 كم صرفت على الألعاب؟", "🎮 كم لعبة عندي؟"],
+        top_game: ["🎮 كم لعبة عندي؟", "🎮 كم صرفت على الألعاب؟"],
+        // Dreams
+        active_dreams: ["🌟 أقرب للإكمال", "📋 كم خطوة باقي؟", "✅ كم حلم حققت؟", "📊 تقدم أحلامي"],
+        all_dreams: ["🌟 أقرب للإكمال", "✅ كم حلم حققت؟", "📊 تقدم أحلامي"],
+        completed_dreams: ["🌟 أقرب للإكمال", "📊 تقدم أحلامي", "🌟 شو أحلامي؟"],
+        closest_to_complete: ["📋 كم خطوة باقي؟", "📊 تقدم أحلامي", "🌟 شو أحلامي؟"],
+        remaining_steps: ["🌟 أقرب للإكمال", "📊 تقدم أحلامي"],
+        dreams_overall_progress: ["🌟 أقرب للإكمال", "📋 كم خطوة باقي؟", "✅ كم حلم حققت؟"],
+        last_added_dream: ["📊 تقدم أحلامي", "🌟 شو أحلامي؟"],
+        // Schedule
+        schedule_today: ["📋 شو عندي بكرا؟", "✅ كم مهمة خلصت هالأسبوع؟"],
+        tomorrow_schedule: ["📋 شو عندي اليوم؟", "✅ كم مهمة خلصت هالأسبوع؟"],
+        completed_tasks: ["📋 شو عندي اليوم؟", "📋 شو عندي بكرا؟"],
+        // Summary
+        monthly_summary: ["📊 حسب الفئات", "📍 حسب الأماكن", "💪 كم مرة تمرنت هالشهر؟", "🕌 كم صلاة صليت هالشهر؟"],
+      };
+
+      const chips = followUpMap[intent.id];
+      if (chips && chips.length > 0) {
+        return { content: reply, reply_chips: chips };
       }
       
-      // Add follow-up chips for specific subcategory/category spending
-      if ((intent.id.startsWith("spending_at_") || intent.id.startsWith("spending_cat_")) && period) {
-        const periodLabel = period.label || "";
-        const chips = [`📊 كم صرفت ${periodLabel}`, `📍 أكثر الأماكن ${periodLabel}`, `📊 أكثر الفئات ${periodLabel}`];
-        return { content: reply, reply_chips: chips };
+      // For dynamic subcategory/category spending intents, add generic follow-ups
+      if ((intent.id.startsWith("spending_at_") || intent.id.startsWith("spending_cat_"))) {
+        const pl = period?.label || "هالشهر";
+        return { content: reply, reply_chips: [`💰 كم صرفت ${pl}؟`, `📍 أكثر الأماكن ${pl}`, `📊 أكثر الفئات ${pl}`, "⏰ متى آخر مرة صرفت؟"] };
       }
       
       return { content: reply };
