@@ -674,12 +674,20 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── ACCOUNT BALANCES ──────────────────────────────────────────────────────
   intents.push({
     id: "account_balances",
-    keywords: ["رصيدي", "رصيد", "حساباتي", "حسابات", "كم معي", "كم عندي فلوس"],
+    keywords: ["رصيدي", "رصيد", "حساباتي", "حسابات", "كم معي", "كم عندي فلوس", "كم ضايل", "ضايل معي", "كم باقي معي", "كم فاضل", "باقي بالحساب"],
     needsTime: false,
     priority: 68,
-    handler: async () => {
+    handler: async (_p: TimePeriod | undefined, _ctx: any, originalText?: string) => {
       const { data } = await supabase.from("accounts").select("name, amount, currency, icon");
       if (!data || data.length === 0) return "ما في حسابات مسجلة بعد 🏦";
+
+      // Check if user asked about a specific account e.g. "كم ضايل بالكاش"
+      const txt = (originalText || "").toLowerCase();
+      const specificAcc = data.find(a => txt.includes(a.name.toLowerCase()));
+      if (specificAcc) {
+        return `${specificAcc.icon || "💰"} ${specificAcc.name}: ${fmtNum(Number(specificAcc.amount))} ${specificAcc.currency}`;
+      }
+
       const total = data.reduce((s, a) => s + Number(a.amount), 0);
       const lines = data.map(a => `${a.icon || "💰"} ${a.name}: ${fmtNum(Number(a.amount))} ${a.currency}`);
       return `🏦 حساباتك:\n${lines.join("\n")}\n\n💰 المجموع: ${fmtNum(total)} ₪`;
