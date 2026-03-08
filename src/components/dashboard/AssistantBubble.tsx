@@ -160,7 +160,7 @@ const SUGGESTION_GROUPS = [
   },
 ];
 
-// ─── Time period detection ──────────────────────────────────────────────────
+const TIME_CHIPS = ["هالشهر", "هالأسبوع", "الشهر الفائت", "هالسنة", "من البداية", "اليوم", "مبارح"];
 function detectTimePeriod(text: string): { period: TimePeriod | null; cleaned: string } {
   const today = new Date();
   const todayStr = format(today, "yyyy-MM-dd");
