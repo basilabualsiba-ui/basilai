@@ -715,7 +715,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── ACCOUNT BALANCES ──────────────────────────────────────────────────────
   intents.push({
     id: "account_balances",
-    keywords: ["رصيدي", "رصيد", "حساباتي", "حسابات", "كم معي", "كم عندي فلوس", "كم ضايل", "ضايل معي", "كم باقي معي", "كم فاضل", "باقي بالحساب"],
+    keywords: ["رصيدي", "رصيد", "حساباتي", "حسابات", "كم معي", "كم عندي فلوس", "كم ضايل", "ضايل معي", "كم باقي معي", "كم فاضل", "باقي بالحساب", "كم فلوسي", "كم بالحساب"],
     needsTime: false,
     priority: 68,
     handler: async (_p: TimePeriod | undefined, _ctx: any, originalText?: string) => {
