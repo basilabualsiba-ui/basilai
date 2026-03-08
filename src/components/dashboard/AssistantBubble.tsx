@@ -1416,7 +1416,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
       return `🎬 آخر فيلم: ${data[0].title}${data[0].user_rating ? ` ⭐${data[0].user_rating}/10` : ""}${data[0].rating ? ` (TMDB: ${data[0].rating})` : ""}`;
     },
   });
-  intents.push({ id: "last_series", keywords: ["آخر مسلسل", "اخر مسلسل", "آخر مسلسل بلشته"], needsTime: false, priority: 74,
+  intents.push({ id: "last_series", keywords: ["آخر مسلسل", "اخر مسلسل", "آخر مسلسل بلشته", "اخر مسلسل بلشتو"], needsTime: false, priority: 74,
     handler: async () => {
       const { data } = await supabase.from("media").select("title, rating, status").eq("type", "tv").order("created_at", { ascending: false }).limit(1);
       if (!data?.[0]) return "ما في مسلسلات بعد 📺";
