@@ -318,7 +318,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── TOP SPENDING PLACES ───────────────────────────────────────────────────
   intents.push({
     id: "top_spending_places",
-    keywords: ["أكثر مكان", "وين صرفت", "وين أكثر", "أكثر مكان صرفت", "اكثر مكان", "حسب الأماكن", "حسب الاماكن", "أكثر أماكن", "اكثر اماكن", "وين رحت صرفت"],
+    keywords: ["أكثر مكان", "وين صرفت", "وين أكثر", "أكثر مكان صرفت", "اكثر مكان", "حسب الأماكن", "حسب الاماكن", "أكثر أماكن", "اكثر اماكن", "وين رحت صرفت", "أكثر الأماكن", "اكثر الاماكن"],
     needsTime: true,
     priority: 90,
     handler: async (period) => {
@@ -342,7 +342,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── TOP SPENDING CATEGORIES ───────────────────────────────────────────────
   intents.push({
     id: "top_spending_categories",
-    keywords: ["أكثر فئة", "أكثر فئات", "اكثر فئة", "فئات المصاريف", "حسب الفئات", "حسب الفئة", "توزيع حسب الفئات"],
+    keywords: ["أكثر فئة", "أكثر فئات", "اكثر فئة", "فئات المصاريف", "حسب الفئات", "حسب الفئة", "توزيع حسب الفئات", "أكثر الفئات", "اكثر الفئات"],
     needsTime: true,
     priority: 85,
     handler: async (period) => {
