@@ -1699,7 +1699,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
       return `⚖️ مقارنة:\nالحالي: ${fmtNum(c)} كغ\nقبل شهر: ${fmtNum(p)} كغ\n${d > 0 ? "📈" : d < 0 ? "📉" : "↔️"} فرق: ${fmtNum(Math.abs(d))} كغ`;
     },
   });
-  intents.push({ id: "workout_comparison", keywords: ["قارن تمارين", "مقارنة تمارين", "تمارين الشهر الفائت مع"], needsTime: false, priority: 83,
+  intents.push({ id: "workout_comparison", keywords: ["قارن تمارين", "مقارنة تمارين", "تمارين الشهر الفائت مع", "قارن تماريني"], needsTime: false, priority: 83,
     handler: async () => {
       const today = new Date();
       const ms = format(startOfMonth(today), "yyyy-MM-dd"), ts = format(today, "yyyy-MM-dd"), ps = format(startOfMonth(subMonths(today, 1)), "yyyy-MM-dd");
