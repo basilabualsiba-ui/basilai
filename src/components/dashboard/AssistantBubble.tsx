@@ -439,7 +439,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── MOST EXPENSIVE MONTH ──────────────────────────────────────────────────
   intents.push({
     id: "most_expensive_month",
-    keywords: ["أغلى شهر", "اغلى شهر"],
+    keywords: ["أغلى شهر", "اغلى شهر", "أكثر شهر صرفت", "اكثر شهر صرفت"],
     needsTime: false,
     priority: 83,
     handler: async () => {
