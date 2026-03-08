@@ -796,7 +796,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── MEDIA COUNT (movies + series) ─────────────────────────────────────────
   intents.push({
     id: "media_count",
-    keywords: ["كم فيلم", "كم مسلسل", "عدد أفلام", "عدد مسلسلات", "أفلامي", "افلامي", "مسلسلاتي"],
+    keywords: ["كم فيلم", "كم مسلسل", "عدد أفلام", "عدد مسلسلات", "أفلامي", "افلامي", "مسلسلاتي", "كم شي شفت", "مكتبتي"],
     needsTime: false,
     priority: 67,
     handler: async () => {
