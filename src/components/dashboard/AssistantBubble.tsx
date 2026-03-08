@@ -1164,7 +1164,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── UNIQUE PLACES COUNT ───────────────────────────────────────────────────
   intents.push({
     id: "unique_places_count",
-    keywords: ["كم مكان صرفت", "عدد الأماكن", "عدد اماكن"],
+    keywords: ["كم مكان صرفت", "عدد الأماكن", "عدد اماكن", "كم محل رحت"],
     needsTime: true,
     priority: 79,
     handler: async (period) => {
