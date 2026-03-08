@@ -1293,7 +1293,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── AVG WORKOUT DURATION ──────────────────────────────────────────────────
   intents.push({
     id: "avg_workout_duration",
-    keywords: ["معدل مدة التمرين", "معدل مدة تمرين", "متوسط مدة"],
+    keywords: ["معدل مدة التمرين", "معدل مدة تمرين", "متوسط مدة", "متوسط مدة التمرين"],
     needsTime: false,
     priority: 78,
     handler: async () => {
