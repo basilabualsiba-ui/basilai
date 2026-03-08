@@ -1851,8 +1851,13 @@ export function AssistantBubble() {
     const normalizedText = arabicToWestern(text);
 
     const { period: detectedPeriod, cleaned } = detectTimePeriod(normalizedText);
-    const period = forcedPeriod || detectedPeriod;
+    const period = forcedPeriod || detectedPeriod || lastPeriodRef.current;
     const textForMatch = cleaned || normalizedText;
+    
+    // Store last used period for follow-up questions
+    if (forcedPeriod || detectedPeriod) {
+      lastPeriodRef.current = forcedPeriod || detectedPeriod;
+    }
 
     // ── Smart expense detection: "صرفت 50 على أكل" or "30 شيكل قهوة" ──
     const expensePatterns = [
