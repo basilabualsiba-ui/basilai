@@ -759,6 +759,7 @@ export function AssistantBubble() {
   const [pulse, setPulse] = useState(true);
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null);
   const [intents, setIntents] = useState<IntentDef[]>([]);
+  const [catSubData, setCatSubData] = useState<{ cats: CategoryRef[]; subs: SubcategoryRef[] }>({ cats: [], subs: [] });
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -771,6 +772,7 @@ export function AssistantBubble() {
       ]);
       const cats: CategoryRef[] = catRes.data || [];
       const subs: SubcategoryRef[] = subRes.data || [];
+      setCatSubData({ cats, subs });
       setIntents(buildIntents(cats, subs));
     })();
   }, []);
