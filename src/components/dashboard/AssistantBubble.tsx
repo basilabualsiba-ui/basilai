@@ -2431,6 +2431,16 @@ export function AssistantBubble() {
       }
     }
 
+    // ── Fuzzy matching: suggest closest intent ──
+    const fuzzy = findClosestIntent(textForMatch, intents);
+    if (fuzzy) {
+      setPendingSuggestion({ userText: textForMatch, intentId: fuzzy.intent.id, keyword: fuzzy.keyword });
+      return {
+        content: `هل تقصد: "${fuzzy.keyword}"؟ 🤔`,
+        reply_chips: ["✅ أيوا", "❌ لا"],
+      };
+    }
+
     return { content: "ما عندي جواب لهالسؤال بعد 🤔\nجرب تسأل بطريقة ثانية أو اختار من الأسئلة المقترحة!" };
   }, [intents, catSubData, accountsList]);
 
