@@ -694,11 +694,55 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
       const { data } = await supabase.from("accounts").select("name, amount, currency, icon");
       if (!data || data.length === 0) return "ما في حسابات مسجلة بعد 🏦";
 
-      // Check if user asked about a specific account e.g. "كم ضايل بالكاش"
+      // Smart account matching with Arabic aliases
       const txt = (originalText || "").toLowerCase();
-      const specificAcc = data.find(a => txt.includes(a.name.toLowerCase()));
-      if (specificAcc) {
-        return `${iconToEmoji(specificAcc.icon)} ${specificAcc.name}: ${fmtNum(Number(specificAcc.amount))} ${specificAcc.currency}`;
+      
+      // Arabic keyword → account name fragments mapping
+      const aliases: [string[], string[]][] = [
+        [["كاش", "نقد", "cash"], ["cash"]],
+        [["شيكل", "شيقل", "ils"], ["ils"]],
+        [["دولار", "dollar", "usd"], ["usd", "dollar"]],
+        [["بنك عربي", "العربي", "arab"], ["arab"]],
+        [["بنك وطني", "الوطني", "tnb"], ["tnb"]],
+        [["بنك", "bank"], ["bank"]],
+        [["درج", "drawer"], ["drawer"]],
+        [["سلفة", "سلف", "lend"], ["lend"]],
+        [["عملة قديمة", "old"], ["old"]],
+      ];
+
+      // Find which alias groups the user mentioned (order matters - check specific first)
+      const matchedFragments: string[] = [];
+      for (const [arabicKeys, engFragments] of aliases) {
+        if (arabicKeys.some(k => txt.includes(k))) {
+          matchedFragments.push(...engFragments);
+        }
+      }
+
+      if (matchedFragments.length > 0) {
+        const matched = data.filter(a => {
+          const nameLow = a.name.toLowerCase();
+          return matchedFragments.every(f => nameLow.includes(f));
+        });
+        // If no exact match on all fragments, try any fragment
+        const results = matched.length > 0 ? matched : data.filter(a => {
+          const nameLow = a.name.toLowerCase();
+          return matchedFragments.some(f => nameLow.includes(f));
+        });
+        if (results.length === 1) {
+          const acc = results[0];
+          return `${iconToEmoji(acc.icon)} ${acc.name}: ${fmtNum(Number(acc.amount))} ${acc.currency}`;
+        }
+        if (results.length > 1) {
+          const total = results.reduce((s, a) => s + Number(a.amount), 0);
+          const lines = results.map(a => `${iconToEmoji(a.icon)} ${a.name}: ${fmtNum(Number(a.amount))} ${a.currency}`);
+          return `🏦 الحسابات المطابقة:\n${lines.join("\n")}${results.length > 1 ? `\n\n💰 المجموع: ${fmtNum(total)} ₪` : ""}`;
+        }
+      }
+
+      // Also try direct name match
+      const directMatch = data.find(a => txt.includes(a.name.toLowerCase()));
+      if (directMatch) {
+        return `${iconToEmoji(directMatch.icon)} ${directMatch.name}: ${fmtNum(Number(directMatch.amount))} ${directMatch.currency}`;
       }
 
       const total = data.reduce((s, a) => s + Number(a.amount), 0);
