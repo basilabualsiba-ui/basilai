@@ -557,7 +557,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── SUPPLEMENTS TODAY ─────────────────────────────────────────────────────
   intents.push({
     id: "supplements_today",
-    keywords: ["كمالات", "مكملات", "كمالاتي", "مكمل"],
+    keywords: ["كمالات", "مكملات", "كمالاتي", "مكمل", "كمالاتي اليوم", "شو أخذت اليوم", "مكملاتي اليومية", "شو اخذت اليوم"],
     needsTime: false,
     priority: 73,
     handler: async () => {
