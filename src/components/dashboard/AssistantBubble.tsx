@@ -1307,7 +1307,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── WEIGHT CHANGE ─────────────────────────────────────────────────────────
   intents.push({
     id: "weight_change",
-    keywords: ["فرق وزني", "فرق الوزن", "تغير وزني", "تغيّر وزني"],
+    keywords: ["فرق وزني", "فرق الوزن", "تغير وزني", "تغيّر وزني", "كم نقصت", "كم زدت"],
     needsTime: false,
     priority: 76,
     handler: async () => {
