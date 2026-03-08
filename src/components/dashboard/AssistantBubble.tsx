@@ -88,34 +88,38 @@ function detectTimePeriod(text: string): { period: TimePeriod | null; cleaned: s
   const todayStr = format(today, "yyyy-MM-dd");
   const patterns: { re: RegExp; build: () => TimePeriod }[] = [
     {
-      re: /هال(شهر|شهري)/,
+      re: /هال(شهر|شهري)|هاد الشهر|هاذ الشهر/,
       build: () => ({ from: format(startOfMonth(today), "yyyy-MM-dd"), to: todayStr, label: "هالشهر" }),
     },
     {
-      re: /هال(أسبوع|اسبوع)/,
+      re: /هال(أسبوع|اسبوع)|هاد الأسبوع|هاد الاسبوع|هاذ الأسبوع/,
       build: () => ({ from: format(startOfWeek(today, { weekStartsOn: 6 }), "yyyy-MM-dd"), to: todayStr, label: "هالأسبوع" }),
     },
     {
-      re: /(الشهر الفائت|الشهر الماضي|الشهر اللي قبل)/,
+      re: /(الشهر الفائت|الشهر الماضي|الشهر اللي قبل|الشهر اللي فات)/,
       build: () => {
         const prev = subMonths(today, 1);
         return { from: format(startOfMonth(prev), "yyyy-MM-dd"), to: format(startOfMonth(today), "yyyy-MM-dd"), label: "الشهر الفائت" };
       },
     },
     {
-      re: /من البداي[ةه]/,
+      re: /من البداي[ةه]|من أول|من اول/,
       build: () => ({ from: null, to: null, label: "من البداية" }),
     },
     {
-      re: /\bاليوم\b/,
+      re: /\bاليوم\b|هاد اليوم|هاذ اليوم/,
       build: () => ({ from: todayStr, to: todayStr, label: "اليوم" }),
     },
     {
-      re: /مبارح|أمس|امس/,
+      re: /مبارح|أمس|امس|إمبارح|امبارح/,
       build: () => {
         const y = format(subDays(today, 1), "yyyy-MM-dd");
         return { from: y, to: y, label: "مبارح" };
       },
+    },
+    {
+      re: /هالسنة|هاد السنة|هاذ السنة|السنة هاي/,
+      build: () => ({ from: format(new Date(today.getFullYear(), 0, 1), "yyyy-MM-dd"), to: todayStr, label: "هالسنة" }),
     },
   ];
 
