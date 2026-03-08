@@ -1498,7 +1498,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── CLOSEST TO COMPLETE DREAM ─────────────────────────────────────────────
-  intents.push({ id: "closest_to_complete", keywords: ["أقرب للإكمال", "اقرب للاكمال", "أقرب حلم", "الحلم اللي أقرب"], needsTime: false, priority: 72,
+  intents.push({ id: "closest_to_complete", keywords: ["أقرب للإكمال", "اقرب للاكمال", "أقرب حلم", "الحلم اللي أقرب", "أقرب هدف"], needsTime: false, priority: 72,
     handler: async () => {
       const { data } = await supabase.from("dreams").select("title, progress_percentage").eq("status", "in_progress").order("progress_percentage", { ascending: false }).limit(3);
       if (!data || data.length === 0) return "ما في أحلام نشطة 🌟";
