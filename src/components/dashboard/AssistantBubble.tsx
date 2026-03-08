@@ -1058,7 +1058,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── BIGGEST TRANSACTION ───────────────────────────────────────────────────
   intents.push({
     id: "biggest_transaction",
-    keywords: ["أغلى معاملة", "اغلى معاملة", "أكبر معاملة", "اكبر معاملة", "أكثر معاملة"],
+    keywords: ["أغلى معاملة", "اغلى معاملة", "أكبر معاملة", "اكبر معاملة", "أكثر معاملة", "أغلى صرفة"],
     needsTime: true,
     priority: 87,
     handler: async (period) => {
