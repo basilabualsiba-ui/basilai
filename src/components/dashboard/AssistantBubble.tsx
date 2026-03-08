@@ -2026,7 +2026,8 @@ export function AssistantBubble() {
       if (spendingIntents.includes(intent.id) && period) {
         // Fetch top subcategories for this period to suggest drill-down
         let chipQ = supabase.from("transactions").select("subcategory_id, subcategories(name), amount").eq("type", "expense");
-        chipQ = dateFilter(chipQ, period);
+        if (period.from) chipQ = chipQ.gte("date", period.from);
+        if (period.to) chipQ = chipQ.lte("date", period.to);
         const { data: chipData } = await chipQ.limit(500);
         if (chipData && chipData.length > 0) {
           const bySub = new Map<string, { name: string; total: number }>();
