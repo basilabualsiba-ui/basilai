@@ -1666,7 +1666,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── MONTHLY SUMMARY ───────────────────────────────────────────────────────
-  intents.push({ id: "monthly_summary", keywords: ["لخصلي الشهر", "ملخص الشهر", "تقرير الشهر", "لخصلي", "ملخص"], needsTime: false, priority: 91,
+  intents.push({ id: "monthly_summary", keywords: ["لخصلي الشهر", "ملخص الشهر", "تقرير الشهر", "لخصلي", "ملخص", "عطيني ملخص", "شو صار هالشهر"], needsTime: false, priority: 91,
     handler: async () => {
       const today = new Date();
       const ms = format(startOfMonth(today), "yyyy-MM-dd");
