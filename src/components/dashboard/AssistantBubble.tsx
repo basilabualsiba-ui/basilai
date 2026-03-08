@@ -1723,6 +1723,54 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
     },
   });
 
+  // ── "متى آخر مرة" INTENTS ──────────────────────────────────────────────
+  intents.push({ id: "last_time_expense", keywords: ["متى آخر مرة صرفت", "امتى آخر مرة صرفت", "متى اخر مرة صرفت"], needsTime: false, priority: 93,
+    handler: async () => {
+      const { data } = await supabase.from("transactions").select("date, time, amount, subcategories(name), categories(name)").eq("type", "expense").order("date", { ascending: false }).order("time", { ascending: false }).limit(1);
+      if (!data?.[0]) return "ما في مصاريف مسجلة بعد 📭";
+      const t = data[0] as any;
+      const place = t.subcategories?.name || t.categories?.name || "";
+      return `💳 آخر مرة صرفت: ${t.date}${t.time ? " " + t.time.substring(0,5) : ""}\n💰 ${fmtNum(Number(t.amount))} ₪${place ? ` على ${place}` : ""}`;
+    },
+  });
+  intents.push({ id: "last_time_workout", keywords: ["متى آخر مرة تمرنت", "امتى آخر مرة تمرنت", "متى اخر مرة تمرنت", "متى آخر مرة رحت الجيم"], needsTime: false, priority: 93,
+    handler: async () => {
+      const { data } = await supabase.from("workout_sessions").select("scheduled_date, muscle_groups").not("completed_at", "is", null).order("scheduled_date", { ascending: false }).limit(1);
+      if (!data?.[0]) return "ما في تمارين مسجلة بعد 🏋️";
+      const muscles = data[0].muscle_groups?.join("، ") || "";
+      return `🏋️ آخر مرة تمرنت: ${data[0].scheduled_date}${muscles ? `\n💪 ${muscles}` : ""}`;
+    },
+  });
+  intents.push({ id: "last_time_fajr", keywords: ["متى آخر مرة صليت الفجر", "امتى آخر مرة صليت الفجر", "متى اخر مرة صليت الفجر"], needsTime: false, priority: 93,
+    handler: async () => {
+      const { data } = await supabase.from("prayer_completions").select("completion_date").eq("prayer_name", "fajr").order("completion_date", { ascending: false }).limit(1);
+      if (!data?.[0]) return "ما سجلت أي فجر بعد 🌅";
+      return `🌅 آخر مرة صليت الفجر: ${data[0].completion_date}`;
+    },
+  });
+  intents.push({ id: "last_time_supplement", keywords: ["متى آخر مرة أخذت مكمل", "امتى آخر مرة اخذت مكمل", "متى اخر مرة اخذت كمال"], needsTime: false, priority: 93,
+    handler: async () => {
+      const { data } = await supabase.from("supplement_logs").select("logged_date, supplements(name)").order("logged_date", { ascending: false }).limit(1);
+      if (!data?.[0]) return "ما في مكملات مسجلة بعد 💊";
+      const t = data[0] as any;
+      return `💊 آخر مرة أخذت مكمل: ${t.logged_date}${t.supplements?.name ? ` (${t.supplements.name})` : ""}`;
+    },
+  });
+  intents.push({ id: "last_time_weight", keywords: ["متى آخر مرة سجلت وزني", "امتى آخر مرة سجلت وزني", "متى اخر مرة وزنت حالي"], needsTime: false, priority: 93,
+    handler: async () => {
+      const { data } = await supabase.from("user_body_stats").select("weight, recorded_at").order("recorded_at", { ascending: false }).limit(1);
+      if (!data?.[0]) return "ما في بيانات وزن بعد ⚖️";
+      return `⚖️ آخر مرة سجلت وزنك: ${format(new Date(data[0].recorded_at), "yyyy-MM-dd")}\n💪 ${fmtNum(Number(data[0].weight))} كغ`;
+    },
+  });
+  intents.push({ id: "last_time_movie", keywords: ["متى آخر مرة شفت فيلم", "امتى آخر مرة شفت فيلم", "متى اخر مرة شفت فلم"], needsTime: false, priority: 93,
+    handler: async () => {
+      const { data } = await supabase.from("media").select("title, created_at").eq("type", "movie").eq("status", "completed").order("created_at", { ascending: false }).limit(1);
+      if (!data?.[0]) return "ما شفت أي فيلم بعد 🎬";
+      return `🎬 آخر مرة شفت فيلم: ${format(new Date(data[0].created_at!), "yyyy-MM-dd")}\n🎬 ${data[0].title}`;
+    },
+  });
+
   // Sort by priority descending
   intents.sort((a, b) => b.priority - a.priority);
   return intents;
