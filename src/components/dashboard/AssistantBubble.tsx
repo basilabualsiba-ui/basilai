@@ -697,7 +697,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
       const txt = (originalText || "").toLowerCase();
       const specificAcc = data.find(a => txt.includes(a.name.toLowerCase()));
       if (specificAcc) {
-        return `${specificAcc.icon || "💰"} ${specificAcc.name}: ${fmtNum(Number(specificAcc.amount))} ${specificAcc.currency}`;
+        return `${iconToEmoji(specificAcc.icon)} ${specificAcc.name}: ${fmtNum(Number(specificAcc.amount))} ${specificAcc.currency}`;
       }
 
       const total = data.reduce((s, a) => s + Number(a.amount), 0);
