@@ -10,12 +10,12 @@ interface Msg {
   role: Role;
   content: string;
   needs_clarification?: boolean;
-  clarification_type?: "time";
+  clarification_type?: "time" | "account" | "confirm_expense";
   reply_chips?: string[];
 }
 
 interface TimePeriod {
-  from: string | null; // ISO date string yyyy-MM-dd
+  from: string | null;
   to: string | null;
   label: string;
 }
@@ -29,6 +29,17 @@ interface SubcategoryRef {
 interface CategoryRef {
   id: string;
   name: string;
+}
+
+interface PendingExpense {
+  amount: number;
+  category_id?: string;
+  category_name?: string;
+  subcategory_id?: string;
+  subcategory_name?: string;
+  account_id?: string;
+  account_name?: string;
+  description?: string;
 }
 
 // ─── Suggestion groups ──────────────────────────────────────────────────────
