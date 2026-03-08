@@ -1846,9 +1846,10 @@ export function AssistantBubble() {
 
   // ── Core: process question locally ──────────────────────────────────────
   const processQuestion = useCallback(async (text: string, forcedPeriod?: TimePeriod) => {
-    // Convert Arabic/Eastern numerals to Western before processing
+    // Convert Arabic/Eastern numerals to Western and strip emoji prefixes from chips
     const arabicToWestern = (s: string) => s.replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
-    const normalizedText = arabicToWestern(text);
+    const stripEmoji = (s: string) => s.replace(/^[\u{1F300}-\u{1FAD6}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{200D}\u{20E3}]+\s*/u, "");
+    const normalizedText = arabicToWestern(stripEmoji(text));
 
     const { period: detectedPeriod, cleaned } = detectTimePeriod(normalizedText);
     const period = forcedPeriod || detectedPeriod || lastPeriodRef.current;
