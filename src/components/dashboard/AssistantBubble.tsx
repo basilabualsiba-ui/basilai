@@ -400,7 +400,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── MONTHLY COMPARISON ────────────────────────────────────────────────────
   intents.push({
     id: "monthly_comparison",
-    keywords: ["قارن", "مقارنة", "مقارن"],
+    keywords: ["قارن", "مقارنة", "مقارن", "قارن المصاريف"],
     needsTime: false,
     priority: 82,
     handler: async () => {
