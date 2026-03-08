@@ -1728,16 +1728,18 @@ export function AssistantBubble() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load categories + subcategories on mount to build dynamic intents
+  // Load categories + subcategories + accounts on mount
   useEffect(() => {
     (async () => {
-      const [catRes, subRes] = await Promise.all([
+      const [catRes, subRes, accRes] = await Promise.all([
         supabase.from("categories").select("id, name"),
         supabase.from("subcategories").select("id, name, category_id"),
+        supabase.from("accounts").select("id, name"),
       ]);
       const cats: CategoryRef[] = catRes.data || [];
       const subs: SubcategoryRef[] = subRes.data || [];
       setCatSubData({ cats, subs });
+      setAccountsList(accRes.data || []);
       setIntents(buildIntents(cats, subs));
     })();
   }, []);
