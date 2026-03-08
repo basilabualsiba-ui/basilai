@@ -813,7 +813,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── SCHEDULE TODAY ────────────────────────────────────────────────────────
   intents.push({
     id: "schedule_today",
-    keywords: ["جدولي", "برنامجي", "مواعيد", "جدول اليوم", "شو عندي اليوم"],
+    keywords: ["جدولي", "برنامجي", "مواعيد", "جدول اليوم", "شو عندي اليوم", "ايش عندي اليوم", "برنامج اليوم", "شو عندي"],
     needsTime: false,
     priority: 69,
     handler: async () => {
