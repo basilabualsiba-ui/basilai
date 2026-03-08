@@ -522,7 +522,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── WORKOUTS COUNT ────────────────────────────────────────────────────────
   intents.push({
     id: "workouts_count",
-    keywords: ["كم مرة اشتغلت", "تمرين", "تمارين", "جيم", "كم تمرين"],
+    keywords: ["كم مرة اشتغلت", "تمرين", "تمارين", "جيم", "كم تمرين", "كم مرة تمرنت", "كم تمرين عملت", "كم مرة رحت الجيم", "كم يوم تمرنت"],
     needsTime: true,
     priority: 74,
     handler: async (period) => {
