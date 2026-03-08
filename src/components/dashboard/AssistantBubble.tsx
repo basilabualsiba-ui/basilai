@@ -1342,7 +1342,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── LAST 3 WEIGHTS ────────────────────────────────────────────────────────
-  intents.push({ id: "last_3_weights", keywords: ["آخر 3 أوزان", "اخر 3 اوزان", "آخر ثلاث أوزان", "آخر ٣"], needsTime: false, priority: 77,
+  intents.push({ id: "last_3_weights", keywords: ["آخر 3 أوزان", "اخر 3 اوزان", "آخر ثلاث أوزان", "آخر ٣", "آخر ثلاث قياسات"], needsTime: false, priority: 77,
     handler: async () => {
       const { data } = await supabase.from("user_body_stats").select("weight, recorded_at").order("recorded_at", { ascending: false }).limit(3);
       if (!data || data.length === 0) return "ما في بيانات وزن ⚖️";
