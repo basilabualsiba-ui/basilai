@@ -228,6 +228,8 @@ function fmtNum(n: number): string {
 }
 
 function iconToEmoji(icon: string): string {
+  if (!icon) return "💰";
+  if (icon.startsWith("http")) return `[img:${icon}]`;
   const map: Record<string, string> = {
     Wallet: "👛", PiggyBank: "🐷", CreditCard: "💳",
     Banknote: "💵", Building2: "🏢", Landmark: "🏛️",
@@ -235,7 +237,6 @@ function iconToEmoji(icon: string): string {
     Coffee: "☕", Gamepad2: "🎮", Gift: "🎁",
     Plane: "✈️", Music: "🎵", BookOpen: "📖", Camera: "📷",
   };
-  if (!icon || icon.startsWith("http")) return "💰";
   return map[icon] || "💰";
 }
 
@@ -1697,7 +1698,15 @@ function MsgBubble({ msg, onChipClick }: { msg: Msg; onChipClick: (text: string)
     <div className="flex flex-col items-start mb-3 gap-2 max-w-[88%]">
       <div className="px-4 py-3 rounded-2xl rounded-tl-sm text-sm text-white/90 leading-relaxed w-full" style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}>
         {msg.content.split("\n").map((line, i) => (
-          <p key={i} className={i > 0 ? "mt-1" : ""}>{line}</p>
+          <p key={i} className={i > 0 ? "mt-1" : ""}>
+            {line.split(/(\[img:[^\]]+\])/).map((part, j) => {
+              const imgMatch = part.match(/^\[img:(.+)\]$/);
+              if (imgMatch) {
+                return <img key={j} src={imgMatch[1]} alt="" className="inline-block h-5 w-5 rounded-sm align-middle mr-0.5" />;
+              }
+              return <span key={j}>{part}</span>;
+            })}
+          </p>
         ))}
       </div>
 
