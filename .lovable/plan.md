@@ -1,108 +1,151 @@
 
 
-# Enhance Assistant: Alternative Phrasings + Follow-up Chips for Every Intent
+# Plan: Delete Closet/Cooking, Fix Stats, UI Polish, Add TV Tracker
 
-## Overview
-Expand every intent with more Arabic keyword variations and add contextual follow-up chips to every response, making the assistant feel like a real conversation.
+## 1. Delete Smart Closet & Smart Cooking (completely)
 
-## Changes (all in `AssistantBubble.tsx`)
+**Delete files:**
+- `src/components/closet/` (5 files)
+- `src/components/cooking/` (5 files)
+- `src/pages/Closet.tsx`
+- `src/pages/Cooking.tsx`
+- `src/components/dashboard/closet-card.tsx`
+- `src/components/dashboard/cooking-card.tsx`
+- `supabase/functions/fetch-recipe-url/`
 
-### 1. Add Alternative Keywords to Every Intent
+**Clean references:**
+- `src/App.tsx`: Remove Closet/Cooking imports and routes
+- `src/pages/Index.tsx`: Remove ClosetCard/CookingCard from BentoGrid
 
-Expand `keywords` arrays with common Arabic phrasings. Examples:
-
-| Intent | Current | Adding |
-|--------|---------|--------|
-| `total_spending` | كم صرفت | مصاريفي, مجموع الصرف, اجمالي مصاريف, قديش صرفت, أديش صرفت |
-| `current_weight` | وزني, وزن | كم وزني, شو وزني, وزني هلق, وزني الحالي, كم وزني هلق |
-| `last_transaction` | آخر اشي صرفتو | آخر صرفة عملتها, شو آخر مصروف, آخر اشي دفعتو, متى آخر مصروف |
-| `workouts_count` | كم مرة اشتغلت | كم مرة تمرنت, كم تمرين عملت, كم مرة رحت الجيم, كم يوم تمرنت |
-| `prayer_count` | كم صلاة | كم صلاة صليت, كم مرة صليت, نسبة صلواتي |
-| `supplements_today` | كمالات | كمالاتي اليوم, شو أخذت اليوم, مكملاتي اليومية |
-| `watching_now` | بتشاهد | شو عم بشاهد, شو بشوف, ايش بتابع |
-| `active_dreams` | أحلام | أهدافي, شو أهدافي, طموحاتي |
-| `schedule_today` | جدولي | شو عندي, ايش عندي, برنامج اليوم |
-| `account_balances` | رصيدي | كم ضايل, كم بالحساب, كم فلوسي, كم معي فلوس |
-| `games_count` | كم لعبة | شو ألعابي, ألعاب عندي |
-| `media_count` | كم فيلم | كم شي شفت, مكتبتي |
-| `monthly_summary` | لخصلي | عطيني ملخص, شو صار هالشهر |
-
-...and similar expansions for all ~60+ intents.
-
-### 2. Add "متى آخر مرة" Intents
-
-New intents with high priority for "when was the last time" questions:
-
-- **متى آخر مرة صرفت** → queries last expense date
-- **متى آخر مرة تمرنت** → queries last workout date
-- **متى آخر مرة صليت الفجر** → queries last fajr date
-- **متى آخر مرة أخذت مكمل** → queries last supplement date
-- **متى آخر مرة سجلت وزني** → queries last weight date
-- **متى آخر مرة شفت فيلم** → queries last watched movie date
-
-### 3. Add Follow-up Chips to EVERY Intent Response
-
-Currently only spending intents get follow-ups. The plan is to build a `followUpMap` that maps each intent ID to relevant follow-up chips. After every intent handler runs, append appropriate chips.
-
-```text
-Intent Response Flow:
-  [User asks] → [Intent matched] → [Handler runs] → [Add follow-up chips] → [Display]
+**Drop Supabase tables** via migration:
+```sql
+DROP TABLE IF EXISTS recipe_ingredients;
+DROP TABLE IF EXISTS recipe_steps;
+DROP TABLE IF EXISTS recipes;
+DROP TABLE IF EXISTS user_ingredients;
+DROP TABLE IF EXISTS clothing_items;
+DROP TABLE IF EXISTS saved_outfits;
+DROP TABLE IF EXISTS shopping_list;
 ```
 
-Examples of follow-up chips per domain:
+---
 
-**Finance intents** (total_spending, daily_average, etc.):
-- "📊 حسب الفئات", "📍 حسب الأماكن", "🔄 قارن مع الشهر الفائت", "💳 آخر 5 معاملات"
+## 2. Fix Wallet Stats (Total Savings & Net Worth)
 
-**Weight intents** (current_weight, weight_change, etc.):
-- "📉 أقل وزن وصلتلو", "📈 أعلى وزن", "⚖️ فرق وزني", "📋 آخر 3 أوزان"
+**Current bug:** "Total Savings" sums each month independently. User wants cumulative total savings (running sum).
 
-**Workout intents** (workouts_count, last_workout, etc.):
-- "💪 أكثر عضلة", "⏱️ كم ساعة تمرين", "🔥 كم يوم متتالي", "📋 تفاصيل آخر تمرين"
+**Fix in `stats-overview.tsx`:**
 
-**Prayer intents** (prayer_count, fajr_count, etc.):
-- "🌅 كم فجر صليت", "🕌 أكثر صلاة", "✅ كم يوم كل الصلوات", "🔥 ستريك فجر"
+- **For completed months** (before current month): 
+  - Total Savings for month X = sum of (income - expenses) for all months from start through X, excluding Aug 2025
+  - Net Worth for month X = use `net_worth_snapshots` table value (recorded at end of month)
+  
+- **For current (incomplete) month** (e.g., March 2026):
+  - Total Savings = current live calculation (sum all months including current, exclude Aug 2025)  
+  - Net Worth = live sum of all account balances
 
-**Supplement intents**:
-- "💊 أكثر مكمل استخدمتو", "📅 كم يوم أخذت كمالات", "💊 آخر مكمل"
+- Update the "Total Savings" and "Net Worth" cards to show the selected month's values (not always current)
+- Update the savings trend chart to show cumulative savings per month
+- Update net worth trend to show per-month snapshots
 
-**Entertainment intents** (movies, series, games):
-- "🎬 آخر فيلم شفته", "📺 شو بتشاهد", "⭐ أعلى تقييم", "🎮 كم صرفت على الألعاب"
+---
 
-**Dreams intents**:
-- "🌟 أقرب للإكمال", "📋 كم خطوة باقي", "✅ كم حققت", "📊 تقدم أحلامي"
+## 3. UI Fixes
 
-**Schedule intents**:
-- "📋 شو عندي بكرا", "✅ كم مهمة خلصت هالأسبوع"
+### 3A. Prayer card — match inner colors to card gradient
+The prayer card icon uses `from-amber-500 to-yellow-600`. The inner page (`Islamic.tsx`) header should use the same amber/yellow gradient colors for the icon and accents (currently uses generic styling).
 
-### 4. Update SUGGESTION_GROUPS
+### 3B. Weight card & page — match colors
+- `WeightStatsCard`: currently uses `text-weight` and `bg-weight/20` — correct
+- `WeightStats.tsx` page: rename title from "Weight Stats" to "Weight", change icon from `Scale` to `PersonStanding` to match the card
 
-Add the new alternative phrasings to the suggestion groups so users see more variety.
+### 3C. All cards use loading skeleton
+Cards that don't fetch data (Prayer, Gym, Supplements, Dreams) should show a brief loading state matching the wallet card pattern. Add a small `useState` loading trick or `loading` prop to BentoCard for consistency.
 
-### Implementation Approach
+---
 
-After `intent.handler()` returns a reply, instead of only checking `spendingIntents`, use a comprehensive mapping:
+## 4. TV & Series Tracker (TMDB)
 
-```typescript
-const followUpChips: Record<string, string[]> = {
-  // Finance
-  total_spending: ["📊 حسب الفئات", "📍 حسب الأماكن", "💳 آخر 5 معاملات", "🔄 قارن مع الشهر الفائت"],
-  // Health
-  current_weight: ["📉 أقل وزن وصلتلو", "📈 أعلى وزن", "📋 آخر 3 أوزان", "⚖️ فرق وزني"],
-  workouts_count: ["💪 أكثر عضلة اشتغلت عليها", "⏱️ كم ساعة تمرين", "📋 تفاصيل آخر تمرين"],
-  // ... etc for all intents
-};
+### 4A. Store TMDB API key
+The TMDB API key is a public/free key. Store it as a Supabase secret and use it in an edge function to avoid exposing it client-side. Or since TMDB keys are public-ish, store as `VITE_TMDB_API_KEY` in code.
 
-const chips = followUpChips[intent.id];
-if (chips) return { content: reply, reply_chips: chips };
+**Decision:** Use an edge function `tmdb-proxy` to keep the key server-side and avoid CORS issues.
+
+### 4B. New Supabase tables
+
+```sql
+CREATE TABLE media (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  tmdb_id integer NOT NULL,
+  type text NOT NULL, -- 'movie' or 'series'
+  title text NOT NULL,
+  poster_url text,
+  rating numeric,
+  runtime integer,
+  total_seasons integer,
+  genres text[] DEFAULT '{}',
+  trailer_url text,
+  status text DEFAULT 'want_to_watch', -- want_to_watch/watching/watched
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(tmdb_id, type)
+);
+
+CREATE TABLE episodes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  series_id uuid REFERENCES media(id) ON DELETE CASCADE,
+  season_number integer NOT NULL,
+  episode_number integer NOT NULL,
+  title text,
+  watched boolean DEFAULT false,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(series_id, season_number, episode_number)
+);
 ```
 
-This replaces the current limited spending-only follow-up logic with a universal system.
+RLS: permissive for all operations (matching existing pattern).
 
-### Summary of Scale
+### 4C. Edge function: `tmdb-proxy`
+- Accepts `path` and `query` parameters
+- Forwards to TMDB API with the stored API key
+- Returns JSON response
+- Handles search, details, season, videos endpoints
 
-- ~60+ intents get expanded keywords (2-5 new phrasings each)
-- ~6 new "متى آخر مرة" intents added
-- ~40+ intents get follow-up chips
-- SUGGESTION_GROUPS updated with new phrasing variety
+### 4D. New files
+
+| File | Purpose |
+|------|---------|
+| `src/pages/TVTracker.tsx` | Main page with tabs: All, Want to Watch, Watching, Watched, Recommendations |
+| `src/components/tv/search-media-dialog.tsx` | Search TMDB, show results, add to library |
+| `src/components/tv/media-card.tsx` | Poster card with title, rating, status badge |
+| `src/components/tv/media-detail-dialog.tsx` | Full details: poster, trailer, episodes, mark watched |
+| `src/components/tv/episode-list.tsx` | Season/episode checklist for series |
+| `src/components/tv/recommendations.tsx` | Genre-based recommendations from TMDB |
+| `src/components/dashboard/tv-card.tsx` | Dashboard card |
+| `supabase/functions/tmdb-proxy/index.ts` | TMDB API proxy |
+
+### 4E. Dashboard & routing
+- Add `TVTrackerCard` to BentoGrid in Index.tsx
+- Add `/tv-tracker` route in App.tsx
+- Card order: Prayer, Weight, Wallet, Gym, TV Tracker, Supplements, Dreams
+
+### 4F. Recommendation logic (no AI)
+- Query user's `media` table, extract most frequent genres
+- Call TMDB `/movie/{id}/recommendations` or `/tv/{id}/recommendations` for top-rated watched items
+- Filter out items already in user's database
+- Display in "Suggested Next Watch" section
+
+---
+
+## Implementation Order
+1. Delete closet & cooking (files + DB migration)
+2. Fix wallet stats (cumulative savings, month-specific net worth)
+3. UI fixes (prayer colors, weight naming, loading states)
+4. Create TV Tracker (DB tables, edge function, UI components, dashboard card)
+
+---
+
+## Technical Notes
+- TMDB API key will need to be added as a Supabase secret — will prompt user for it
+- ~10 files deleted, ~10 new files created, ~5 files modified
+- No AI used anywhere — TMDB API + rule-based recommendations only
 

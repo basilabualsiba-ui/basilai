@@ -49,6 +49,7 @@ const SUGGESTION_GROUPS = [
     items: [
       "كم صرفت هاد الشهر؟",
       "كم صرفت اليوم؟",
+      "أديش صرفت هالأسبوع؟",
       "شو آخر اشي صرفتو؟",
       "شو صرفت اليوم؟",
       "شو آخر 5 معاملات؟",
@@ -56,6 +57,8 @@ const SUGGESTION_GROUPS = [
       "كم معاملة عملت هالشهر؟",
       "صرفت 50 على أكل",
       "أضف صرف",
+      "مجموع مصاريفي هالشهر",
+      "قديش صرفت هالسنة؟",
     ],
   },
   {
@@ -70,6 +73,8 @@ const SUGGESTION_GROUPS = [
       "شو الحساب اللي أكثر صرفت منه؟",
       "شو الفئة اللي ما صرفت عليها هالشهر؟",
       "كم صرفت بالويكند هالشهر؟",
+      "وين أكثر صرفت هالشهر؟",
+      "توزيع مصاريفي هالشهر",
     ],
   },
   {
@@ -87,7 +92,9 @@ const SUGGESTION_GROUPS = [
     label: "💪 صحة",
     items: [
       "شو وزني هلق؟",
+      "كم وزني الحالي؟",
       "كم مرة تمرنت هالشهر؟",
+      "كم مرة رحت الجيم هالشهر؟",
       "شو آخر تدريب عملتو؟",
       "كم ساعة تمرين هالشهر؟",
       "شو أكثر عضلة اشتغلت عليها؟",
@@ -96,22 +103,26 @@ const SUGGESTION_GROUPS = [
       "شو آخر 3 أوزان سجلتها؟",
       "معدل مدة التمرين؟",
       "كم يوم متتالي تمرنت؟",
+      "متى آخر مرة تمرنت؟",
     ],
   },
   {
     label: "💊 مكملات",
     items: [
       "شو كمالاتي اليومية؟",
+      "شو أخذت اليوم؟",
       "شو المكمل اللي أكثر استخدمتو؟",
       "شو آخر مكمل أخذتو؟",
       "كم سكوب بروتين أخذت هالشهر؟",
       "كم يوم أخذت كمالات هالشهر؟",
+      "متى آخر مرة أخذت مكمل؟",
     ],
   },
   {
     label: "🎬 ترفيه",
     items: [
       "شو بتشاهد هلق؟",
+      "شو عم بشاهد؟",
       "كم فيلم شفت؟",
       "كم حلقة شفت؟",
       "شو آخر فيلم شفته؟",
@@ -119,12 +130,14 @@ const SUGGESTION_GROUPS = [
       "شو المسلسل اللي أعلى تقييم؟",
       "اقترح فيلم أشوفه",
       "قارن الأفلام مع المسلسلات",
+      "متى آخر مرة شفت فيلم؟",
     ],
   },
   {
     label: "🎮 ألعاب",
     items: [
       "كم لعبة عندي؟",
+      "شو ألعابي؟",
       "كم صرفت على الألعاب؟",
       "كم لعبة PS5 عندي؟",
       "شو اللعبة اللي أكثر صرفت عليها؟",
@@ -139,12 +152,14 @@ const SUGGESTION_GROUPS = [
       "شو أكثر صلاة صليتها هالشهر؟",
       "كم يوم صليت فيه كل الصلوات هالشهر؟",
       "كم يوم متتالي صليت الفجر؟",
+      "متى آخر مرة صليت الفجر؟",
     ],
   },
   {
     label: "🌟 أحلام",
     items: [
       "شو أحلامي؟",
+      "شو أهدافي؟",
       "كم حلم حققت؟",
       "شو الحلم اللي أقرب للإكمال؟",
       "شو تقدم أحلامي؟",
@@ -158,20 +173,33 @@ const SUGGESTION_GROUPS = [
       "شو عندي اليوم بالجدول؟",
       "شو عندي بكرا بالجدول؟",
       "كم مهمة خلصت هالأسبوع؟",
+      "ايش عندي اليوم؟",
     ],
   },
   {
     label: "📈 ملخصات",
     items: [
       "لخصلي الشهر",
+      "عطيني ملخص هالشهر",
       "كم رصيدي بالحسابات؟",
+      "كم فلوسي؟",
       "كم دخلي هاد الشهر؟",
       "شو الصافي هالشهر؟",
       "كم صرفت هالسنة؟",
     ],
   },
+  {
+    label: "⏰ متى آخر مرة",
+    items: [
+      "متى آخر مرة صرفت؟",
+      "متى آخر مرة تمرنت؟",
+      "متى آخر مرة صليت الفجر؟",
+      "متى آخر مرة أخذت مكمل؟",
+      "متى آخر مرة سجلت وزني؟",
+      "متى آخر مرة شفت فيلم؟",
+    ],
+  },
 ];
-
 const TIME_CHIPS = ["هالشهر", "هالأسبوع", "الشهر الفائت", "هالسنة", "من البداية", "اليوم", "مبارح"];
 function detectTimePeriod(text: string): { period: TimePeriod | null; cleaned: string } {
   const today = new Date();
@@ -290,7 +318,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── TOP SPENDING PLACES ───────────────────────────────────────────────────
   intents.push({
     id: "top_spending_places",
-    keywords: ["أكثر مكان", "وين صرفت", "وين أكثر", "أكثر مكان صرفت", "اكثر مكان", "حسب الأماكن", "حسب الاماكن"],
+    keywords: ["أكثر مكان", "وين صرفت", "وين أكثر", "أكثر مكان صرفت", "اكثر مكان", "حسب الأماكن", "حسب الاماكن", "أكثر أماكن", "اكثر اماكن", "وين رحت صرفت"],
     needsTime: true,
     priority: 90,
     handler: async (period) => {
@@ -314,7 +342,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── TOP SPENDING CATEGORIES ───────────────────────────────────────────────
   intents.push({
     id: "top_spending_categories",
-    keywords: ["أكثر فئة", "أكثر فئات", "اكثر فئة", "فئات المصاريف", "حسب الفئات"],
+    keywords: ["أكثر فئة", "أكثر فئات", "اكثر فئة", "فئات المصاريف", "حسب الفئات", "حسب الفئة", "توزيع حسب الفئات"],
     needsTime: true,
     priority: 85,
     handler: async (period) => {
@@ -338,7 +366,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── TOTAL SPENDING ────────────────────────────────────────────────────────
   intents.push({
     id: "total_spending",
-    keywords: ["كم صرفت", "مجموع مصاريف", "مجموع صرف", "كيف مصاريفي", "مصاريف"],
+    keywords: ["كم صرفت", "مجموع مصاريف", "مجموع صرف", "كيف مصاريفي", "مصاريف", "مصاريفي", "اجمالي مصاريف", "قديش صرفت", "أديش صرفت", "كم مصاريفي", "مجموع الصرف"],
     needsTime: true,
     priority: 50,
     handler: async (period) => {
@@ -355,7 +383,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── DAILY AVERAGE ─────────────────────────────────────────────────────────
   intents.push({
     id: "daily_average",
-    keywords: ["معدل يومي", "معدل صرف", "المعدل اليومي"],
+    keywords: ["معدل يومي", "معدل صرف", "المعدل اليومي", "معدل صرفي اليومي", "متوسط صرفي", "متوسط يومي"],
     needsTime: true,
     priority: 80,
     handler: async (period) => {
@@ -372,7 +400,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── MONTHLY COMPARISON ────────────────────────────────────────────────────
   intents.push({
     id: "monthly_comparison",
-    keywords: ["قارن", "مقارنة", "مقارن"],
+    keywords: ["قارن", "مقارنة", "مقارن", "قارن المصاريف"],
     needsTime: false,
     priority: 82,
     handler: async () => {
@@ -411,7 +439,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── MOST EXPENSIVE MONTH ──────────────────────────────────────────────────
   intents.push({
     id: "most_expensive_month",
-    keywords: ["أغلى شهر", "اغلى شهر"],
+    keywords: ["أغلى شهر", "اغلى شهر", "أكثر شهر صرفت", "اكثر شهر صرفت"],
     needsTime: false,
     priority: 83,
     handler: async () => {
@@ -473,7 +501,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── CURRENT WEIGHT ────────────────────────────────────────────────────────
   intents.push({
     id: "current_weight",
-    keywords: ["وزني", "وزن", "كيلو", "الوزن"],
+    keywords: ["وزني", "وزن", "كيلو", "الوزن", "كم وزني", "شو وزني", "وزني هلق", "وزني الحالي", "كم وزني هلق"],
     needsTime: false,
     priority: 75,
     handler: async () => {
@@ -494,7 +522,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── WORKOUTS COUNT ────────────────────────────────────────────────────────
   intents.push({
     id: "workouts_count",
-    keywords: ["كم مرة اشتغلت", "تمرين", "تمارين", "جيم", "كم تمرين"],
+    keywords: ["كم مرة اشتغلت", "تمرين", "تمارين", "جيم", "كم تمرين", "كم مرة تمرنت", "كم تمرين عملت", "كم مرة رحت الجيم", "كم يوم تمرنت"],
     needsTime: true,
     priority: 74,
     handler: async (period) => {
@@ -513,7 +541,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── LAST WORKOUT ──────────────────────────────────────────────────────────
   intents.push({
     id: "last_workout",
-    keywords: ["آخر تمرين", "اخر تمرين", "متى آخر", "متى اخر"],
+    keywords: ["آخر تمرين", "اخر تمرين"],
     needsTime: false,
     priority: 76,
     handler: async () => {
@@ -529,7 +557,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── SUPPLEMENTS TODAY ─────────────────────────────────────────────────────
   intents.push({
     id: "supplements_today",
-    keywords: ["كمالات", "مكملات", "كمالاتي", "مكمل"],
+    keywords: ["كمالات", "مكملات", "كمالاتي", "مكمل", "كمالاتي اليوم", "شو أخذت اليوم", "مكملاتي اليومية", "شو اخذت اليوم"],
     needsTime: false,
     priority: 73,
     handler: async () => {
@@ -555,7 +583,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── WATCHING NOW ──────────────────────────────────────────────────────────
   intents.push({
     id: "watching_now",
-    keywords: ["بتشاهد", "بشاهد", "مسلسل", "مسلسلات"],
+    keywords: ["بتشاهد", "بشاهد", "مسلسل", "مسلسلات", "شو عم بشاهد", "شو بشوف", "ايش بتابع", "شو بتابع"],
     needsTime: false,
     priority: 72,
     handler: async () => {
@@ -597,7 +625,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── ACTIVE DREAMS ─────────────────────────────────────────────────────────
   intents.push({
     id: "active_dreams",
-    keywords: ["أحلام", "احلام", "أحلامي", "احلامي"],
+    keywords: ["أحلام", "احلام", "أحلامي", "احلامي", "أهدافي", "اهدافي", "طموحاتي"],
     needsTime: false,
     priority: 70,
     handler: async () => {
@@ -611,7 +639,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── PRAYER COUNT ──────────────────────────────────────────────────────────
   intents.push({
     id: "prayer_count",
-    keywords: ["كم صلاة", "كم صليت", "صلوات", "نسبة إتمام", "نسبة اتمام", "نسبة الصلوات"],
+    keywords: ["كم صلاة", "كم صليت", "صلوات", "نسبة إتمام", "نسبة اتمام", "نسبة الصلوات", "كم صلاة صليت", "كم مرة صليت", "نسبة صلواتي"],
     needsTime: true,
     priority: 74,
     handler: async (period) => {
@@ -630,7 +658,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── FAJR COUNT ────────────────────────────────────────────────────────────
   intents.push({
     id: "fajr_count",
-    keywords: ["فجر", "صلاة الفجر"],
+    keywords: ["فجر", "صلاة الفجر", "كم فجر صليت"],
     needsTime: true,
     priority: 78,
     handler: async (period) => {
@@ -649,7 +677,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── TOTAL INCOME ───────────────────────────────────────────────────────────
   intents.push({
     id: "total_income",
-    keywords: ["كم دخلي", "دخل", "إيرادات", "ايرادات", "راتب", "مصروف"],
+    keywords: ["كم دخلي", "دخل", "إيرادات", "ايرادات", "راتب", "مصروف", "كم دخلت", "مجموع الدخل"],
     needsTime: true,
     priority: 65,
     handler: async (period) => {
@@ -666,7 +694,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── NET BALANCE (Income - Expenses) ───────────────────────────────────────
   intents.push({
     id: "net_balance",
-    keywords: ["صافي", "الصافي", "دخل مقابل مصاريف", "ربح", "خسارة"],
+    keywords: ["صافي", "الصافي", "دخل مقابل مصاريف", "ربح", "خسارة", "صافي الحساب", "كم باقي صافي"],
     needsTime: true,
     priority: 66,
     handler: async (period) => {
@@ -687,7 +715,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── ACCOUNT BALANCES ──────────────────────────────────────────────────────
   intents.push({
     id: "account_balances",
-    keywords: ["رصيدي", "رصيد", "حساباتي", "حسابات", "كم معي", "كم عندي فلوس", "كم ضايل", "ضايل معي", "كم باقي معي", "كم فاضل", "باقي بالحساب"],
+    keywords: ["رصيدي", "رصيد", "حساباتي", "حسابات", "كم معي", "كم عندي فلوس", "كم ضايل", "ضايل معي", "كم باقي معي", "كم فاضل", "باقي بالحساب", "كم فلوسي", "كم بالحساب"],
     needsTime: false,
     priority: 68,
     handler: async (_p: TimePeriod | undefined, _ctx: any, originalText?: string) => {
@@ -754,7 +782,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── GAMES COUNT ───────────────────────────────────────────────────────────
   intents.push({
     id: "games_count",
-    keywords: ["كم لعبة", "عدد ألعاب", "عدد العاب", "ألعابي", "العابي"],
+    keywords: ["كم لعبة", "عدد ألعاب", "عدد العاب", "ألعابي", "العابي", "شو ألعابي", "ألعاب عندي"],
     needsTime: false,
     priority: 67,
     handler: async () => {
@@ -768,7 +796,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── MEDIA COUNT (movies + series) ─────────────────────────────────────────
   intents.push({
     id: "media_count",
-    keywords: ["كم فيلم", "كم مسلسل", "عدد أفلام", "عدد مسلسلات", "أفلامي", "افلامي", "مسلسلاتي"],
+    keywords: ["كم فيلم", "كم مسلسل", "عدد أفلام", "عدد مسلسلات", "أفلامي", "افلامي", "مسلسلاتي", "كم شي شفت", "مكتبتي"],
     needsTime: false,
     priority: 67,
     handler: async () => {
@@ -785,7 +813,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── SCHEDULE TODAY ────────────────────────────────────────────────────────
   intents.push({
     id: "schedule_today",
-    keywords: ["جدولي", "برنامجي", "مواعيد", "جدول اليوم", "شو عندي اليوم"],
+    keywords: ["جدولي", "برنامجي", "مواعيد", "جدول اليوم", "شو عندي اليوم", "ايش عندي اليوم", "برنامج اليوم", "شو عندي"],
     needsTime: false,
     priority: 69,
     handler: async () => {
@@ -810,7 +838,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── LAST TRANSACTION (general) ────────────────────────────────────────────
   intents.push({
     id: "last_transaction",
-    keywords: ["آخر اشي صرفتو", "اخر اشي صرفتو", "آخر معاملة", "اخر معاملة", "آخر صرفة", "اخر صرفة", "آخر مصروف", "اخر مصروف"],
+    keywords: ["آخر اشي صرفتو", "اخر اشي صرفتو", "آخر معاملة", "اخر معاملة", "آخر صرفة", "اخر صرفة", "آخر مصروف", "اخر مصروف", "آخر صرفة عملتها", "شو آخر مصروف", "آخر اشي دفعتو"],
     needsTime: false,
     priority: 88,
     handler: async () => {
@@ -839,7 +867,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── TODAY'S TRANSACTIONS DETAIL ───────────────────────────────────────────
   intents.push({
     id: "today_transactions",
-    keywords: ["شو صرفت اليوم", "مصاريف اليوم", "صرفيات اليوم", "تفاصيل مصاريف اليوم"],
+    keywords: ["شو صرفت اليوم", "مصاريف اليوم", "صرفيات اليوم", "تفاصيل مصاريف اليوم", "ايش صرفت اليوم"],
     needsTime: false,
     priority: 86,
     handler: async () => {
@@ -859,7 +887,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── WANT TO WATCH (movies) ────────────────────────────────────────────────
   intents.push({
     id: "want_to_watch_movies",
-    keywords: ["أفلام بدي", "افلام بدي", "بدي اشوف", "بدي أشوف", "أفلام ما شفتها", "افلام ما شفتها", "أفلام محفوظة"],
+    keywords: ["أفلام بدي", "افلام بدي", "بدي اشوف", "بدي أشوف", "أفلام ما شفتها", "افلام ما شفتها", "أفلام محفوظة", "أفلام بدي أشوفها"],
     needsTime: false,
     priority: 72,
     handler: async () => {
@@ -873,7 +901,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── WANT TO WATCH (series) ────────────────────────────────────────────────
   intents.push({
     id: "want_to_watch_series",
-    keywords: ["مسلسلات بدي", "بدي ابلش", "بدي أبلش", "مسلسلات محفوظة", "مسلسلات ما بلشت"],
+    keywords: ["مسلسلات بدي", "بدي ابلش", "بدي أبلش", "مسلسلات محفوظة", "مسلسلات ما بلشت", "مسلسل بدي ابلشو"],
     needsTime: false,
     priority: 72,
     handler: async () => {
@@ -887,7 +915,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── ALL DREAMS (not just active) ──────────────────────────────────────────
   intents.push({
     id: "all_dreams",
-    keywords: ["شو أحلامي", "شو احلامي", "كل أحلامي", "كل احلامي", "قائمة أحلام", "قائمة احلام"],
+    keywords: ["شو أحلامي", "شو احلامي", "كل أحلامي", "كل احلامي", "قائمة أحلام", "قائمة احلام", "شو أهدافي", "شو اهدافي"],
     needsTime: false,
     priority: 71,
     handler: async () => {
@@ -904,7 +932,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── LAST WORKOUT DETAIL ───────────────────────────────────────────────────
   intents.push({
     id: "last_workout_detail",
-    keywords: ["آخر تدريب", "اخر تدريب", "آخر تدريب عملتو", "اخر تدريب عملتو", "تفاصيل آخر تمرين"],
+    keywords: ["آخر تدريب", "اخر تدريب", "آخر تدريب عملتو", "اخر تدريب عملتو", "تفاصيل آخر تمرين", "تفاصيل اخر تمرين"],
     needsTime: false,
     priority: 77,
     handler: async () => {
@@ -924,7 +952,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── ADD EXPENSE (now just a trigger for the smart flow - handled in processQuestion) ──
   intents.push({
     id: "add_expense",
-    keywords: ["أضف صرف", "اضف صرف", "سجلي مصروف", "سجلي صرفة", "بدي أسجل صرفة", "بدي اسجل صرفة", "أضف معاملة", "اضف معاملة", "بدي أضيف صرف"],
+    keywords: ["أضف صرف", "اضف صرف", "سجلي مصروف", "سجلي صرفة", "بدي أسجل صرفة", "بدي اسجل صرفة", "أضف معاملة", "اضف معاملة", "بدي أضيف صرف", "سجل صرفة"],
     needsTime: false,
     priority: 96,
     handler: async () => "🧾 بدك تضيف صرفة؟\nاكتبلي بهالشكل:\n\"صرفت 50 على أكل\"\n\"صرفت 120 شيكل بنزين\"\n\"30 شيكل قهوة\"\n\nوأنا بسجلها مباشرة! 💰",
@@ -933,7 +961,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── MOST EXPENSIVE DAY ────────────────────────────────────────────────────
   intents.push({
     id: "most_expensive_day",
-    keywords: ["أكثر يوم صرفت", "اكثر يوم صرفت", "أغلى يوم", "اغلى يوم"],
+    keywords: ["أكثر يوم صرفت", "اكثر يوم صرفت", "أغلى يوم", "اغلى يوم", "أكثر يوم مصاريف"],
     needsTime: true,
     priority: 84,
     handler: async (period) => {
@@ -971,7 +999,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── WEEKLY AVERAGE ────────────────────────────────────────────────────────
   intents.push({
     id: "weekly_average",
-    keywords: ["معدل أسبوعي", "معدل اسبوعي", "معدل صرفي الأسبوعي", "معدل صرفي الاسبوعي"],
+    keywords: ["معدل أسبوعي", "معدل اسبوعي", "معدل صرفي الأسبوعي", "معدل صرفي الاسبوعي", "متوسط أسبوعي"],
     needsTime: true,
     priority: 81,
     handler: async (period) => {
@@ -991,7 +1019,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── CATEGORY PERCENTAGES ──────────────────────────────────────────────────
   intents.push({
     id: "category_percentages",
-    keywords: ["نسبة كل فئة", "نسب الفئات", "نسب المصاريف", "توزيع المصاريف", "توزيع الفئات"],
+    keywords: ["نسبة كل فئة", "نسب الفئات", "نسب المصاريف", "توزيع المصاريف", "توزيع الفئات", "توزيع مصاريفي"],
     needsTime: true,
     priority: 86,
     handler: async (period) => {
@@ -1015,7 +1043,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── TRANSACTIONS COUNT ────────────────────────────────────────────────────
   intents.push({
     id: "transactions_count",
-    keywords: ["كم معاملة", "عدد المعاملات", "عدد معاملات"],
+    keywords: ["كم معاملة", "عدد المعاملات", "عدد معاملات", "كم عملية"],
     needsTime: true,
     priority: 79,
     handler: async (period) => {
@@ -1030,7 +1058,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── BIGGEST TRANSACTION ───────────────────────────────────────────────────
   intents.push({
     id: "biggest_transaction",
-    keywords: ["أغلى معاملة", "اغلى معاملة", "أكبر معاملة", "اكبر معاملة", "أكثر معاملة"],
+    keywords: ["أغلى معاملة", "اغلى معاملة", "أكبر معاملة", "اكبر معاملة", "أكثر معاملة", "أغلى صرفة"],
     needsTime: true,
     priority: 87,
     handler: async (period) => {
@@ -1066,7 +1094,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── LAST 5 TRANSACTIONS ───────────────────────────────────────────────────
   intents.push({
     id: "last_5_transactions",
-    keywords: ["آخر 5 معاملات", "اخر 5 معاملات", "آخر خمس معاملات", "اخر خمس", "آخر ٥"],
+    keywords: ["آخر 5 معاملات", "اخر 5 معاملات", "آخر خمس معاملات", "اخر خمس", "آخر ٥", "آخر خمس صرفات"],
     needsTime: false,
     priority: 89,
     handler: async () => {
@@ -1117,7 +1145,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── WEEKEND SPENDING ──────────────────────────────────────────────────────
   intents.push({
     id: "weekend_spending",
-    keywords: ["بالويكند", "ويكند", "نهاية الأسبوع", "نهاية الاسبوع", "الجمعة والسبت"],
+    keywords: ["بالويكند", "ويكند", "نهاية الأسبوع", "نهاية الاسبوع", "الجمعة والسبت", "صرفت بالويكند"],
     needsTime: true,
     priority: 79,
     handler: async (period) => {
@@ -1136,7 +1164,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── UNIQUE PLACES COUNT ───────────────────────────────────────────────────
   intents.push({
     id: "unique_places_count",
-    keywords: ["كم مكان صرفت", "عدد الأماكن", "عدد اماكن"],
+    keywords: ["كم مكان صرفت", "عدد الأماكن", "عدد اماكن", "كم محل رحت"],
     needsTime: true,
     priority: 79,
     handler: async (period) => {
@@ -1153,7 +1181,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── MOST USED ACCOUNT ─────────────────────────────────────────────────────
   intents.push({
     id: "most_used_account",
-    keywords: ["أكثر حساب صرفت", "اكثر حساب", "الحساب اللي أكثر", "الحساب اللي اكثر"],
+    keywords: ["أكثر حساب صرفت", "اكثر حساب", "الحساب اللي أكثر", "الحساب اللي اكثر", "من وين أكثر صرفت"],
     needsTime: true,
     priority: 80,
     handler: async (period) => {
@@ -1211,7 +1239,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── MONTHLY AVERAGE SPENDING ──────────────────────────────────────────────
   intents.push({
     id: "monthly_average",
-    keywords: ["معدل شهري", "معدل صرفي الشهري"],
+    keywords: ["معدل شهري", "معدل صرفي الشهري", "متوسط شهري"],
     needsTime: false,
     priority: 79,
     handler: async () => {
@@ -1226,7 +1254,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── MOST TRAINED MUSCLE ───────────────────────────────────────────────────
   intents.push({
     id: "most_trained_muscle",
-    keywords: ["أكثر عضلة", "اكثر عضلة", "أكثر عضلة اشتغلت"],
+    keywords: ["أكثر عضلة", "اكثر عضلة", "أكثر عضلة اشتغلت", "أكثر عضلة اشتغلت عليها"],
     needsTime: true,
     priority: 79,
     handler: async (period) => {
@@ -1247,7 +1275,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── TOTAL WORKOUT HOURS ───────────────────────────────────────────────────
   intents.push({
     id: "total_workout_hours",
-    keywords: ["ساعة تمرين", "ساعات تمرين", "كم ساعة تمرين"],
+    keywords: ["ساعة تمرين", "ساعات تمرين", "كم ساعة تمرين", "كم ساعة اشتغلت"],
     needsTime: true,
     priority: 78,
     handler: async (period) => {
@@ -1265,7 +1293,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── AVG WORKOUT DURATION ──────────────────────────────────────────────────
   intents.push({
     id: "avg_workout_duration",
-    keywords: ["معدل مدة التمرين", "معدل مدة تمرين", "متوسط مدة"],
+    keywords: ["معدل مدة التمرين", "معدل مدة تمرين", "متوسط مدة", "متوسط مدة التمرين"],
     needsTime: false,
     priority: 78,
     handler: async () => {
@@ -1279,7 +1307,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── WEIGHT CHANGE ─────────────────────────────────────────────────────────
   intents.push({
     id: "weight_change",
-    keywords: ["فرق وزني", "فرق الوزن", "تغير وزني", "تغيّر وزني"],
+    keywords: ["فرق وزني", "فرق الوزن", "تغير وزني", "تغيّر وزني", "كم نقصت", "كم زدت"],
     needsTime: false,
     priority: 76,
     handler: async () => {
@@ -1298,14 +1326,14 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── LOWEST / HIGHEST WEIGHT ───────────────────────────────────────────────
-  intents.push({ id: "lowest_weight", keywords: ["أقل وزن", "اقل وزن", "أخف وزن"], needsTime: false, priority: 76,
+  intents.push({ id: "lowest_weight", keywords: ["أقل وزن", "اقل وزن", "أخف وزن", "أقل وزن وصلتلو"], needsTime: false, priority: 76,
     handler: async () => {
       const { data } = await supabase.from("user_body_stats").select("weight, recorded_at").order("weight", { ascending: true }).limit(1);
       if (!data?.[0]) return "ما في بيانات وزن ⚖️";
       return `⚖️ أقل وزن: ${fmtNum(Number(data[0].weight))} كغ (${format(new Date(data[0].recorded_at), "yyyy-MM-dd")})`;
     },
   });
-  intents.push({ id: "highest_weight", keywords: ["أعلى وزن", "اعلى وزن", "أثقل وزن"], needsTime: false, priority: 76,
+  intents.push({ id: "highest_weight", keywords: ["أعلى وزن", "اعلى وزن", "أثقل وزن", "أعلى وزن وصلتلو"], needsTime: false, priority: 76,
     handler: async () => {
       const { data } = await supabase.from("user_body_stats").select("weight, recorded_at").order("weight", { ascending: false }).limit(1);
       if (!data?.[0]) return "ما في بيانات وزن ⚖️";
@@ -1314,7 +1342,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── LAST 3 WEIGHTS ────────────────────────────────────────────────────────
-  intents.push({ id: "last_3_weights", keywords: ["آخر 3 أوزان", "اخر 3 اوزان", "آخر ثلاث أوزان", "آخر ٣"], needsTime: false, priority: 77,
+  intents.push({ id: "last_3_weights", keywords: ["آخر 3 أوزان", "اخر 3 اوزان", "آخر ثلاث أوزان", "آخر ٣", "آخر ثلاث قياسات"], needsTime: false, priority: 77,
     handler: async () => {
       const { data } = await supabase.from("user_body_stats").select("weight, recorded_at").order("recorded_at", { ascending: false }).limit(3);
       if (!data || data.length === 0) return "ما في بيانات وزن ⚖️";
@@ -1324,7 +1352,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── SUPPLEMENT DOSES COUNT ────────────────────────────────────────────────
-  intents.push({ id: "supplement_doses_count", keywords: ["كم سكوب", "سكوب بروتين", "جرعات بروتين"], needsTime: true, priority: 77,
+  intents.push({ id: "supplement_doses_count", keywords: ["كم سكوب", "سكوب بروتين", "جرعات بروتين", "كم جرعة أخذت"], needsTime: true, priority: 77,
     handler: async (period) => {
       let q = supabase.from("supplement_logs").select("doses_taken");
       if (period?.from) q = q.gte("logged_date", period.from);
@@ -1337,7 +1365,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── MOST USED SUPPLEMENT ──────────────────────────────────────────────────
-  intents.push({ id: "most_used_supplement", keywords: ["أكثر مكمل", "اكثر مكمل", "المكمل اللي أكثر", "المكمل اللي اكثر"], needsTime: true, priority: 77,
+  intents.push({ id: "most_used_supplement", keywords: ["أكثر مكمل", "اكثر مكمل", "المكمل اللي أكثر", "المكمل اللي اكثر", "أكثر مكمل استخدمتو"], needsTime: true, priority: 77,
     handler: async (period) => {
       let q = supabase.from("supplement_logs").select("doses_taken, supplements(name)");
       if (period?.from) q = q.gte("logged_date", period.from);
@@ -1352,7 +1380,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── LAST SUPPLEMENT ───────────────────────────────────────────────────────
-  intents.push({ id: "last_supplement", keywords: ["آخر مكمل", "اخر مكمل", "آخر كمال"], needsTime: false, priority: 77,
+  intents.push({ id: "last_supplement", keywords: ["آخر مكمل", "اخر مكمل", "آخر كمال", "آخر مكمل أخذتو"], needsTime: false, priority: 77,
     handler: async () => {
       const { data } = await supabase.from("supplement_logs").select("logged_date, logged_time, doses_taken, supplements(name)").order("logged_date", { ascending: false }).order("logged_time", { ascending: false }).limit(1);
       if (!data?.[0]) return "ما في مكملات مسجلة بعد 💊";
@@ -1362,7 +1390,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── SUPPLEMENT DAYS COUNT ─────────────────────────────────────────────────
-  intents.push({ id: "supplement_days_count", keywords: ["كم يوم أخذت كمالات", "كم يوم اخذت كمالات", "أيام المكملات"], needsTime: true, priority: 77,
+  intents.push({ id: "supplement_days_count", keywords: ["كم يوم أخذت كمالات", "كم يوم اخذت كمالات", "أيام المكملات", "كم يوم أخذت مكملات"], needsTime: true, priority: 77,
     handler: async (period) => {
       let q = supabase.from("supplement_logs").select("logged_date");
       if (period?.from) q = q.gte("logged_date", period.from);
@@ -1373,22 +1401,22 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── MOVIES WATCHED / EPISODES WATCHED ─────────────────────────────────────
-  intents.push({ id: "movies_watched", keywords: ["كم فيلم شفت", "عدد أفلام شفت", "كم فلم شفت"], needsTime: false, priority: 73,
+  intents.push({ id: "movies_watched", keywords: ["كم فيلم شفت", "عدد أفلام شفت", "كم فلم شفت", "كم فيلم خلصت"], needsTime: false, priority: 73,
     handler: async () => { const { data } = await supabase.from("media").select("id").eq("type", "movie").eq("status", "completed"); return `🎬 شفت ${data?.length || 0} فيلم`; },
   });
-  intents.push({ id: "episodes_watched", keywords: ["كم حلقة شفت", "عدد حلقات", "كم حلقة"], needsTime: false, priority: 73,
+  intents.push({ id: "episodes_watched", keywords: ["كم حلقة شفت", "عدد حلقات", "كم حلقة", "كم حلقة خلصت"], needsTime: false, priority: 73,
     handler: async () => { const { data } = await supabase.from("episodes").select("id").eq("watched", true); return `📺 شفت ${data?.length || 0} حلقة`; },
   });
 
   // ── LAST MOVIE / LAST SERIES ──────────────────────────────────────────────
-  intents.push({ id: "last_movie", keywords: ["آخر فيلم شفته", "اخر فيلم شفته", "آخر فيلم", "اخر فلم"], needsTime: false, priority: 74,
+  intents.push({ id: "last_movie", keywords: ["آخر فيلم شفته", "اخر فيلم شفته", "آخر فيلم", "اخر فلم", "آخر فلم شفتو"], needsTime: false, priority: 74,
     handler: async () => {
       const { data } = await supabase.from("media").select("title, rating, user_rating").eq("type", "movie").eq("status", "completed").order("created_at", { ascending: false }).limit(1);
       if (!data?.[0]) return "ما شفت أي فيلم بعد 🎬";
       return `🎬 آخر فيلم: ${data[0].title}${data[0].user_rating ? ` ⭐${data[0].user_rating}/10` : ""}${data[0].rating ? ` (TMDB: ${data[0].rating})` : ""}`;
     },
   });
-  intents.push({ id: "last_series", keywords: ["آخر مسلسل", "اخر مسلسل", "آخر مسلسل بلشته"], needsTime: false, priority: 74,
+  intents.push({ id: "last_series", keywords: ["آخر مسلسل", "اخر مسلسل", "آخر مسلسل بلشته", "اخر مسلسل بلشتو"], needsTime: false, priority: 74,
     handler: async () => {
       const { data } = await supabase.from("media").select("title, rating, status").eq("type", "tv").order("created_at", { ascending: false }).limit(1);
       if (!data?.[0]) return "ما في مسلسلات بعد 📺";
@@ -1398,7 +1426,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── GAMES BY PLATFORM / TOTAL SPENT / MOST EXPENSIVE ──────────────────────
-  intents.push({ id: "games_by_platform", keywords: ["لعبة PS5", "لعبة PS4", "لعبة PC", "ألعاب PS5", "العاب PS5", "ألعاب PC", "العاب PC", "كم لعبة PS", "كم لعبة بي سي"], needsTime: false, priority: 73,
+  intents.push({ id: "games_by_platform", keywords: ["لعبة PS5", "لعبة PS4", "لعبة PC", "ألعاب PS5", "العاب PS5", "ألعاب PC", "العاب PC", "كم لعبة PS", "كم لعبة بي سي", "ألعاب بلايستيشن"], needsTime: false, priority: 73,
     handler: async () => {
       const { data } = await supabase.from("games").select("platform");
       if (!data || data.length === 0) return "ما في ألعاب 🎮";
@@ -1407,7 +1435,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
       return `🎮 ألعابك:\n${[...byPlat.entries()].map(([p, c]) => `${p}: ${c} لعبة`).join("\n")}`;
     },
   });
-  intents.push({ id: "games_total_spent", keywords: ["صرفت على الألعاب", "صرفت على العاب", "تكلفة الألعاب", "مصاريف ألعاب"], needsTime: false, priority: 73,
+  intents.push({ id: "games_total_spent", keywords: ["صرفت على الألعاب", "صرفت على العاب", "تكلفة الألعاب", "مصاريف ألعاب", "كم صرفت على الألعاب"], needsTime: false, priority: 73,
     handler: async () => {
       const { data } = await supabase.from("games").select("user_price_ils, name").order("user_price_ils", { ascending: false });
       if (!data || data.length === 0) return "ما في ألعاب 🎮";
@@ -1415,7 +1443,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
       return `🎮 مصاريف الألعاب: ${fmtNum(total)} ₪\n💸 أغلى: ${data[0].name} (${fmtNum(Number(data[0].user_price_ils))} ₪)`;
     },
   });
-  intents.push({ id: "most_expensive_game", keywords: ["اللعبة اللي أكثر صرفت", "اللعبة اللي اكثر", "أغلى لعبة", "اغلى لعبة"], needsTime: false, priority: 73,
+  intents.push({ id: "most_expensive_game", keywords: ["اللعبة اللي أكثر صرفت", "اللعبة اللي اكثر", "أغلى لعبة", "اغلى لعبة", "أغلى لعبة عندي"], needsTime: false, priority: 73,
     handler: async () => {
       const { data } = await supabase.from("games").select("name, user_price_ils, platform").order("user_price_ils", { ascending: false }).limit(3);
       if (!data || data.length === 0) return "ما في ألعاب 🎮";
@@ -1440,7 +1468,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── SUGGEST MOVIE ─────────────────────────────────────────────────────────
-  intents.push({ id: "suggest_movie", keywords: ["اقترح فيلم", "اقترحلي فيلم", "نصحني فيلم", "شو أشوف"], needsTime: false, priority: 73,
+  intents.push({ id: "suggest_movie", keywords: ["اقترح فيلم", "اقترحلي فيلم", "نصحني فيلم", "شو أشوف", "اقتراح فيلم"], needsTime: false, priority: 73,
     handler: async () => {
       const { data } = await supabase.from("media").select("title, rating, genres").eq("status", "want_to_watch").not("rating", "is", null).order("rating", { ascending: false }).limit(5);
       if (!data || data.length === 0) return "ما عندك أفلام بقائمة المشاهدة 🎬";
@@ -1461,7 +1489,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── COMPLETED DREAMS ──────────────────────────────────────────────────────
-  intents.push({ id: "completed_dreams", keywords: ["كم حلم حققت", "أحلام محققة", "احلام محققة"], needsTime: false, priority: 72,
+  intents.push({ id: "completed_dreams", keywords: ["كم حلم حققت", "أحلام محققة", "احلام محققة", "كم هدف حققت"], needsTime: false, priority: 72,
     handler: async () => {
       const { data } = await supabase.from("dreams").select("title, completed_at, rating").eq("status", "completed").order("completed_at", { ascending: false });
       if (!data || data.length === 0) return "ما حققت أي حلم بعد 🌟";
@@ -1470,7 +1498,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── CLOSEST TO COMPLETE DREAM ─────────────────────────────────────────────
-  intents.push({ id: "closest_to_complete", keywords: ["أقرب للإكمال", "اقرب للاكمال", "أقرب حلم", "الحلم اللي أقرب"], needsTime: false, priority: 72,
+  intents.push({ id: "closest_to_complete", keywords: ["أقرب للإكمال", "اقرب للاكمال", "أقرب حلم", "الحلم اللي أقرب", "أقرب هدف"], needsTime: false, priority: 72,
     handler: async () => {
       const { data } = await supabase.from("dreams").select("title, progress_percentage").eq("status", "in_progress").order("progress_percentage", { ascending: false }).limit(3);
       if (!data || data.length === 0) return "ما في أحلام نشطة 🌟";
@@ -1496,7 +1524,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── DREAMS OVERALL PROGRESS ───────────────────────────────────────────────
-  intents.push({ id: "dreams_overall_progress", keywords: ["تقدم أحلامي", "تقدم احلامي", "إنجاز أحلامي", "معدل إنجاز", "معدل انجاز"], needsTime: false, priority: 72,
+  intents.push({ id: "dreams_overall_progress", keywords: ["تقدم أحلامي", "تقدم احلامي", "إنجاز أحلامي", "معدل إنجاز", "معدل انجاز", "تقدم أهدافي"], needsTime: false, priority: 72,
     handler: async () => {
       const { data } = await supabase.from("dreams").select("progress_percentage, status");
       if (!data || data.length === 0) return "ما في أحلام 🌟";
@@ -1507,7 +1535,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── LAST ADDED DREAM ──────────────────────────────────────────────────────
-  intents.push({ id: "last_added_dream", keywords: ["آخر حلم أضفتو", "اخر حلم اضفتو", "آخر حلم"], needsTime: false, priority: 72,
+  intents.push({ id: "last_added_dream", keywords: ["آخر حلم أضفتو", "اخر حلم اضفتو", "آخر حلم", "آخر هدف أضفتو"], needsTime: false, priority: 72,
     handler: async () => {
       const { data } = await supabase.from("dreams").select("title, status, progress_percentage, created_at").order("created_at", { ascending: false }).limit(1);
       if (!data?.[0]) return "ما في أحلام 🌟";
@@ -1555,7 +1583,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── MOST PRAYED ───────────────────────────────────────────────────────────
-  intents.push({ id: "most_prayed", keywords: ["أكثر صلاة صليتها", "اكثر صلاة", "أكثر صلاة"], needsTime: true, priority: 79,
+  intents.push({ id: "most_prayed", keywords: ["أكثر صلاة صليتها", "اكثر صلاة", "أكثر صلاة", "شو أكثر صلاة"], needsTime: true, priority: 79,
     handler: async (period) => {
       let q = supabase.from("prayer_completions").select("prayer_name");
       if (period?.from) q = q.gte("completion_date", period.from);
@@ -1571,7 +1599,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── FULL PRAYER DAYS ──────────────────────────────────────────────────────
-  intents.push({ id: "full_prayer_days", keywords: ["كل الصلوات", "صليت كل الصلوات", "كم يوم صليت فيه كل", "5 صلوات", "خمس صلوات"], needsTime: true, priority: 80,
+  intents.push({ id: "full_prayer_days", keywords: ["كل الصلوات", "صليت كل الصلوات", "كم يوم صليت فيه كل", "5 صلوات", "خمس صلوات", "كم يوم كل الصلوات"], needsTime: true, priority: 80,
     handler: async (period) => {
       let q = supabase.from("prayer_completions").select("completion_date, prayer_name");
       if (period?.from) q = q.gte("completion_date", period.from);
@@ -1586,7 +1614,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── TOMORROW SCHEDULE ─────────────────────────────────────────────────────
-  intents.push({ id: "tomorrow_schedule", keywords: ["بكرا بالجدول", "بكره بالجدول", "جدول بكرا", "شو عندي بكرا"], needsTime: false, priority: 70,
+  intents.push({ id: "tomorrow_schedule", keywords: ["بكرا بالجدول", "بكره بالجدول", "جدول بكرا", "شو عندي بكرا", "ايش عندي بكرا", "برنامج بكرا"], needsTime: false, priority: 70,
     handler: async () => {
       const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
       const tStr = format(tomorrow, "yyyy-MM-dd");
@@ -1599,7 +1627,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── COMPLETED TASKS ───────────────────────────────────────────────────────
-  intents.push({ id: "completed_tasks", keywords: ["مهمة خلصت", "مهام خلصت", "كم مهمة خلصت"], needsTime: true, priority: 70,
+  intents.push({ id: "completed_tasks", keywords: ["مهمة خلصت", "مهام خلصت", "كم مهمة خلصت", "كم مهمه خلصت"], needsTime: true, priority: 70,
     handler: async (period) => {
       let q = supabase.from("activity_completions").select("id");
       if (period?.from) q = q.gte("completion_date", period.from);
@@ -1610,7 +1638,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── WORKOUT STREAK ────────────────────────────────────────────────────────
-  intents.push({ id: "workout_streak", keywords: ["يوم متتالي تمرنت", "أيام متتالية تمرين", "ستريك تمارين", "streak"], needsTime: false, priority: 77,
+  intents.push({ id: "workout_streak", keywords: ["يوم متتالي تمرنت", "أيام متتالية تمرين", "ستريك تمارين", "streak", "كم يوم متتالي تمرنت"], needsTime: false, priority: 77,
     handler: async () => {
       const { data } = await supabase.from("workout_sessions").select("scheduled_date").not("completed_at", "is", null).order("scheduled_date", { ascending: false }).limit(100);
       if (!data || data.length === 0) return "ما في تمارين 🏋️";
@@ -1624,7 +1652,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── FAJR STREAK ───────────────────────────────────────────────────────────
-  intents.push({ id: "fajr_streak", keywords: ["يوم متتالي صليت الفجر", "ستريك فجر", "أيام متتالية فجر"], needsTime: false, priority: 79,
+  intents.push({ id: "fajr_streak", keywords: ["يوم متتالي صليت الفجر", "ستريك فجر", "أيام متتالية فجر", "كم يوم متتالي صليت الفجر"], needsTime: false, priority: 79,
     handler: async () => {
       const { data } = await supabase.from("prayer_completions").select("completion_date").eq("prayer_name", "fajr").order("completion_date", { ascending: false }).limit(100);
       if (!data || data.length === 0) return "ما في فجر مسجل 🌅";
@@ -1638,7 +1666,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── MONTHLY SUMMARY ───────────────────────────────────────────────────────
-  intents.push({ id: "monthly_summary", keywords: ["لخصلي الشهر", "ملخص الشهر", "تقرير الشهر", "لخصلي", "ملخص"], needsTime: false, priority: 91,
+  intents.push({ id: "monthly_summary", keywords: ["لخصلي الشهر", "ملخص الشهر", "تقرير الشهر", "لخصلي", "ملخص", "عطيني ملخص", "شو صار هالشهر"], needsTime: false, priority: 91,
     handler: async () => {
       const today = new Date();
       const ms = format(startOfMonth(today), "yyyy-MM-dd");
@@ -1657,7 +1685,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── WEIGHT/WORKOUT/PRAYER COMPARISONS ─────────────────────────────────────
-  intents.push({ id: "weight_comparison", keywords: ["قارن وزني", "مقارنة وزن", "وزن الشهر الفائت"], needsTime: false, priority: 83,
+  intents.push({ id: "weight_comparison", keywords: ["قارن وزني", "مقارنة وزن", "وزن الشهر الفائت", "قارن وزني الشهر"], needsTime: false, priority: 83,
     handler: async () => {
       const monthAgo = format(subMonths(new Date(), 1), "yyyy-MM-dd'T'HH:mm:ss");
       const [curr, prev] = await Promise.all([
@@ -1671,7 +1699,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
       return `⚖️ مقارنة:\nالحالي: ${fmtNum(c)} كغ\nقبل شهر: ${fmtNum(p)} كغ\n${d > 0 ? "📈" : d < 0 ? "📉" : "↔️"} فرق: ${fmtNum(Math.abs(d))} كغ`;
     },
   });
-  intents.push({ id: "workout_comparison", keywords: ["قارن تمارين", "مقارنة تمارين", "تمارين الشهر الفائت مع"], needsTime: false, priority: 83,
+  intents.push({ id: "workout_comparison", keywords: ["قارن تمارين", "مقارنة تمارين", "تمارين الشهر الفائت مع", "قارن تماريني"], needsTime: false, priority: 83,
     handler: async () => {
       const today = new Date();
       const ms = format(startOfMonth(today), "yyyy-MM-dd"), ts = format(today, "yyyy-MM-dd"), ps = format(startOfMonth(subMonths(today, 1)), "yyyy-MM-dd");
@@ -1682,7 +1710,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
       return `🏋️ مقارنة:\nهالشهر: ${c.data?.length || 0}\nالفائت: ${p.data?.length || 0}\n${(c.data?.length || 0) > (p.data?.length || 0) ? "📈" : "📉"} فرق: ${Math.abs((c.data?.length || 0) - (p.data?.length || 0))}`;
     },
   });
-  intents.push({ id: "prayer_comparison", keywords: ["قارن صلواتي", "مقارنة صلوات", "صلوات هالأسبوع مع"], needsTime: false, priority: 83,
+  intents.push({ id: "prayer_comparison", keywords: ["قارن صلواتي", "مقارنة صلوات", "صلوات هالأسبوع مع", "قارن صلاتي"], needsTime: false, priority: 83,
     handler: async () => {
       const today = new Date();
       const ws = format(startOfWeek(today, { weekStartsOn: 6 }), "yyyy-MM-dd"), ts = format(today, "yyyy-MM-dd");
@@ -1692,6 +1720,54 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
         supabase.from("prayer_completions").select("id").gte("completion_date", lws).lt("completion_date", ws).limit(100),
       ]);
       return `🕌 مقارنة:\nهالأسبوع: ${c.data?.length || 0}\nالفائت: ${p.data?.length || 0}`;
+    },
+  });
+
+  // ── "متى آخر مرة" INTENTS ──────────────────────────────────────────────
+  intents.push({ id: "last_time_expense", keywords: ["متى آخر مرة صرفت", "امتى آخر مرة صرفت", "متى اخر مرة صرفت"], needsTime: false, priority: 93,
+    handler: async () => {
+      const { data } = await supabase.from("transactions").select("date, time, amount, subcategories(name), categories(name)").eq("type", "expense").order("date", { ascending: false }).order("time", { ascending: false }).limit(1);
+      if (!data?.[0]) return "ما في مصاريف مسجلة بعد 📭";
+      const t = data[0] as any;
+      const place = t.subcategories?.name || t.categories?.name || "";
+      return `💳 آخر مرة صرفت: ${t.date}${t.time ? " " + t.time.substring(0,5) : ""}\n💰 ${fmtNum(Number(t.amount))} ₪${place ? ` على ${place}` : ""}`;
+    },
+  });
+  intents.push({ id: "last_time_workout", keywords: ["متى آخر مرة تمرنت", "امتى آخر مرة تمرنت", "متى اخر مرة تمرنت", "متى آخر مرة رحت الجيم"], needsTime: false, priority: 93,
+    handler: async () => {
+      const { data } = await supabase.from("workout_sessions").select("scheduled_date, muscle_groups").not("completed_at", "is", null).order("scheduled_date", { ascending: false }).limit(1);
+      if (!data?.[0]) return "ما في تمارين مسجلة بعد 🏋️";
+      const muscles = data[0].muscle_groups?.join("، ") || "";
+      return `🏋️ آخر مرة تمرنت: ${data[0].scheduled_date}${muscles ? `\n💪 ${muscles}` : ""}`;
+    },
+  });
+  intents.push({ id: "last_time_fajr", keywords: ["متى آخر مرة صليت الفجر", "امتى آخر مرة صليت الفجر", "متى اخر مرة صليت الفجر"], needsTime: false, priority: 93,
+    handler: async () => {
+      const { data } = await supabase.from("prayer_completions").select("completion_date").eq("prayer_name", "fajr").order("completion_date", { ascending: false }).limit(1);
+      if (!data?.[0]) return "ما سجلت أي فجر بعد 🌅";
+      return `🌅 آخر مرة صليت الفجر: ${data[0].completion_date}`;
+    },
+  });
+  intents.push({ id: "last_time_supplement", keywords: ["متى آخر مرة أخذت مكمل", "امتى آخر مرة اخذت مكمل", "متى اخر مرة اخذت كمال"], needsTime: false, priority: 93,
+    handler: async () => {
+      const { data } = await supabase.from("supplement_logs").select("logged_date, supplements(name)").order("logged_date", { ascending: false }).limit(1);
+      if (!data?.[0]) return "ما في مكملات مسجلة بعد 💊";
+      const t = data[0] as any;
+      return `💊 آخر مرة أخذت مكمل: ${t.logged_date}${t.supplements?.name ? ` (${t.supplements.name})` : ""}`;
+    },
+  });
+  intents.push({ id: "last_time_weight", keywords: ["متى آخر مرة سجلت وزني", "امتى آخر مرة سجلت وزني", "متى اخر مرة وزنت حالي"], needsTime: false, priority: 93,
+    handler: async () => {
+      const { data } = await supabase.from("user_body_stats").select("weight, recorded_at").order("recorded_at", { ascending: false }).limit(1);
+      if (!data?.[0]) return "ما في بيانات وزن بعد ⚖️";
+      return `⚖️ آخر مرة سجلت وزنك: ${format(new Date(data[0].recorded_at), "yyyy-MM-dd")}\n💪 ${fmtNum(Number(data[0].weight))} كغ`;
+    },
+  });
+  intents.push({ id: "last_time_movie", keywords: ["متى آخر مرة شفت فيلم", "امتى آخر مرة شفت فيلم", "متى اخر مرة شفت فلم"], needsTime: false, priority: 93,
+    handler: async () => {
+      const { data } = await supabase.from("media").select("title, created_at").eq("type", "movie").eq("status", "completed").order("created_at", { ascending: false }).limit(1);
+      if (!data?.[0]) return "ما شفت أي فيلم بعد 🎬";
+      return `🎬 آخر مرة شفت فيلم: ${format(new Date(data[0].created_at!), "yyyy-MM-dd")}\n🎬 ${data[0].title}`;
     },
   });
 
@@ -2028,39 +2104,119 @@ export function AssistantBubble() {
       }
       const reply = await intent.handler(period, undefined, normalizedText);
       
-      // Add follow-up chips for spending-related intents
-      const spendingIntents = ["total_spending", "daily_average", "monthly_comparison", "top_spending_categories", "top_spending_places", "net_income_expense"];
-      if (spendingIntents.includes(intent.id) && period) {
-        // Fetch top subcategories for this period to suggest drill-down
-        let chipQ = supabase.from("transactions").select("subcategory_id, subcategories(name), amount").eq("type", "expense");
-        if (period.from) chipQ = chipQ.gte("date", period.from);
-        if (period.to) chipQ = chipQ.lte("date", period.to);
-        const { data: chipData } = await chipQ.limit(500);
-        if (chipData && chipData.length > 0) {
-          const bySub = new Map<string, { name: string; total: number }>();
-          for (const t of chipData as any[]) {
-            const subName = t.subcategories?.name;
-            if (subName) {
-              const prev = bySub.get(subName) || { name: subName, total: 0 };
-              prev.total += Number(t.amount);
-              bySub.set(subName, prev);
-            }
-          }
-          const topSubs = [...bySub.values()].sort((a, b) => b.total - a.total).slice(0, 5);
-          if (topSubs.length > 0) {
-            const chips = topSubs.map(s => `📍 ${s.name}`);
-            chips.push("📊 حسب الفئات");
-            chips.push("📍 حسب الأماكن");
-            return { content: reply, reply_chips: chips };
-          }
-        }
+      // ── Universal follow-up chips system ──
+      const followUpMap: Record<string, string[]> = {
+        // Finance
+        total_spending: ["📊 حسب الفئات", "📍 حسب الأماكن", "💳 آخر 5 معاملات", "🔄 قارن مصاريف هالشهر مع الشهر الفائت", "⏰ متى آخر مرة صرفت؟"],
+        daily_average: ["📊 حسب الفئات", "📍 حسب الأماكن", "📊 معدل أسبوعي"],
+        weekly_average: ["📊 معدل يومي", "📊 حسب الفئات"],
+        monthly_average: ["📊 معدل يومي", "📈 لخصلي الشهر"],
+        monthly_comparison: ["📊 حسب الفئات", "📍 حسب الأماكن", "💳 آخر 5 معاملات"],
+        top_spending_categories: ["📍 حسب الأماكن", "💰 كم صرفت هالشهر؟", "🔄 قارن مصاريف هالشهر مع الشهر الفائت"],
+        top_spending_places: ["📊 حسب الفئات", "💰 كم صرفت هالشهر؟", "🔄 قارن مصاريف هالشهر مع الشهر الفائت"],
+        category_percentages: ["📍 حسب الأماكن", "💳 آخر 5 معاملات", "💰 كم صرفت هالشهر؟"],
+        total_income: ["💳 كم صرفت هالشهر؟", "📈 الصافي هالشهر", "📊 لخصلي الشهر"],
+        net_balance: ["📊 حسب الفئات", "📍 حسب الأماكن", "📈 لخصلي الشهر"],
+        last_transaction: ["💳 آخر 5 معاملات", "💰 كم صرفت اليوم؟", "📊 كم صرفت هالشهر؟"],
+        last_5_transactions: ["💰 كم صرفت هالشهر؟", "📊 حسب الفئات", "📍 أكثر مكان صرفت فيه"],
+        today_transactions: ["💰 كم صرفت هالشهر؟", "📊 حسب الفئات", "📊 معدل يومي"],
+        biggest_transaction: ["💳 آخر 5 معاملات", "📊 حسب الفئات"],
+        smallest_transaction: ["💳 آخر 5 معاملات", "💸 أغلى معاملة هالشهر"],
+        most_expensive_month: ["📊 لخصلي الشهر", "💰 كم صرفت هالسنة؟"],
+        most_expensive_day: ["💳 آخر 5 معاملات", "📊 معدل يومي"],
+        account_balances: ["💰 كم صرفت هالشهر؟", "📈 كم دخلي هالشهر؟", "📊 لخصلي الشهر"],
+        transactions_count: ["📊 حسب الفئات", "💳 آخر 5 معاملات"],
+        most_used_account: ["💳 كم رصيدي بالحسابات؟", "💰 كم صرفت هالشهر؟"],
+        unused_categories: ["📊 حسب الفئات", "💰 كم صرفت هالشهر؟"],
+        evening_spending: ["☀️ كم صرفت بالصبح؟", "💰 كم صرفت هالشهر؟"],
+        morning_spending: ["🌙 كم صرفت بالمسا؟", "💰 كم صرفت هالشهر؟"],
+        weekend_spending: ["📊 معدل يومي", "💰 كم صرفت هالشهر؟"],
+        transfers_count: ["💳 كم رصيدي بالحسابات؟"],
+        unique_places_count: ["📍 أكثر مكان صرفت فيه", "📊 حسب الفئات"],
+        last_time_expense: ["💳 آخر 5 معاملات", "💰 كم صرفت هالشهر؟", "📊 شو صرفت اليوم؟"],
+        // Health - Weight
+        current_weight: ["📉 أقل وزن وصلتلو", "📈 أعلى وزن وصلتلو", "⚖️ فرق وزني", "📋 آخر 3 أوزان", "⏰ متى آخر مرة سجلت وزني؟"],
+        weight_change: ["📉 أقل وزن وصلتلو", "📈 أعلى وزن وصلتلو", "📋 آخر 3 أوزان"],
+        weight_comparison: ["📉 أقل وزن وصلتلو", "📈 أعلى وزن وصلتلو", "⚖️ فرق وزني"],
+        lowest_weight: ["📈 أعلى وزن وصلتلو", "⚖️ شو وزني هلق؟", "📋 آخر 3 أوزان"],
+        highest_weight: ["📉 أقل وزن وصلتلو", "⚖️ شو وزني هلق؟", "📋 آخر 3 أوزان"],
+        last_3_weights: ["⚖️ شو وزني هلق؟", "⚖️ فرق وزني"],
+        last_time_weight: ["⚖️ شو وزني هلق؟", "📋 آخر 3 أوزان", "⚖️ فرق وزني"],
+        // Health - Workout
+        workouts_count: ["💪 أكثر عضلة اشتغلت عليها", "⏱️ كم ساعة تمرين", "📋 تفاصيل آخر تمرين", "🔥 كم يوم متتالي تمرنت؟", "⏰ متى آخر مرة تمرنت؟"],
+        last_workout: ["💪 أكثر عضلة اشتغلت عليها", "⏱️ كم ساعة تمرين", "📋 تفاصيل آخر تمرين"],
+        last_workout_detail: ["💪 أكثر عضلة اشتغلت عليها", "🔥 كم يوم متتالي تمرنت؟", "💪 كم مرة تمرنت هالشهر؟"],
+        most_trained_muscle: ["💪 كم مرة تمرنت هالشهر؟", "⏱️ كم ساعة تمرين", "📋 تفاصيل آخر تمرين"],
+        total_workout_hours: ["💪 كم مرة تمرنت هالشهر؟", "⏱️ معدل مدة التمرين"],
+        avg_workout_duration: ["💪 كم مرة تمرنت هالشهر؟", "⏱️ كم ساعة تمرين هالشهر؟"],
+        workout_streak: ["💪 كم مرة تمرنت هالشهر؟", "📋 تفاصيل آخر تمرين"],
+        workout_comparison: ["💪 كم مرة تمرنت هالشهر؟", "⏱️ كم ساعة تمرين"],
+        last_time_workout: ["📋 تفاصيل آخر تمرين", "💪 كم مرة تمرنت هالشهر؟", "🔥 كم يوم متتالي تمرنت؟"],
+        // Prayer
+        prayer_count: ["🌅 كم فجر صليت؟", "🕌 أكثر صلاة صليتها", "✅ كم يوم صليت كل الصلوات؟", "🔥 ستريك فجر"],
+        fajr_count: ["🕌 كم صلاة صليت هالشهر؟", "🔥 كم يوم متتالي صليت الفجر؟", "✅ كم يوم صليت كل الصلوات؟"],
+        prayer_dhuhr: ["🕌 كم صلاة صليت هالشهر؟", "🌅 كم فجر صليت؟"],
+        prayer_asr: ["🕌 كم صلاة صليت هالشهر؟", "🌅 كم فجر صليت؟"],
+        prayer_maghrib: ["🕌 كم صلاة صليت هالشهر؟", "🌅 كم فجر صليت؟"],
+        prayer_isha: ["🕌 كم صلاة صليت هالشهر؟", "🌅 كم فجر صليت؟"],
+        most_prayed: ["🌅 كم فجر صليت؟", "✅ كم يوم صليت كل الصلوات؟"],
+        full_prayer_days: ["🕌 كم صلاة صليت هالشهر؟", "🔥 ستريك فجر"],
+        fajr_streak: ["🌅 كم فجر صليت هالشهر؟", "✅ كم يوم صليت كل الصلوات؟"],
+        prayer_comparison: ["🌅 كم فجر صليت؟", "✅ كم يوم صليت كل الصلوات؟"],
+        last_time_fajr: ["🌅 كم فجر صليت هالشهر؟", "🔥 كم يوم متتالي صليت الفجر؟", "🕌 كم صلاة صليت هالشهر؟"],
+        // Supplements
+        supplements_today: ["💊 أكثر مكمل استخدمتو", "📅 كم يوم أخذت كمالات هالشهر؟", "💊 آخر مكمل أخذتو", "⏰ متى آخر مرة أخذت مكمل؟"],
+        most_used_supplement: ["💊 كم يوم أخذت كمالات هالشهر؟", "💊 آخر مكمل أخذتو"],
+        last_supplement: ["💊 أكثر مكمل استخدمتو", "📅 كم يوم أخذت كمالات هالشهر؟"],
+        supplement_doses_count: ["💊 أكثر مكمل استخدمتو", "💊 آخر مكمل أخذتو"],
+        supplement_days_count: ["💊 أكثر مكمل استخدمتو", "💊 كمالاتي اليوم"],
+        last_time_supplement: ["💊 كمالاتي اليوم", "💊 أكثر مكمل استخدمتو", "📅 كم يوم أخذت كمالات هالشهر؟"],
+        // Entertainment - Movies/Series
+        watching_now: ["🎬 آخر فيلم شفته", "📺 كم حلقة شفت؟", "⭐ أعلى تقييم فيلم"],
+        media_count: ["🎬 آخر فيلم شفته", "📺 شو بتشاهد هلق؟", "🎬 أفلام بدي أشوفها"],
+        movies_watched: ["🎬 آخر فيلم شفته", "⭐ أحسن فيلم", "🎬 اقترح فيلم أشوفه"],
+        episodes_watched: ["📺 شو بتشاهد هلق؟", "📺 آخر مسلسل بلشته"],
+        last_movie: ["⭐ أحسن فيلم", "🎬 اقترح فيلم أشوفه", "📺 كم فيلم شفت؟"],
+        last_series: ["📺 شو بتشاهد هلق؟", "📺 كم حلقة شفت؟"],
+        best_movie: ["🎬 آخر فيلم شفته", "🎬 اقترح فيلم أشوفه"],
+        highest_rated_movie: ["🎬 آخر فيلم شفته", "🎬 أحسن فيلم"],
+        highest_rated_series: ["📺 شو بتشاهد هلق؟", "📺 آخر مسلسل بلشته"],
+        suggest_movie: ["🎬 آخر فيلم شفته", "📺 شو بتشاهد هلق؟", "🎬 أفلام بدي أشوفها"],
+        want_to_watch_movies: ["🎬 اقترح فيلم أشوفه", "📺 شو بتشاهد هلق؟"],
+        want_to_watch_series: ["📺 شو بتشاهد هلق؟", "📺 كم حلقة شفت؟"],
+        compare_media_types: ["🎬 كم فيلم شفت؟", "📺 كم حلقة شفت؟"],
+        last_time_movie: ["🎬 آخر فيلم شفته", "🎬 اقترح فيلم أشوفه", "📺 شو بتشاهد هلق؟"],
+        // Games
+        games_count: ["🎮 كم صرفت على الألعاب؟", "🎮 أغلى لعبة عندي", "⭐ أعلى لعبة تقييم"],
+        games_by_platform: ["🎮 كم لعبة عندي؟", "🎮 كم صرفت على الألعاب؟"],
+        games_total_spent: ["🎮 أغلى لعبة عندي", "🎮 كم لعبة عندي؟"],
+        most_expensive_game: ["🎮 كم صرفت على الألعاب؟", "🎮 كم لعبة عندي؟"],
+        top_game: ["🎮 كم لعبة عندي؟", "🎮 كم صرفت على الألعاب؟"],
+        // Dreams
+        active_dreams: ["🌟 أقرب للإكمال", "📋 كم خطوة باقي؟", "✅ كم حلم حققت؟", "📊 تقدم أحلامي"],
+        all_dreams: ["🌟 أقرب للإكمال", "✅ كم حلم حققت؟", "📊 تقدم أحلامي"],
+        completed_dreams: ["🌟 أقرب للإكمال", "📊 تقدم أحلامي", "🌟 شو أحلامي؟"],
+        closest_to_complete: ["📋 كم خطوة باقي؟", "📊 تقدم أحلامي", "🌟 شو أحلامي؟"],
+        remaining_steps: ["🌟 أقرب للإكمال", "📊 تقدم أحلامي"],
+        dreams_overall_progress: ["🌟 أقرب للإكمال", "📋 كم خطوة باقي؟", "✅ كم حلم حققت؟"],
+        last_added_dream: ["📊 تقدم أحلامي", "🌟 شو أحلامي؟"],
+        // Schedule
+        schedule_today: ["📋 شو عندي بكرا؟", "✅ كم مهمة خلصت هالأسبوع؟"],
+        tomorrow_schedule: ["📋 شو عندي اليوم؟", "✅ كم مهمة خلصت هالأسبوع؟"],
+        completed_tasks: ["📋 شو عندي اليوم؟", "📋 شو عندي بكرا؟"],
+        // Summary
+        monthly_summary: ["📊 حسب الفئات", "📍 حسب الأماكن", "💪 كم مرة تمرنت هالشهر؟", "🕌 كم صلاة صليت هالشهر؟"],
+      };
+
+      const chips = followUpMap[intent.id];
+      if (chips && chips.length > 0) {
+        return { content: reply, reply_chips: chips };
       }
       
-      // Add follow-up chips for specific subcategory/category spending
-      if ((intent.id.startsWith("spending_at_") || intent.id.startsWith("spending_cat_")) && period) {
-        const periodLabel = period.label || "";
-        const chips = [`📊 كم صرفت ${periodLabel}`, `📍 أكثر الأماكن ${periodLabel}`, `📊 أكثر الفئات ${periodLabel}`];
-        return { content: reply, reply_chips: chips };
+      // For dynamic subcategory/category spending intents, add generic follow-ups
+      if ((intent.id.startsWith("spending_at_") || intent.id.startsWith("spending_cat_"))) {
+        const pl = period?.label || "هالشهر";
+        return { content: reply, reply_chips: [`💰 كم صرفت ${pl}؟`, `📍 أكثر الأماكن ${pl}`, `📊 أكثر الفئات ${pl}`, "⏰ متى آخر مرة صرفت؟"] };
       }
       
       return { content: reply };
