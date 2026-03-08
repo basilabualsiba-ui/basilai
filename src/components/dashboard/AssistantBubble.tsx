@@ -1954,7 +1954,7 @@ export function AssistantBubble() {
           clarification_type: "time" as const,
         };
       }
-      const reply = await intent.handler(period, undefined);
+      const reply = await intent.handler(period, undefined, normalizedText);
       return { content: reply };
     }
 
