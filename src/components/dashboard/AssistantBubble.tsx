@@ -639,7 +639,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── PRAYER COUNT ──────────────────────────────────────────────────────────
   intents.push({
     id: "prayer_count",
-    keywords: ["كم صلاة", "كم صليت", "صلوات", "نسبة إتمام", "نسبة اتمام", "نسبة الصلوات"],
+    keywords: ["كم صلاة", "كم صليت", "صلوات", "نسبة إتمام", "نسبة اتمام", "نسبة الصلوات", "كم صلاة صليت", "كم مرة صليت", "نسبة صلواتي"],
     needsTime: true,
     priority: 74,
     handler: async (period) => {
