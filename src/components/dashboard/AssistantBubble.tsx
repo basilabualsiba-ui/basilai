@@ -1326,7 +1326,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── LOWEST / HIGHEST WEIGHT ───────────────────────────────────────────────
-  intents.push({ id: "lowest_weight", keywords: ["أقل وزن", "اقل وزن", "أخف وزن"], needsTime: false, priority: 76,
+  intents.push({ id: "lowest_weight", keywords: ["أقل وزن", "اقل وزن", "أخف وزن", "أقل وزن وصلتلو"], needsTime: false, priority: 76,
     handler: async () => {
       const { data } = await supabase.from("user_body_stats").select("weight, recorded_at").order("weight", { ascending: true }).limit(1);
       if (!data?.[0]) return "ما في بيانات وزن ⚖️";
