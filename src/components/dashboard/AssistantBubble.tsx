@@ -1239,7 +1239,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── MONTHLY AVERAGE SPENDING ──────────────────────────────────────────────
   intents.push({
     id: "monthly_average",
-    keywords: ["معدل شهري", "معدل صرفي الشهري"],
+    keywords: ["معدل شهري", "معدل صرفي الشهري", "متوسط شهري"],
     needsTime: false,
     priority: 79,
     handler: async () => {
