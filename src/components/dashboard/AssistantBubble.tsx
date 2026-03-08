@@ -541,7 +541,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── LAST WORKOUT ──────────────────────────────────────────────────────────
   intents.push({
     id: "last_workout",
-    keywords: ["آخر تمرين", "اخر تمرين", "متى آخر", "متى اخر"],
+    keywords: ["آخر تمرين", "اخر تمرين"],
     needsTime: false,
     priority: 76,
     handler: async () => {
