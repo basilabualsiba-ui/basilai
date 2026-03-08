@@ -1390,7 +1390,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   });
 
   // ── SUPPLEMENT DAYS COUNT ─────────────────────────────────────────────────
-  intents.push({ id: "supplement_days_count", keywords: ["كم يوم أخذت كمالات", "كم يوم اخذت كمالات", "أيام المكملات"], needsTime: true, priority: 77,
+  intents.push({ id: "supplement_days_count", keywords: ["كم يوم أخذت كمالات", "كم يوم اخذت كمالات", "أيام المكملات", "كم يوم أخذت مكملات"], needsTime: true, priority: 77,
     handler: async (period) => {
       let q = supabase.from("supplement_logs").select("logged_date");
       if (period?.from) q = q.gte("logged_date", period.from);
