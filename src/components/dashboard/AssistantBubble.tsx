@@ -821,6 +821,16 @@ export function AssistantBubble() {
         found.sort((a, b) => a.idx - b.idx);
 
         if (found.length < 2) {
+          // Fall through to monthly_comparison or other intents
+          const fallbackIntent = intents.find(i => i.id !== "compare_categories" && i.keywords.some(kw => textForMatch.toLowerCase().includes(kw.toLowerCase())));
+          if (fallbackIntent) {
+            if (fallbackIntent.needsTime && !period) {
+              setPendingQuestion(text);
+              return { content: "لأي فترة بدك تعرف؟ 📅", needs_clarification: true, clarification_type: "time" as const };
+            }
+            const reply = await fallbackIntent.handler(period, undefined);
+            return { content: reply };
+          }
           return { content: "عشان أقارن، لازم تذكر فئتين أو مكانين 🔄\nمثال: قارن الأكل مع الطلعات هالشهر" };
         }
 
