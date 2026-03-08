@@ -1435,7 +1435,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
       return `🎮 ألعابك:\n${[...byPlat.entries()].map(([p, c]) => `${p}: ${c} لعبة`).join("\n")}`;
     },
   });
-  intents.push({ id: "games_total_spent", keywords: ["صرفت على الألعاب", "صرفت على العاب", "تكلفة الألعاب", "مصاريف ألعاب"], needsTime: false, priority: 73,
+  intents.push({ id: "games_total_spent", keywords: ["صرفت على الألعاب", "صرفت على العاب", "تكلفة الألعاب", "مصاريف ألعاب", "كم صرفت على الألعاب"], needsTime: false, priority: 73,
     handler: async () => {
       const { data } = await supabase.from("games").select("user_price_ils, name").order("user_price_ils", { ascending: false });
       if (!data || data.length === 0) return "ما في ألعاب 🎮";
