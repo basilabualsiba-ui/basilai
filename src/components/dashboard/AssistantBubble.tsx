@@ -915,7 +915,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── ALL DREAMS (not just active) ──────────────────────────────────────────
   intents.push({
     id: "all_dreams",
-    keywords: ["شو أحلامي", "شو احلامي", "كل أحلامي", "كل احلامي", "قائمة أحلام", "قائمة احلام"],
+    keywords: ["شو أحلامي", "شو احلامي", "كل أحلامي", "كل احلامي", "قائمة أحلام", "قائمة احلام", "شو أهدافي", "شو اهدافي"],
     needsTime: false,
     priority: 71,
     handler: async () => {
