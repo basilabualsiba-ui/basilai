@@ -952,7 +952,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
   // ── ADD EXPENSE (now just a trigger for the smart flow - handled in processQuestion) ──
   intents.push({
     id: "add_expense",
-    keywords: ["أضف صرف", "اضف صرف", "سجلي مصروف", "سجلي صرفة", "بدي أسجل صرفة", "بدي اسجل صرفة", "أضف معاملة", "اضف معاملة", "بدي أضيف صرف"],
+    keywords: ["أضف صرف", "اضف صرف", "سجلي مصروف", "سجلي صرفة", "بدي أسجل صرفة", "بدي اسجل صرفة", "أضف معاملة", "اضف معاملة", "بدي أضيف صرف", "سجل صرفة"],
     needsTime: false,
     priority: 96,
     handler: async () => "🧾 بدك تضيف صرفة؟\nاكتبلي بهالشكل:\n\"صرفت 50 على أكل\"\n\"صرفت 120 شيكل بنزين\"\n\"30 شيكل قهوة\"\n\nوأنا بسجلها مباشرة! 💰",
