@@ -503,6 +503,115 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
     },
   });
 
+  // ── TOTAL INCOME ───────────────────────────────────────────────────────────
+  intents.push({
+    id: "total_income",
+    keywords: ["كم دخلي", "دخل", "إيرادات", "ايرادات", "راتب", "مصروف"],
+    needsTime: true,
+    priority: 65,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("amount").eq("type", "income");
+      q = dateFilter(q, period);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في دخل مسجل بهالفترة 📭";
+      const total = data.reduce((s, t) => s + Number(t.amount), 0);
+      const periodLabel = period?.label || "من البداية";
+      return `💵 مجموع دخلك ${periodLabel}: ${fmtNum(total)} ₪`;
+    },
+  });
+
+  // ── NET BALANCE (Income - Expenses) ───────────────────────────────────────
+  intents.push({
+    id: "net_balance",
+    keywords: ["صافي", "الصافي", "دخل مقابل مصاريف", "ربح", "خسارة"],
+    needsTime: true,
+    priority: 66,
+    handler: async (period) => {
+      let qInc = supabase.from("transactions").select("amount").eq("type", "income");
+      let qExp = supabase.from("transactions").select("amount").eq("type", "expense");
+      qInc = dateFilter(qInc, period);
+      qExp = dateFilter(qExp, period);
+      const [inc, exp] = await Promise.all([qInc.limit(1000), qExp.limit(1000)]);
+      const totalInc = (inc.data || []).reduce((s, t) => s + Number(t.amount), 0);
+      const totalExp = (exp.data || []).reduce((s, t) => s + Number(t.amount), 0);
+      const net = totalInc - totalExp;
+      const periodLabel = period?.label || "من البداية";
+      const emoji = net >= 0 ? "📈" : "📉";
+      return `${emoji} الصافي ${periodLabel}:\n💵 دخل: ${fmtNum(totalInc)} ₪\n💳 مصاريف: ${fmtNum(totalExp)} ₪\n${net >= 0 ? "✅" : "⚠️"} صافي: ${fmtNum(net)} ₪`;
+    },
+  });
+
+  // ── ACCOUNT BALANCES ──────────────────────────────────────────────────────
+  intents.push({
+    id: "account_balances",
+    keywords: ["رصيدي", "رصيد", "حساباتي", "حسابات", "كم معي", "كم عندي فلوس"],
+    needsTime: false,
+    priority: 68,
+    handler: async () => {
+      const { data } = await supabase.from("accounts").select("name, amount, currency, icon");
+      if (!data || data.length === 0) return "ما في حسابات مسجلة بعد 🏦";
+      const total = data.reduce((s, a) => s + Number(a.amount), 0);
+      const lines = data.map(a => `${a.icon || "💰"} ${a.name}: ${fmtNum(Number(a.amount))} ${a.currency}`);
+      return `🏦 حساباتك:\n${lines.join("\n")}\n\n💰 المجموع: ${fmtNum(total)} ₪`;
+    },
+  });
+
+  // ── GAMES COUNT ───────────────────────────────────────────────────────────
+  intents.push({
+    id: "games_count",
+    keywords: ["كم لعبة", "عدد ألعاب", "عدد العاب", "ألعابي", "العابي"],
+    needsTime: false,
+    priority: 67,
+    handler: async () => {
+      const { data } = await supabase.from("games").select("name, platform, rating").order("rating", { ascending: false });
+      if (!data || data.length === 0) return "ما في ألعاب مسجلة بعد 🎮";
+      const totalSpent = data.reduce((s, g) => s + (Number((g as any).user_price_ils) || 0), 0);
+      return `🎮 عندك ${data.length} لعبة\n📊 أعلى: ${data[0].name}${data[0].rating ? ` (⭐ ${data[0].rating})` : ""}`;
+    },
+  });
+
+  // ── MEDIA COUNT (movies + series) ─────────────────────────────────────────
+  intents.push({
+    id: "media_count",
+    keywords: ["كم فيلم", "كم مسلسل", "عدد أفلام", "عدد مسلسلات", "أفلامي", "افلامي", "مسلسلاتي"],
+    needsTime: false,
+    priority: 67,
+    handler: async () => {
+      const { data } = await supabase.from("media").select("type, status");
+      if (!data || data.length === 0) return "ما في أفلام أو مسلسلات مسجلة بعد 📺";
+      const movies = data.filter(m => m.type === "movie");
+      const series = data.filter(m => m.type === "tv");
+      const watching = data.filter(m => m.status === "watching").length;
+      const completed = data.filter(m => m.status === "completed").length;
+      return `📺 مكتبتك:\n🎬 ${movies.length} فيلم\n📺 ${series.length} مسلسل\n▶️ بتشاهد: ${watching}\n✅ خلصت: ${completed}`;
+    },
+  });
+
+  // ── SCHEDULE TODAY ────────────────────────────────────────────────────────
+  intents.push({
+    id: "schedule_today",
+    keywords: ["جدولي", "برنامجي", "مواعيد", "جدول اليوم", "شو عندي اليوم"],
+    needsTime: false,
+    priority: 69,
+    handler: async () => {
+      const todayStr = format(new Date(), "yyyy-MM-dd");
+      const dayOfWeek = new Date().getDay() || 7; // 1-7
+      const { data } = await supabase.from("daily_activities").select("title, start_time, end_time, is_completed, is_recurring, days_of_week").or(`date.eq.${todayStr},and(is_recurring.eq.true)`);
+      if (!data || data.length === 0) return "ما عندك شي بالجدول اليوم 📋";
+      const todayItems = data.filter(a => {
+        if (!a.is_recurring) return true;
+        return a.days_of_week?.includes(dayOfWeek);
+      });
+      if (todayItems.length === 0) return "ما عندك شي بالجدول اليوم 📋";
+      const lines = todayItems.map(a => {
+        const time = a.start_time ? a.start_time.substring(0, 5) : "";
+        const status = a.is_completed ? "✅" : "⬜";
+        return `${status} ${time ? time + " " : ""}${a.title}`;
+      });
+      return `📋 جدولك اليوم:\n${lines.join("\n")}`;
+    },
+  });
+
   // Sort by priority descending
   intents.sort((a, b) => b.priority - a.priority);
   return intents;
