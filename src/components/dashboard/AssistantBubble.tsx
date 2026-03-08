@@ -701,7 +701,7 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
       }
 
       const total = data.reduce((s, a) => s + Number(a.amount), 0);
-      const lines = data.map(a => `${a.icon || "💰"} ${a.name}: ${fmtNum(Number(a.amount))} ${a.currency}`);
+      const lines = data.map(a => `${iconToEmoji(a.icon)} ${a.name}: ${fmtNum(Number(a.amount))} ${a.currency}`);
       return `🏦 حساباتك:\n${lines.join("\n")}\n\n💰 المجموع: ${fmtNum(total)} ₪`;
     },
   });
