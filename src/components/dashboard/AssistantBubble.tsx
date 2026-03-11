@@ -59,6 +59,9 @@ const SUGGESTION_GROUPS = [
       "أضف صرف",
       "مجموع مصاريفي هالشهر",
       "قديش صرفت هالسنة؟",
+      "صرفت خمسين على حشاش",
+      "سجلي وزني 67 كيلو",
+      "من وين دخلي هالشهر؟",
     ],
   },
   {
@@ -78,6 +81,11 @@ const SUGGESTION_GROUPS = [
       "قارن المعدل اليومي مع الشهر الفائت",
       "قارن المعدل الأسبوعي مع الفائت",
       "كم المعدل حسب الفئات هالشهر؟",
+      "شو أغلى يوم بالأسبوع؟",
+      "مصاريفي رايحة لفوق ولا لتحت؟",
+      "كم يوم ما صرفت هالشهر؟",
+      "مصاريف يناير",
+      "مصاريف أكتوبر",
     ],
   },
   {
@@ -96,9 +104,15 @@ const SUGGESTION_GROUPS = [
     items: [
       "شو وزني هلق؟",
       "كم وزني الحالي؟",
+      "سجلي وزني 67 كيلو",
       "كم مرة تمرنت هالشهر؟",
       "كم مرة رحت الجيم هالشهر؟",
       "شو آخر تدريب عملتو؟",
+      "تفاصيل تمريني الأخير",
+      "شو أكثر تمارين عملتها؟",
+      "أثقل اشي رفعتو؟",
+      "كم مجموع رفعاتي هالشهر؟",
+      "كم تمرين عملت مع مدرب؟",
       "كم ساعة تمرين هالشهر؟",
       "شو أكثر عضلة اشتغلت عليها؟",
       "أقل وزن وصلتلو؟",
@@ -269,6 +283,64 @@ function iconToEmoji(icon: string): string {
     Plane: "✈️", Music: "🎵", BookOpen: "📖", Camera: "📷",
   };
   return map[icon] || "💰";
+}
+
+// ─── Arabic number words → numeric ──────────────────────────────────────────
+function arabicWordsToNumber(text: string): number | null {
+  const t = text.trim();
+  const hundreds: [RegExp, number][] = [
+    [/خمسمي[هة]|خمسمئة/, 500], [/أربعمي[هة]|اربعمي[هة]|أربعمئة/, 400],
+    [/ثلاثمي[هة]|ثلاثمئة/, 300], [/مئتين|ميتين/, 200],
+    [/مي[هة]|مائة/, 100],
+  ];
+  const tens: [RegExp, number][] = [
+    [/تسعين/, 90], [/ثمانين/, 80], [/سبعين/, 70], [/ستين/, 60],
+    [/خمسين/, 50], [/أربعين|اربعين/, 40], [/ثلاثين/, 30], [/عشرين/, 20],
+  ];
+  const ones: [RegExp, number][] = [
+    [/تسعة عشر/, 19], [/ثمانية عشر/, 18], [/سبعة عشر/, 17], [/ستة عشر/, 16],
+    [/خمسة عشر/, 15], [/أربعة عشر|اربعة عشر/, 14], [/ثلاثة عشر/, 13],
+    [/اثني عشر|اثنا عشر/, 12], [/أحد عشر/, 11], [/عشرة\b/, 10],
+    [/تسعة/, 9], [/ثمانية/, 8], [/سبعة/, 7], [/ستة/, 6], [/خمسة/, 5],
+    [/أربعة|اربعة/, 4], [/ثلاثة/, 3], [/اثنين|اثنان/, 2], [/واحد/, 1],
+  ];
+  let total = 0, found = false;
+  for (const [re, v] of hundreds) { if (re.test(t)) { total += v; found = true; break; } }
+  for (const [re, v] of tens)     { if (re.test(t)) { total += v; found = true; break; } }
+  for (const [re, v] of ones)     { if (re.test(t)) { total += v; found = true; break; } }
+  return found ? total : null;
+}
+
+// ─── Detect specific Arabic month name → TimePeriod ──────────────────────────
+function detectMonthName(text: string): TimePeriod | null {
+  const today = new Date();
+  const months = [
+    { re: /يناير|كانون الثاني/, m: 0, label: "يناير" },
+    { re: /فبراير|شباط/, m: 1, label: "فبراير" },
+    { re: /مارس|آذار|اذار/, m: 2, label: "مارس" },
+    { re: /أبريل|ابريل|نيسان/, m: 3, label: "أبريل" },
+    { re: /مايو|أيار|ايار/, m: 4, label: "مايو" },
+    { re: /يونيو|حزيران/, m: 5, label: "يونيو" },
+    { re: /يوليو|تموز/, m: 6, label: "يوليو" },
+    { re: /أغسطس|اغسطس|آب/, m: 7, label: "أغسطس" },
+    { re: /سبتمبر|أيلول/, m: 8, label: "سبتمبر" },
+    { re: /أكتوبر|اكتوبر|تشرين الأول/, m: 9, label: "أكتوبر" },
+    { re: /نوفمبر|تشرين الثاني/, m: 10, label: "نوفمبر" },
+    { re: /ديسمبر|كانون الأول/, m: 11, label: "ديسمبر" },
+  ];
+  const yearMatch = text.match(/\b(202\d|203\d)\b/);
+  for (const { re, m, label } of months) {
+    if (re.test(text)) {
+      let year = yearMatch ? parseInt(yearMatch[1]) : today.getFullYear();
+      if (!yearMatch && m > today.getMonth()) year--;
+      const from = format(new Date(year, m, 1), "yyyy-MM-dd");
+      const lastDay = new Date(year, m + 1, 0);
+      const isCurrent = m === today.getMonth() && year === today.getFullYear();
+      const to = isCurrent ? format(today, "yyyy-MM-dd") : format(lastDay, "yyyy-MM-dd");
+      return { from, to, label: `${label} ${year}` };
+    }
+  }
+  return null;
 }
 
 // ─── Intent matching engine ─────────────────────────────────────────────────
@@ -1909,6 +1981,252 @@ function buildIntents(categories: CategoryRef[], subcategories: SubcategoryRef[]
     },
   });
 
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // NEW INTENTS v4 — Exercise PRs, Month spending, Record weight, etc.
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // ── MOST USED EXERCISES ───────────────────────────────────────────────────
+  intents.push({ id: "most_used_exercises", keywords: ["أكثر تمرين عملت", "أكثر تمارين عملتها", "اكثر تمرين عملت", "التمارين اللي أكثر", "تمرين أعمله أكثر", "أكثر تمارين", "شو تمريناتي الأكثر"], needsTime: false, priority: 78,
+    handler: async () => {
+      const { data } = await (supabase as any).from("exercise_sets").select("exercises(name, muscle_group)").limit(1000);
+      if (!data || data.length === 0) return "ما في تمارين مسجلة بعد 🏋️";
+      const byEx = new Map<string, { count: number; muscle: string }>();
+      for (const row of data) {
+        const name = (row as any).exercises?.name || "؟";
+        const muscle = (row as any).exercises?.muscle_group || "";
+        const prev = byEx.get(name) || { count: 0, muscle };
+        byEx.set(name, { count: prev.count + 1, muscle });
+      }
+      const sorted = [...byEx.entries()].sort((a, b) => b[1].count - a[1].count).slice(0, 8);
+      const lines = sorted.map((s, i) => `${i + 1}. ${s[0]} (${s[1].muscle}): ${s[1].count} سيت`);
+      return `🏋️ أكثر تمارينك:\n${lines.join("\n")}`;
+    },
+  });
+
+  // ── LAST SESSION FULL DETAILS ─────────────────────────────────────────────
+  intents.push({ id: "last_session_full", keywords: ["تفاصيل تمريني الأخير", "تفاصيل اخر تمرين", "شو عملت بآخر تمرين", "شو عملت باخر تمرين", "تفاصيل التمرين الأخير", "تفاصيل آخر تمريني", "سيتات آخر تمرين", "سيتات اخر تمرين"], needsTime: false, priority: 79,
+    handler: async () => {
+      const { data: sessions } = await supabase.from("workout_sessions").select("id, scheduled_date, total_duration_minutes, muscle_groups, with_trainer").not("completed_at", "is", null).order("scheduled_date", { ascending: false }).limit(1);
+      if (!sessions?.[0]) return "ما في تمارين مسجلة بعد 🏋️";
+      const s = sessions[0];
+      const { data: sets } = await (supabase as any).from("exercise_sets").select("set_number, weight, reps, exercises(name)").eq("session_id", s.id).order("set_number");
+      if (!sets || sets.length === 0) return `🏋️ آخر تمرين: ${s.scheduled_date}\n💪 ${s.muscle_groups?.join("، ") || ""}\nما في سيتات مسجلة`;
+      
+      // Group by exercise
+      const byEx = new Map<string, { sets: { w: number; r: number }[] }>();
+      for (const set of sets) {
+        const name = (set as any).exercises?.name || "؟";
+        if (!byEx.has(name)) byEx.set(name, { sets: [] });
+        byEx.get(name)!.sets.push({ w: Number(set.weight), r: Number(set.reps) });
+      }
+      const trainer = s.with_trainer ? " 👨‍💼 مع مدرب" : "";
+      const dur = s.total_duration_minutes ? ` ⏱️ ${s.total_duration_minutes} دق` : "";
+      let result = `🏋️ تمرين ${s.scheduled_date}${dur}${trainer}\n💪 ${s.muscle_groups?.join("، ") || ""}\n\n`;
+      for (const [name, { sets: exSets }] of byEx) {
+        const maxW = Math.max(...exSets.map(e => e.w));
+        const setsStr = exSets.map((e, i) => `  سيت ${i+1}: ${e.w}كغ × ${e.r}`).join("\n");
+        result += `📌 ${name} (أقوى: ${maxW}كغ)\n${setsStr}\n`;
+      }
+      return result.trim();
+    },
+  });
+
+  // ── SUPPLEMENT REMAINING STOCK ────────────────────────────────────────────
+  intents.push({ id: "supplement_stock", keywords: ["كم باقي من", "باقي من البروتين", "باقي مكملات", "مخزون مكملات", "كم باقي بروتين", "كم باقي مكمل", "كم جرعة باقية", "مخزون كمالات", "كم باقي عندي من"], needsTime: false, priority: 78,
+    handler: async () => {
+      const { data } = await supabase.from("supplements").select("name, remaining_doses, total_doses, dose_unit").order("name");
+      if (!data || data.length === 0) return "ما في مكملات مسجلة بعد 💊";
+      const lines = data.map(s => {
+        const pct = s.total_doses ? ((Number(s.remaining_doses) / Number(s.total_doses)) * 100).toFixed(0) : "?";
+        const warn = Number(s.remaining_doses) <= 10 ? " ⚠️" : Number(s.remaining_doses) <= 5 ? " 🚨" : "";
+        return `💊 ${s.name}: ${fmtNum(Number(s.remaining_doses))} ${s.dose_unit || "جرعة"} (${pct}%)${warn}`;
+      });
+      return `📦 مخزون مكملاتك:\n${lines.join("\n")}`;
+    },
+  });
+
+  // ── HEAVIEST LIFT EVER ────────────────────────────────────────────────────
+  intents.push({ id: "heaviest_lift", keywords: ["أثقل اشي رفعتو", "اثقل اشي رفعتو", "أثقل وزن رفعتو", "اثقل وزن", "أقوى وزن رفعتو على الإطلاق", "أقوى رفعة", "أثقل سيت", "أقصى وزن"], needsTime: false, priority: 78,
+    handler: async () => {
+      const { data } = await (supabase as any).from("exercise_sets").select("weight, reps, exercises(name, muscle_group)").order("weight", { ascending: false }).limit(5);
+      if (!data || data.length === 0) return "ما في سيتات مسجلة بعد 🏋️";
+      const lines = data.map((s: any, i: number) => `${i+1}. ${s.exercises?.name || "؟"} (${s.exercises?.muscle_group || ""}): ${s.weight}كغ × ${s.reps}`);
+      return `🏆 أثقل سيتاتك على الإطلاق:\n${lines.join("\n")}`;
+    },
+  });
+
+  // ── TOTAL VOLUME LIFTED ───────────────────────────────────────────────────
+  intents.push({ id: "total_volume", keywords: ["مجموع رفعاتي", "كم رفعت", "مجموع الأوزان", "إجمالي الرفع", "كم مجموع رفعاتي", "كم كيلو رفعت", "مجموع الكيلوات"], needsTime: true, priority: 77,
+    handler: async (period) => {
+      let q = (supabase as any).from("exercise_sets").select("weight, reps, workout_sessions!inner(scheduled_date, completed_at)");
+      if (period?.from) q = q.gte("workout_sessions.scheduled_date", period.from);
+      if (period?.to) q = q.lte("workout_sessions.scheduled_date", period.to);
+      const { data } = await q.not("workout_sessions.completed_at", "is", null).limit(2000);
+      if (!data || data.length === 0) return "ما في بيانات تمارين بهالفترة 🏋️";
+      const total = data.reduce((s: number, row: any) => s + (Number(row.weight) * Number(row.reps)), 0);
+      const sets = data.length;
+      const periodLabel = period?.label || "من البداية";
+      return `💪 مجموع رفعاتك ${periodLabel}:\n🏋️ ${fmtNum(total)} كغ (${sets} سيت)\n📊 معدل الحمل: ${fmtNum(total / sets)} كغ/سيت`;
+    },
+  });
+
+  // ── TRAINER SESSIONS ──────────────────────────────────────────────────────
+  intents.push({ id: "trainer_sessions", keywords: ["مع مدرب", "تمرين مدرب", "كم تمرين مع مدرب", "تمارين مدرب", "جلسات مدرب"], needsTime: true, priority: 77,
+    handler: async (period) => {
+      let q = supabase.from("workout_sessions").select("id, scheduled_date").eq("with_trainer", true).not("completed_at", "is", null);
+      if (period?.from) q = q.gte("scheduled_date", period.from);
+      if (period?.to) q = q.lte("scheduled_date", period.to);
+      const { data } = await q.limit(100);
+      const count = data?.length || 0;
+      const periodLabel = period?.label || "من البداية";
+      return count > 0
+        ? `👨‍💼 تمرنت مع مدرب ${count} مرة ${periodLabel}`
+        : `ما تمرنت مع مدرب ${periodLabel} 👨‍💼`;
+    },
+  });
+
+  // ── SPENDING BY DAY OF WEEK ───────────────────────────────────────────────
+  intents.push({ id: "day_of_week_spending", keywords: ["أغلى يوم بالأسبوع", "اغلى يوم بالاسبوع", "مصاريف حسب اليوم", "يوم الأسبوع", "مصاريف أيام الأسبوع", "توزيع حسب الأيام", "شو أغلى يوم", "كم صرفت كل يوم بالأسبوع"], needsTime: true, priority: 83,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("amount, date").eq("type", "expense");
+      if (period?.from) q = q.gte("date", period.from);
+      if (period?.to) q = q.lte("date", period.to);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في مصاريف بهالفترة 📭";
+      const dayNames = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+      const byDay = new Map<number, { total: number; count: number }>();
+      for (const t of data) {
+        const d = new Date(t.date).getDay();
+        const prev = byDay.get(d) || { total: 0, count: 0 };
+        byDay.set(d, { total: prev.total + Number(t.amount), count: prev.count + 1 });
+      }
+      const sorted = [0,1,2,3,4,5,6].map(d => ({ day: d, name: dayNames[d], ...(byDay.get(d) || { total: 0, count: 0 }) })).sort((a, b) => b.total - a.total);
+      const periodLabel = period?.label || "من البداية";
+      const lines = sorted.filter(d => d.total > 0).map((d, i) => `${i===0?"🏆":i===1?"🥈":i===2?"🥉":"  "} ${d.name}: ${fmtNum(d.total)} ₪ (${d.count} معاملة)`);
+      return `📅 مصاريف حسب اليوم ${periodLabel}:\n${lines.join("\n")}`;
+    },
+  });
+
+  // ── SPENDING TREND (month by month) ──────────────────────────────────────
+  intents.push({ id: "spending_trend", keywords: ["مصاريفي رايحة لفوق", "اتجاه المصاريف", "ترند المصاريف", "هل مصاريفي زايدة", "مصاريفي بتزيد", "مصاريفي بتقل", "تطور مصاريفي", "اتجاه الصرف", "ترند الصرف"], needsTime: false, priority: 81,
+    handler: async () => {
+      const { data } = await supabase.from("transactions").select("amount, date").eq("type", "expense").limit(1000);
+      if (!data || data.length === 0) return "ما في مصاريف بعد 📭";
+      const byMonth = new Map<string, number>();
+      for (const t of data) {
+        const key = t.date.substring(0, 7);
+        byMonth.set(key, (byMonth.get(key) || 0) + Number(t.amount));
+      }
+      const sorted = [...byMonth.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+      const last4 = sorted.slice(-4);
+      if (last4.length < 2) return "ما في بيانات كافية للتحليل 📊";
+      const monthNames = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+      const lines = last4.map(([key, total]) => {
+        const [y, m] = key.split("-");
+        return `📅 ${monthNames[parseInt(m)-1]} ${y}: ${fmtNum(total)} ₪`;
+      });
+      const trend = last4[last4.length-1][1] > last4[0][1] ? "📈 صرفك عم يزيد" : "📉 صرفك عم يقل";
+      const diff = last4[last4.length-1][1] - last4[last4.length-2][1];
+      return `📊 اتجاه مصاريفك (آخر 4 شهور):\n${lines.join("\n")}\n\n${trend}\n${diff > 0 ? "📈" : "📉"} فرق آخر شهرين: ${fmtNum(Math.abs(diff))} ₪`;
+    },
+  });
+
+  // ── INCOME BREAKDOWN ──────────────────────────────────────────────────────
+  intents.push({ id: "income_breakdown", keywords: ["من وين دخلي", "مصادر الدخل", "مصادر دخلي", "دخلي من وين", "حسب مصدر الدخل", "توزيع الدخل"], needsTime: true, priority: 76,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("amount, description, categories(name), subcategories(name)").eq("type", "income");
+      if (period?.from) q = q.gte("date", period.from);
+      if (period?.to) q = q.lte("date", period.to);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في دخل مسجل بهالفترة 📭";
+      const bySource = new Map<string, number>();
+      for (const t of data as any[]) {
+        const name = t.subcategories?.name || t.categories?.name || t.description || "غير محدد";
+        bySource.set(name, (bySource.get(name) || 0) + Number(t.amount));
+      }
+      const total = [...bySource.values()].reduce((s, v) => s + v, 0);
+      const sorted = [...bySource.entries()].sort((a, b) => b[1] - a[1]);
+      const periodLabel = period?.label || "من البداية";
+      const lines = sorted.map(([name, amt]) => `💵 ${name}: ${fmtNum(amt)} ₪ (${((amt/total)*100).toFixed(1)}%)`);
+      return `💵 مصادر دخلك ${periodLabel}:\n${lines.join("\n")}\n\n💰 المجموع: ${fmtNum(total)} ₪`;
+    },
+  });
+
+  // ── YEARS OVERVIEW ────────────────────────────────────────────────────────
+  intents.push({ id: "yearly_overview", keywords: ["مصاريف السنة الفائتة", "مصاريف كل سنة", "ملخص سنوي", "كم صرفت السنة الفائتة", "سنة 2025", "سنة 2026", "مصاريف 2025", "مصاريف 2026"], needsTime: false, priority: 79,
+    handler: async () => {
+      const { data } = await supabase.from("transactions").select("amount, date").eq("type", "expense").limit(2000);
+      if (!data || data.length === 0) return "ما في مصاريف بعد 📭";
+      const byYear = new Map<string, number>();
+      for (const t of data) {
+        const y = t.date.substring(0, 4);
+        byYear.set(y, (byYear.get(y) || 0) + Number(t.amount));
+      }
+      const sorted = [...byYear.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+      const lines = sorted.map(([y, total]) => `📅 ${y}: ${fmtNum(total)} ₪`);
+      return `📊 مصاريفك حسب السنة:\n${lines.join("\n")}`;
+    },
+  });
+
+  // ── SPECIFIC MONTH SPENDING (now handled by detectMonthName, but add explicit intent) ──
+  intents.push({ id: "month_spending_explicit", keywords: ["مصاريف شهر", "صرفت شهر", "كم صرفت ب", "مصاريف يناير", "مصاريف فبراير", "مصاريف مارس", "مصاريف أبريل", "مصاريف مايو", "مصاريف يونيو", "مصاريف يوليو", "مصاريف أغسطس", "مصاريف سبتمبر", "مصاريف أكتوبر", "مصاريف نوفمبر", "مصاريف ديسمبر"], needsTime: true, priority: 86,
+    handler: async (period) => {
+      if (!period?.from) return "حدد الشهر اللي بدك تعرف عنه 📅";
+      let q = supabase.from("transactions").select("amount, category_id, categories(name)").eq("type", "expense").gte("date", period.from).lte("date", period.to!);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return `ما في مصاريف ${period.label} 📭`;
+      const total = data.reduce((s, t) => s + Number(t.amount), 0);
+      const byCat = new Map<string, number>();
+      for (const t of data as any[]) {
+        const name = t.categories?.name || "غير محدد";
+        byCat.set(name, (byCat.get(name) || 0) + Number(t.amount));
+      }
+      const topCats = [...byCat.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4);
+      const lines = topCats.map(([name, amt]) => `  📁 ${name}: ${fmtNum(amt)} ₪ (${((amt/total)*100).toFixed(0)}%)`);
+      return `💰 مصاريف ${period.label}:\n💳 المجموع: ${fmtNum(total)} ₪\n\nأكثر فئات:\n${lines.join("\n")}`;
+    },
+  });
+
+  // ── AVERAGE SPENDING PER VISIT (specific subcategory) - smarter version ──
+  intents.push({ id: "avg_per_visit_place", keywords: ["معدل زيارة", "كم أصرف بالزيارة", "متوسط الزيارة", "كم أصرف كل مرة", "معدل الزيارة الواحدة"], needsTime: true, priority: 80,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("amount, subcategory_id, subcategories(name)").eq("type", "expense").not("subcategory_id", "is", null);
+      if (period?.from) q = q.gte("date", period.from);
+      if (period?.to) q = q.lte("date", period.to);
+      const { data } = await q.limit(1000);
+      if (!data || data.length === 0) return "ما في مصاريف بهالفترة 📭";
+      const byPlace = new Map<string, { total: number; count: number }>();
+      for (const t of data as any[]) {
+        const name = t.subcategories?.name || "؟";
+        const prev = byPlace.get(name) || { total: 0, count: 0 };
+        byPlace.set(name, { total: prev.total + Number(t.amount), count: prev.count + 1 });
+      }
+      const sorted = [...byPlace.entries()].sort((a, b) => b[1].total - a[1].total).slice(0, 8);
+      const periodLabel = period?.label || "من البداية";
+      const lines = sorted.map(([name, { total, count }]) => `📍 ${name}: ${fmtNum(total/count)} ₪/زيارة (${count} مرة)`);
+      return `📍 معدل الصرف بالزيارة ${periodLabel}:\n${lines.join("\n")}`;
+    },
+  });
+
+  // ── NUMBER OF DAYS WITHOUT SPENDING ───────────────────────────────────────
+  intents.push({ id: "zero_spending_days", keywords: ["كم يوم ما صرفت", "أيام بدون صرف", "كم يوم فاضي", "يوم ما صرفت فيه", "أيام ما صرفت"], needsTime: true, priority: 78,
+    handler: async (period) => {
+      let q = supabase.from("transactions").select("date").eq("type", "expense");
+      if (period?.from) q = q.gte("date", period.from);
+      if (period?.to) q = q.lte("date", period.to);
+      const { data } = await q.limit(1000);
+      if (!data) return "ما في بيانات 📭";
+      const spendingDays = new Set(data.map(t => t.date)).size;
+      const from = period?.from ? new Date(period.from) : new Date("2025-08-01");
+      const to = period?.to ? new Date(period.to) : new Date();
+      const totalDays = Math.ceil((to.getTime() - from.getTime()) / 86400000) + 1;
+      const zeroDays = totalDays - spendingDays;
+      const periodLabel = period?.label || "من البداية";
+      return `🎉 أيام بدون صرف ${periodLabel}: ${zeroDays} يوم من ${totalDays}\n💚 نسبة: ${((zeroDays/totalDays)*100).toFixed(1)}%`;
+    },
+  });
+
   // Sort by priority descending
   intents.sort((a, b) => b.priority - a.priority);
   return intents;
@@ -2074,6 +2392,8 @@ export function AssistantBubble() {
   const [pendingExpense, setPendingExpense] = useState<PendingExpense | null>(null);
   const [accountsList, setAccountsList] = useState<{ id: string; name: string }[]>([]);
   const [pendingSuggestion, setPendingSuggestion] = useState<{ userText: string; intentId: string; keyword: string } | null>(null);
+  const [exercisesList, setExercisesList] = useState<{ id: string; name: string; muscle_group: string }[]>([]);
+  const [pendingWeight, setPendingWeight] = useState<number | null>(null);
   const lastPeriodRef = useRef<TimePeriod | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -2091,6 +2411,9 @@ export function AssistantBubble() {
       setCatSubData({ cats, subs });
       setAccountsList(accRes.data || []);
       setIntents(buildIntents(cats, subs));
+      // Load exercises for PR/history queries
+      const exRes = await (supabase as any).from("exercises").select("id, name, muscle_group");
+      setExercisesList(exRes.data || []);
     })();
   }, []);
 
@@ -2113,7 +2436,9 @@ export function AssistantBubble() {
     // Convert Arabic/Eastern numerals to Western and strip emoji prefixes from chips
     const arabicToWestern = (s: string) => s.replace(/[٠-٩]/g, d => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
     const stripEmoji = (s: string) => s.replace(/^[\u{1F300}-\u{1FAD6}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{200D}\u{20E3}]+\s*/u, "");
-    const normalizedText = arabicToWestern(stripEmoji(text));
+    // Also try to convert Arabic word numbers before normalization
+    const wordNum = arabicWordsToNumber(text);
+    const normalizedText = arabicToWestern(stripEmoji(wordNum !== null ? text.replace(/(?:واحد|اثنين|اثنان|ثلاثة|أربعة|اربعة|خمسة|ستة|سبعة|ثمانية|تسعة|عشرة|أحد عشر|اثني عشر|ثلاثة عشر|أربعة عشر|خمسة عشر|ستة عشر|سبعة عشر|ثمانية عشر|تسعة عشر|عشرين|ثلاثين|أربعين|اربعين|خمسين|ستين|سبعين|ثمانين|تسعين|مي[هة]|مائة|مئتين|ميتين|ثلاثمي[هة]|أربعمي[هة]|اربعمي[هة]|خمسمي[هة])(?:\s*و\s*(?:واحد|اثنين|ثلاثة|أربعة|خمسة|ستة|سبعة|ثمانية|تسعة|عشرة|عشرين|ثلاثين|أربعين|خمسين))?/, String(wordNum)) : text));
 
     const { period: detectedPeriod, cleaned } = detectTimePeriod(normalizedText);
     const period = forcedPeriod || detectedPeriod || lastPeriodRef.current;
@@ -2122,6 +2447,69 @@ export function AssistantBubble() {
     // Store last used period for follow-up questions
     if (forcedPeriod || detectedPeriod) {
       lastPeriodRef.current = forcedPeriod || detectedPeriod;
+    }
+
+    // ── Record weight flow: "سجلي وزني 67.5 كيلو" ──
+    const weightRecordPatterns = [
+      /(?:سجل(?:ي|لي)?|حط(?:لي)?|دوّن(?:لي)?)\s*(?:وزني|الوزن)\s*(\d+(?:[.,]\d+)?)/i,
+      /وزني\s*(?:هلق|هلأ|الحين)?\s*(\d+(?:[.,]\d+)?)\s*(?:كيلو|كغ|kg)/i,
+      /(\d+(?:[.,]\d+)?)\s*(?:كيلو|كغ|kg)\s*(?:وزني|وزن)/i,
+    ];
+    for (const pat of weightRecordPatterns) {
+      const match = normalizedText.match(pat);
+      if (match) {
+        const weightVal = parseFloat((match[1] || match[2]).replace(",", "."));
+        if (weightVal > 30 && weightVal < 250) {
+          setPendingWeight(weightVal);
+          return {
+            content: `⚖️ تسجيل وزن جديد:\n💪 ${weightVal} كغ\n📅 ${format(new Date(), "yyyy-MM-dd")}\n\nمتأكد؟`,
+            needs_clarification: true,
+            clarification_type: "confirm_expense" as const,
+            reply_chips: ["✅ سجله", "❌ إلغاء"],
+          };
+        }
+      }
+    }
+
+    // ── Exercise PR query: "شو أقوى وزن بالـ X؟" ──
+    const prPatterns = [
+      /(?:PR|بي آر|أقوى وزن|اقوى وزن|أقصى وزن|ماكس|max)\s*(?:ب|بالـ|بال|بتمرين)?\s*(.+)/i,
+      /(?:رفعتو|رفعت)\s*(?:بالـ|بال|بتمرين)?\s*(.+)/i,
+      /(?:تطورت|كيف تطورت|كيف رحت|تقدمت)\s*(?:بالـ|بال|بتمرين)?\s*(.+)/i,
+    ];
+    for (const pat of prPatterns) {
+      const match = (cleaned || normalizedText).match(pat);
+      if (match) {
+        const exerciseQuery = match[1].trim().replace(/[؟?!]/g, "").trim().toLowerCase();
+        const found = exercisesList.find(ex =>
+          ex.name.toLowerCase().includes(exerciseQuery) ||
+          exerciseQuery.includes(ex.name.toLowerCase().split(" ")[0])
+        );
+        if (found) {
+          const { data } = await (supabase as any)
+            .from("exercise_sets")
+            .select("weight, reps, set_number, workout_sessions!inner(scheduled_date)")
+            .eq("exercise_id", found.id)
+            .order("weight", { ascending: false })
+            .limit(20);
+          if (!data || data.length === 0) return { content: `ما في سيتات مسجلة لتمرين ${found.name} بعد 🏋️` };
+          const maxWeight = data[0];
+          const allSessions = [...new Map(data.map((d: any) => [d.workout_sessions?.scheduled_date, d])).values()].slice(0, 5);
+          let result = `🏆 ${found.name} (${found.muscle_group})\n\n💪 PR: ${maxWeight.weight} كغ × ${maxWeight.reps} رeps (${(maxWeight as any).workout_sessions?.scheduled_date || ""})\n\nآخر 5 سيتات:\n`;
+          result += data.slice(0, 5).map((d: any) => `  ${d.workout_sessions?.scheduled_date}: ${d.weight}كغ × ${d.reps}`).join("\n");
+          return { content: result };
+        }
+        // Exercise not found, show partial matches
+        const partials = exercisesList.filter(ex =>
+          exerciseQuery.split(" ").some(w => w.length > 2 && ex.name.toLowerCase().includes(w))
+        ).slice(0, 4);
+        if (partials.length > 0) {
+          return {
+            content: `ما لقيت تمرين بالاسم الدقيق 🤔\nقصدك أحد هذول؟`,
+            reply_chips: partials.map(ex => ex.name),
+          };
+        }
+      }
     }
 
     // ── Smart expense detection: "صرفت 50 على أكل" or "30 شيكل قهوة" ──
@@ -2398,6 +2786,20 @@ export function AssistantBubble() {
         completed_tasks: ["📋 شو عندي اليوم؟", "📋 شو عندي بكرا؟"],
         // Summary
         monthly_summary: ["📊 حسب الفئات", "📍 حسب الأماكن", "💪 كم مرة تمرنت هالشهر؟", "🕌 كم صلاة صليت هالشهر؟"],
+        // New v4 intents
+        most_used_exercises: ["🏆 أثقل اشي رفعتو؟", "💪 تفاصيل تمريني الأخير", "⏱️ كم ساعة تمرين هالشهر؟", "💪 كم مجموع رفعاتي؟"],
+        last_session_full: ["💪 أكثر تمارين عملتها؟", "🏆 أثقل اشي رفعتو؟", "💪 كم مرة تمرنت هالشهر؟"],
+        supplement_stock: ["💊 كمالاتي اليوم", "💊 أكثر مكمل استخدمتو", "💊 متى آخر مرة أخذت مكمل؟"],
+        heaviest_lift: ["💪 أكثر تمارين عملتها؟", "💪 تفاصيل تمريني الأخير", "💪 كم مجموع رفعاتي؟"],
+        total_volume: ["🏆 أثقل اشي رفعتو؟", "💪 أكثر تمارين عملتها؟", "⏱️ كم ساعة تمرين هالشهر؟"],
+        trainer_sessions: ["💪 كم مرة تمرنت هالشهر؟", "🏋️ تفاصيل تمريني الأخير"],
+        day_of_week_spending: ["📊 معدل يومي", "📍 أكثر مكان صرفت فيه", "💰 كم صرفت هالشهر؟"],
+        spending_trend: ["📊 حسب الفئات", "📍 حسب الأماكن", "🔄 قارن مصاريف هالشهر مع الشهر الفائت"],
+        income_breakdown: ["💳 كم صرفت هالشهر؟", "📈 الصافي هالشهر", "📊 لخصلي الشهر"],
+        yearly_overview: ["📊 لخصلي الشهر", "📊 أغلى شهر عندي؟", "📊 مصاريف يناير"],
+        month_spending_explicit: ["📊 حسب الفئات", "📍 أكثر مكان صرفت فيه", "🔄 قارن مع الشهر الفائت"],
+        avg_per_visit_place: ["📊 معدل يومي", "📍 أكثر الأماكن هالشهر", "💰 كم صرفت هالشهر؟"],
+        zero_spending_days: ["💰 كم صرفت هالشهر؟", "📊 معدل يومي", "📅 أكثر يوم صرفت فيه"],
       };
 
       const chips = followUpMap[intent.id];
@@ -2442,7 +2844,7 @@ export function AssistantBubble() {
     }
 
     return { content: "ما عندي جواب لهالسؤال بعد 🤔\nجرب تسأل بطريقة ثانية أو اختار من الأسئلة المقترحة!" };
-  }, [intents, catSubData, accountsList]);
+  }, [intents, catSubData, accountsList, exercisesList]);
 
   const callAssistant = useCallback(async (text: string) => {
     if (!text.trim() || loading) return;
@@ -2496,6 +2898,33 @@ export function AssistantBubble() {
       } finally {
         setLoading(false);
         setPendingSuggestion(null);
+      }
+      return;
+    }
+
+    // ── Handle weight recording ──
+    if (pendingWeight !== null && (chip === "✅ سجله" || chip === "❌ إلغاء")) {
+      addMsg({ role: "user", content: chip });
+      if (chip === "❌ إلغاء") {
+        setPendingWeight(null);
+        addMsg({ role: "assistant", content: "تم الإلغاء ❌" });
+        return;
+      }
+      setLoading(true);
+      try {
+        const { error } = await supabase.from("user_body_stats").insert({
+          weight: pendingWeight,
+          recorded_at: new Date().toISOString(),
+        });
+        if (error) throw error;
+        addMsg({ role: "assistant", content: `✅ تم تسجيل وزنك: ${pendingWeight} كغ\n📅 ${format(new Date(), "yyyy-MM-dd")}` });
+        setPendingWeight(null);
+      } catch (err) {
+        console.error("Weight insert error:", err);
+        addMsg({ role: "assistant", content: "صار خطأ بالتسجيل 😕 جرب مرة ثانية" });
+        setPendingWeight(null);
+      } finally {
+        setLoading(false);
       }
       return;
     }
