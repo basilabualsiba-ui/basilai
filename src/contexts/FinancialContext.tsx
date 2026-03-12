@@ -266,74 +266,54 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   const addAccount = async (account: Omit<Account, 'id'>) => {
     try {
-      const { error } = await supabase
-        .from('accounts')
-        .insert({
-          name: account.name,
-          amount: account.amount,
-          icon: account.icon,
-          type: account.type,
-          currency: account.currency
-        });
+      const tempId = `temp-${Date.now()}`;
+      const tempAcc: Account = { id: tempId, ...account };
+      setAccounts(prev => [...prev, tempAcc]);
 
+      const { data, error } = await supabase.from('accounts').insert({
+        name: account.name, amount: account.amount, icon: account.icon,
+        type: account.type, currency: account.currency
+      }).select().single();
       if (error) throw error;
-      await fetchAccounts();
+
+      setAccounts(prev => prev.map(a => a.id === tempId ? {
+        id: data.id, name: data.name, amount: parseFloat(data.amount.toString()),
+        icon: data.icon, type: data.type as Account['type'], currency: data.currency as Account['currency']
+      } : a));
     } catch (error) {
       console.error('Error adding account:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add account",
-        variant: "destructive"
-      });
+      await fetchAccounts();
+      toast({ title: "Error", description: "Failed to add account", variant: "destructive" });
     }
   };
 
   const updateAccount = async (id: string, updates: Partial<Account>) => {
     try {
-      const { error } = await supabase
-        .from('accounts')
-        .update({
-          name: updates.name,
-          amount: updates.amount,
-          icon: updates.icon,
-          type: updates.type,
-          currency: updates.currency as any
-        })
-        .eq('id', id);
+      // Instant local update
+      setAccounts(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
 
+      const { error } = await supabase.from('accounts').update({
+        name: updates.name, amount: updates.amount, icon: updates.icon,
+        type: updates.type, currency: updates.currency as any
+      }).eq('id', id);
       if (error) throw error;
-      await fetchAccounts();
     } catch (error) {
       console.error('Error updating account:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update account",
-        variant: "destructive"
-      });
+      await fetchAccounts(); // rollback on error
+      toast({ title: "Error", description: "Failed to update account", variant: "destructive" });
     }
   };
 
   const deleteAccount = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('accounts')
-        .delete()
-        .eq('id', id);
-
+      setAccounts(prev => prev.filter(a => a.id !== id));
+      const { error } = await supabase.from('accounts').delete().eq('id', id);
       if (error) throw error;
-      await fetchAccounts();
-      
-      toast({
-        title: "Success",
-        description: "Account deleted successfully"
-      });
+      toast({ title: "Success", description: "Account deleted successfully" });
     } catch (error) {
       console.error('Error deleting account:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete account",
-        variant: "destructive"
-      });
+      await fetchAccounts();
+      toast({ title: "Error", description: "Failed to delete account", variant: "destructive" });
     }
   };
 
@@ -496,50 +476,62 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     try {
-      const { error } = await supabase
-        .from('transactions')
-        .insert({
-          amount: transaction.amount,
-          type: transaction.type,
-          category_id: transaction.categoryId,
-          subcategory_id: transaction.subcategoryId,
-          account_id: transaction.accountId,
-          date: transaction.date.toISOString().split('T')[0],
-          time: transaction.time,
-          description: transaction.description,
-          transfer_id: transaction.transferId
-        });
+      const tempId = `temp-${Date.now()}`;
+      const tempTx: Transaction = { id: tempId, ...transaction };
 
+      // Instant UI: prepend transaction + adjust account balance
+      setTransactions(prev => [tempTx, ...prev]);
+      const balanceChange = transaction.type === 'income' ? transaction.amount : -transaction.amount;
+      setAccounts(prev => prev.map(a =>
+        a.id === transaction.accountId ? { ...a, amount: a.amount + balanceChange } : a
+      ));
+
+      // Background DB writes
+      const { data, error } = await supabase.from('transactions').insert({
+        amount: transaction.amount,
+        type: transaction.type,
+        category_id: transaction.categoryId,
+        subcategory_id: transaction.subcategoryId,
+        account_id: transaction.accountId,
+        date: transaction.date.toISOString().split('T')[0],
+        time: transaction.time,
+        description: transaction.description,
+        transfer_id: transaction.transferId
+      }).select().single();
       if (error) throw error;
 
-      // Update account balance
-      const account = accounts.find(acc => acc.id === transaction.accountId);
+      // Also persist account balance to DB (no UI refetch needed)
+      const account = accounts.find(a => a.id === transaction.accountId);
       if (account) {
-        const balanceChange = transaction.type === 'income' ? transaction.amount : -transaction.amount;
-        await updateAccount(transaction.accountId, { amount: account.amount + balanceChange });
+        await supabase.from('accounts').update({ amount: account.amount + balanceChange }).eq('id', account.id);
       }
 
-      await fetchTransactions();
-      
-      toast({
-        title: "Success",
-        description: "Transaction added successfully"
-      });
+      // Swap temp row with real DB row
+      const dateParts = data.date.split('-');
+      const localDate = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+      const realTx: Transaction = {
+        id: data.id, amount: parseFloat(data.amount.toString()),
+        type: data.type as Transaction['type'],
+        categoryId: data.category_id, subcategoryId: data.subcategory_id,
+        accountId: data.account_id, date: localDate,
+        time: data.time || '', description: data.description, transferId: data.transfer_id
+      };
+      setTransactions(prev => prev.map(t => t.id === tempId ? realTx : t));
+
+      toast({ title: "Success", description: "Transaction added successfully" });
     } catch (error) {
       console.error('Error adding transaction:', error);
-      toast({
-        title: "Error",
-        description: "Failed to add transaction",
-        variant: "destructive"
-      });
+      await fetchTransactions(); await fetchAccounts(); // rollback on error
+      toast({ title: "Error", description: "Failed to add transaction", variant: "destructive" });
     }
   };
 
   const updateTransaction = async (id: string, updates: Partial<Transaction>) => {
     try {
-      // Build update object with only provided fields
+      // Instant local update
+      setTransactions(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+
       const updateData: any = {};
-      
       if (updates.amount !== undefined) updateData.amount = updates.amount;
       if (updates.type !== undefined) updateData.type = updates.type;
       if (updates.categoryId !== undefined) updateData.category_id = updates.categoryId;
@@ -550,84 +542,65 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
       if (updates.description !== undefined) updateData.description = updates.description;
       if (updates.transferId !== undefined) updateData.transfer_id = updates.transferId;
 
-      const { error } = await supabase
-        .from('transactions')
-        .update(updateData)
-        .eq('id', id);
-
+      const { error } = await supabase.from('transactions').update(updateData).eq('id', id);
       if (error) throw error;
-      await fetchTransactions();
-      
-      toast({
-        title: "Success",
-        description: "Transaction updated successfully"
-      });
+      toast({ title: "Success", description: "Transaction updated successfully" });
     } catch (error) {
       console.error('Error updating transaction:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update transaction",
-        variant: "destructive"
-      });
+      await fetchTransactions(); // rollback on error
+      toast({ title: "Error", description: "Failed to update transaction", variant: "destructive" });
     }
   };
 
   const deleteTransaction = async (id: string) => {
     try {
       const transaction = transactions.find(t => t.id === id);
+
       if (transaction) {
-        // If this is a transfer, delete the paired transaction too
         if (transaction.type === 'transfer' && transaction.transferId) {
           const pairedTransaction = transactions.find(t => t.transferId === transaction.transferId && t.id !== id);
-          if (pairedTransaction) {
-            // Reverse balance changes for both accounts
-            const fromAccount = accounts.find(acc => acc.id === transaction.accountId);
-            const toAccount = accounts.find(acc => acc.id === pairedTransaction.accountId);
-            
-            if (fromAccount && toAccount) {
-              // Determine which is the outgoing and incoming
-              const isOutgoing = transaction.amount < 0;
-              if (isOutgoing) {
-                await updateAccount(transaction.accountId, { amount: fromAccount.amount - transaction.amount });
-                await updateAccount(pairedTransaction.accountId, { amount: toAccount.amount - pairedTransaction.amount });
-              } else {
-                await updateAccount(transaction.accountId, { amount: fromAccount.amount - transaction.amount });
-                await updateAccount(pairedTransaction.accountId, { amount: toAccount.amount - pairedTransaction.amount });
-              }
-            }
 
-            // Delete both transactions
-            await supabase.from('transactions').delete().eq('transfer_id', transaction.transferId);
+          // Instant UI: remove both transfer legs
+          const transferId = transaction.transferId;
+          setTransactions(prev => prev.filter(t => t.transferId !== transferId));
+
+          if (pairedTransaction) {
+            const fromAcc = accounts.find(a => a.id === transaction.accountId);
+            const toAcc   = accounts.find(a => a.id === pairedTransaction.accountId);
+            if (fromAcc && toAcc) {
+              setAccounts(prev => prev.map(a => {
+                if (a.id === transaction.accountId)       return { ...a, amount: a.amount - transaction.amount };
+                if (a.id === pairedTransaction.accountId) return { ...a, amount: a.amount - pairedTransaction.amount };
+                return a;
+              }));
+              await supabase.from('accounts').update({ amount: fromAcc.amount - transaction.amount }).eq('id', fromAcc.id);
+              await supabase.from('accounts').update({ amount: toAcc.amount - pairedTransaction.amount }).eq('id', toAcc.id);
+            }
           }
+          await supabase.from('transactions').delete().eq('transfer_id', transaction.transferId);
         } else {
-          // Regular transaction - reverse the account balance change
-          const account = accounts.find(acc => acc.id === transaction.accountId);
+          // Regular transaction: instant UI removal + balance reversal
+          setTransactions(prev => prev.filter(t => t.id !== id));
+          const account = accounts.find(a => a.id === transaction.accountId);
           if (account) {
             const balanceChange = transaction.type === 'income' ? -transaction.amount : transaction.amount;
-            await updateAccount(transaction.accountId, { amount: account.amount + balanceChange });
+            setAccounts(prev => prev.map(a => a.id === account.id ? { ...a, amount: a.amount + balanceChange } : a));
+            await supabase.from('accounts').update({ amount: account.amount + balanceChange }).eq('id', account.id);
           }
-          
           await supabase.from('transactions').delete().eq('id', id);
         }
       } else {
+        setTransactions(prev => prev.filter(t => t.id !== id));
         await supabase.from('transactions').delete().eq('id', id);
       }
 
-      await fetchTransactions();
-      
-      toast({
-        title: "Success",
-        description: "Transaction deleted successfully"
-      });
+      toast({ title: "Success", description: "Transaction deleted successfully" });
     } catch (error) {
       console.error('Error deleting transaction:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete transaction",
-        variant: "destructive"
-      });
+      await fetchTransactions(); await fetchAccounts(); // rollback
+      toast({ title: "Error", description: "Failed to delete transaction", variant: "destructive" });
     }
-  };
+  };;
 
   const transferBetweenAccounts = async (fromAccountId: string, toAccountId: string, amount: number, exchangeRate: number = 1, date?: Date, time?: string) => {
     try {

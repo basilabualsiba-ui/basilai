@@ -91,11 +91,16 @@ export const DreamsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const addDream = async (dream: Partial<Dream>) => {
     try {
-      const { error } = await supabase.from('dreams').insert([dream as any]);
+      const tempId = `temp-${Date.now()}`;
+      const tempDream = { id: tempId, ...dream } as Dream;
+      setDreams(prev => [tempDream, ...prev]);
+
+      const { data, error } = await supabase.from('dreams').insert([dream as any]).select().single();
       if (error) throw error;
-      await fetchDreams();
+      setDreams(prev => prev.map(dr => dr.id === tempId ? data as Dream : dr));
       toast({ title: "Success", description: "Dream added successfully!" });
     } catch (error: any) {
+      await fetchDreams();
       toast({ title: "Error", description: error.message, variant: "destructive" });
       throw error;
     }
@@ -103,11 +108,12 @@ export const DreamsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const updateDream = async (id: string, updates: Partial<Dream>) => {
     try {
+      setDreams(prev => prev.map(dr => dr.id === id ? { ...dr, ...updates } : dr));
       const { error } = await supabase.from('dreams').update(updates).eq('id', id);
       if (error) throw error;
-      await fetchDreams();
       toast({ title: "Success", description: "Dream updated successfully!" });
     } catch (error: any) {
+      await fetchDreams();
       toast({ title: "Error", description: error.message, variant: "destructive" });
       throw error;
     }
@@ -115,11 +121,12 @@ export const DreamsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const deleteDream = async (id: string) => {
     try {
+      setDreams(prev => prev.filter(dr => dr.id !== id));
       const { error } = await supabase.from('dreams').delete().eq('id', id);
       if (error) throw error;
-      await fetchDreams();
       toast({ title: "Success", description: "Dream deleted successfully!" });
     } catch (error: any) {
+      await fetchDreams();
       toast({ title: "Error", description: error.message, variant: "destructive" });
       throw error;
     }
