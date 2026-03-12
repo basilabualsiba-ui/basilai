@@ -77,8 +77,8 @@ export default function Wardrobe() {
   const [scanResult,  setScanResult]  = useState<{ found: WardrobeItem | null; analysis: ClothingAnalysis | null } | null>(null);
   const [scanning,    setScanning]    = useState(false);
 
-  // ── Data loading ────────────────────────────────────────────────────────────
-  const loadItems = useCallback(async () => {
+  // ── Data loading (initial load only — mutations use optimistic updates) ──────
+  async function loadItems() {
     const { data } = await supabase.from("wardrobe").select("*").order("created_at", { ascending: false });
     const mapped = (data || []).map((d: any) => ({
       ...d,
@@ -87,9 +87,9 @@ export default function Wardrobe() {
     }));
     setItems(mapped);
     setLoading(false);
-  }, []);
+  }
 
-  useEffect(() => { loadItems(); }, [loadItems]);
+  useEffect(() => { loadItems(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Add flow: handle image capture ──────────────────────────────────────────
   async function handleImageFile(file: File) {
@@ -117,49 +117,81 @@ export default function Wardrobe() {
     }
   }
 
-  // ── Save item ───────────────────────────────────────────────────────────────
+  // ── Save item — OPTIMISTIC ──────────────────────────────────────────────────
+  // 1. Close add screen immediately — user sees wardrobe at once
+  // 2. Prepend a temp item to local state — appears instantly in the list
+  // 3. DB insert fires in background; temp item swapped with real DB row when done
   async function saveItem() {
     if (!analysis) return;
     setSaving(true);
-    await supabase.from("wardrobe").insert({
-      image_url: analysis.processedImageUrl,
-      type: editForm.type     ?? analysis.type,
-      pattern: editForm.pattern ?? analysis.pattern,
-      colors: editForm.colors ?? analysis.colors,
-      style: editForm.style   ?? analysis.style,
-      season: editForm.season ?? analysis.season,
-      brand: editForm.brand   ?? null,
-      location: "Closet",
+
+    const payload = {
+      image_url:           analysis.processedImageUrl,
+      type:                editForm.type    ?? analysis.type,
+      pattern:             editForm.pattern ?? analysis.pattern,
+      colors:              editForm.colors  ?? analysis.colors,
+      style:               editForm.style   ?? analysis.style,
+      season:              editForm.season  ?? analysis.season,
+      brand:               editForm.brand   ?? null,
+      location:            "Closet" as LocationType,
       location_updated_at: new Date().toISOString(),
-    });
-    await loadItems();
+    };
+
+    // Temp item for instant display
+    const tempId   = `temp-${Date.now()}`;
+    const tempItem: WardrobeItem = {
+      id: tempId, notes: null, worn_count: 0,
+      last_worn: null, created_at: new Date().toISOString(),
+      ...payload,
+    };
+
+    // Instant UI update — no waiting
+    setItems(prev => [tempItem, ...prev]);
     setAddStep(null); setAnalysis(null); setEditForm({}); setSaving(false);
+
+    // Background DB write
+    const { data } = await supabase.from("wardrobe").insert(payload).select().single();
+    if (data) {
+      // Swap temp row with real DB row (real UUID etc.)
+      setItems(prev => prev.map(i =>
+        i.id === tempId
+          ? { ...data, colors: Array.isArray(data.colors) ? data.colors : [], location: (data.location || "Closet") as LocationType }
+          : i
+      ));
+    }
   }
 
-  // ── Move item location ──────────────────────────────────────────────────────
+  // ── Move item location — OPTIMISTIC ─────────────────────────────────────────
   async function moveLocation(item: WardrobeItem, to: LocationType) {
-    await supabase.from("wardrobe").update({
-      location: to,
-      location_updated_at: new Date().toISOString(),
-    }).eq("id", item.id);
-    await loadItems();
-    if (selected?.id === item.id) setSelected(prev => prev ? { ...prev, location: to } : null);
+    const ts = new Date().toISOString();
+    // Instant local update
+    setItems(prev => prev.map(i =>
+      i.id === item.id ? { ...i, location: to, location_updated_at: ts } : i
+    ));
+    if (selected?.id === item.id)
+      setSelected(prev => prev ? { ...prev, location: to, location_updated_at: ts } : null);
+    // Background DB write
+    await supabase.from("wardrobe").update({ location: to, location_updated_at: ts }).eq("id", item.id);
   }
 
-  // ── Delete item ─────────────────────────────────────────────────────────────
+  // ── Delete item — OPTIMISTIC ─────────────────────────────────────────────────
   async function deleteItem(id: string) {
-    await supabase.from("wardrobe").delete().eq("id", id);
-    await loadItems();
+    // Instant local removal
+    setItems(prev => prev.filter(i => i.id !== id));
     setSelected(null);
+    // Background DB delete
+    await supabase.from("wardrobe").delete().eq("id", id);
   }
 
-  // ── Save edit ───────────────────────────────────────────────────────────────
+  // ── Save edit — OPTIMISTIC ───────────────────────────────────────────────────
   async function saveEdit() {
     if (!selected) return;
-    await supabase.from("wardrobe").update({ ...editItem, updated_at: new Date().toISOString() }).eq("id", selected.id);
-    await loadItems();
+    // Instant local update
+    setItems(prev => prev.map(i => i.id === selected.id ? { ...i, ...editItem } : i));
     setSelected(prev => prev ? { ...prev, ...editItem } : null);
     setEditMode(false);
+    // Background DB write
+    await supabase.from("wardrobe").update({ ...editItem, updated_at: new Date().toISOString() }).eq("id", selected.id);
   }
 
   // ── Scanner ─────────────────────────────────────────────────────────────────

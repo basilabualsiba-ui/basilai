@@ -37,36 +37,46 @@ export default function Notes() {
     setLoading(false);
   }
 
+  // All mutations use optimistic updates — local state changes instantly,
+  // DB write fires in background. No round-trip before UI updates.
+
   async function addNote() {
     const text = newText.trim();
     if (!text) return;
     setSaving(true);
-    await supabase.from("notes").insert({ content: text });
-    setNewText("");
-    setAdding(false);
-    await load();
-    setSaving(false);
+
+    const tempId   = `temp-${Date.now()}`;
+    const tempNote: Note = {
+      id: tempId, content: text,
+      is_done: false, done_at: null,
+      created_at: new Date().toISOString(),
+    };
+
+    // Instant UI — close form, show note immediately
+    setNotes(prev => [tempNote, ...prev]);
+    setNewText(""); setAdding(false); setSaving(false);
+
+    // Background DB write — swap temp with real row when done
+    const { data } = await supabase.from("notes").insert({ content: text }).select().single();
+    if (data) {
+      setNotes(prev => prev.map(n => n.id === tempId ? data : n));
+    }
   }
 
   async function markDone(id: string) {
-    await supabase.from("notes").update({
-      is_done: true,
-      done_at: new Date().toISOString(),
-    }).eq("id", id);
-    load();
+    const ts = new Date().toISOString();
+    setNotes(prev => prev.map(n => n.id === id ? { ...n, is_done: true, done_at: ts } : n));
+    await supabase.from("notes").update({ is_done: true, done_at: ts }).eq("id", id);
   }
 
   async function markUndone(id: string) {
-    await supabase.from("notes").update({
-      is_done: false,
-      done_at: null,
-    }).eq("id", id);
-    load();
+    setNotes(prev => prev.map(n => n.id === id ? { ...n, is_done: false, done_at: null } : n));
+    await supabase.from("notes").update({ is_done: false, done_at: null }).eq("id", id);
   }
 
   async function deleteNote(id: string) {
+    setNotes(prev => prev.filter(n => n.id !== id));
     await supabase.from("notes").delete().eq("id", id);
-    load();
   }
 
   const pending = notes
