@@ -30,6 +30,7 @@ import GamesTracker from "./pages/GamesTracker";
 import NotFound from "./pages/NotFound";
 import Soccer from "./pages/Soccer";
 import Notes from "./pages/Notes";
+import Wardrobe from "./pages/Wardrobe";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ function AppContent() {
           <Route path="/games" element={<GamesTracker />} />
           <Route path="/soccer" element={<Soccer />} />
           <Route path="/notes" element={<Notes />} />
+          <Route path="/wardrobe" element={<Wardrobe />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
