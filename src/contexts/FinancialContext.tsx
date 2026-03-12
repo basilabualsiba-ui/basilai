@@ -262,6 +262,13 @@ export const FinancialProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   useEffect(() => {
     refreshData();
+
+    // Live realtime updates — syncs across all devices
+    const channels = [
+      supabase.channel('rt:transactions').on('postgres_changes' as any, { event: '*', schema: 'public', table: 'transactions' }, () => fetchTransactions()).subscribe(),
+      supabase.channel('rt:accounts').on('postgres_changes' as any, { event: '*', schema: 'public', table: 'accounts' }, () => fetchAccounts()).subscribe(),
+    ];
+    return () => channels.forEach(c => supabase.removeChannel(c));
   }, []);
 
   const addAccount = async (account: Omit<Account, 'id'>) => {

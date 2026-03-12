@@ -87,6 +87,12 @@ export const DreamsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   useEffect(() => {
     fetchDreams();
+
+    // Live realtime updates
+    const ch = supabase.channel('rt:dreams')
+      .on('postgres_changes' as any, { event: '*', schema: 'public', table: 'dreams' }, fetchDreams)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
   }, []);
 
   const addDream = async (dream: Partial<Dream>) => {
