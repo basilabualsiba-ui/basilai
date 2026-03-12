@@ -15,6 +15,7 @@ import { GymCard } from "@/components/dashboard/gym-card";
 import { SupplementsCard } from "@/components/dashboard/supplements-card";
 import { DreamsCardNew } from "@/components/dashboard/dreams-card-new";
 import { NotesCard } from "@/components/dashboard/notes-card";
+import { WardrobeCard } from "@/components/dashboard/wardrobe-card";
 import { WeightStatsCard } from "@/components/dashboard/weight-stats-card";
 import { TVCard } from "@/components/dashboard/tv-card";
 import { GamesCard } from "@/components/dashboard/games-card";
@@ -88,6 +89,7 @@ const Index = () => {
             <SupplementsCard />
             <DreamsCardNew />
             <NotesCard />
+            <WardrobeCard />
           </div>
         </div>
       </main>
