@@ -31,6 +31,7 @@ import NotFound from "./pages/NotFound";
 import Soccer from "./pages/Soccer";
 import Notes from "./pages/Notes";
 import Wardrobe from "./pages/Wardrobe";
+import Songs from "./pages/Songs";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,7 @@ function AppContent() {
           <Route path="/soccer" element={<Soccer />} />
           <Route path="/notes" element={<Notes />} />
           <Route path="/wardrobe" element={<Wardrobe />} />
+          <Route path="/songs" element={<Songs />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
