@@ -257,8 +257,8 @@ export default function Wardrobe() {
       {addStep === "confirm" && analysis && (
         <div className="flex-1 overflow-y-auto pb-28">
           {/* Image preview */}
-          <div className="relative h-52 bg-muted overflow-hidden">
-            <img src={analysis.processedImageUrl} alt="item" className="w-full h-full object-contain" />
+          <div className="relative h-52 overflow-hidden" style={{ background: "repeating-conic-gradient(#2a2a35 0% 25%, #1a1a24 0% 50%) 0 0 / 20px 20px" }}>
+            <img src={analysis.processedImageUrl} alt="item" className="w-full h-full object-contain" style={{ mixBlendMode: "normal" }} />
             <div className="absolute top-3 right-3 bg-black/60 rounded-xl px-3 py-1 text-xs text-white flex items-center gap-1">
               <Wand2 className="h-3 w-3" />
               {Math.round(analysis.confidence * 100)}% confidence
@@ -341,7 +341,7 @@ export default function Wardrobe() {
 
         <div className="flex-1 overflow-y-auto pb-4">
           {/* Image */}
-          <div className="h-64 bg-muted overflow-hidden">
+          <div className="h-64 overflow-hidden" style={{ background: "repeating-conic-gradient(#2a2a35 0% 25%, #1a1a24 0% 50%) 0 0 / 20px 20px" }}>
             {selected.image_url
               ? <img src={selected.image_url} alt={selected.type} className="w-full h-full object-contain" />
               : <div className="w-full h-full flex items-center justify-center"><Shirt className="h-16 w-16 text-muted-foreground/30" /></div>
@@ -536,7 +536,7 @@ export default function Wardrobe() {
                   <button key={item.id} onClick={() => setSelected(item)}
                     className="aspect-[3/4] rounded-2xl bg-card border border-border overflow-hidden text-left transition-all active:scale-95 relative group">
                     {item.image_url
-                      ? <img src={item.image_url} alt={item.type} className="w-full h-full object-cover" />
+                      ? <img src={item.image_url} alt={item.type} className="w-full h-full object-contain" style={{ background: "repeating-conic-gradient(#2a2a35 0% 25%,#1a1a24 0% 50%) 0 0/16px 16px" }} />
                       : (
                         <div className="w-full h-full flex items-center justify-center"
                           style={{ background: item.colors?.[0] ? `${COLOR_HEX[item.colors[0]] ?? "#888"}22` : "rgba(139,92,246,0.08)" }}>
