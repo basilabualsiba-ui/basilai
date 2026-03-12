@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRealtime } from "@/hooks/useRealtime";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ExternalLink, Gamepad2, Monitor, Search, Smartphone, Tv, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -85,6 +86,7 @@ const GamesTracker = () => {
   };
 
   useEffect(() => { loadGames(); }, []);
+  useRealtime('games', loadGames);
 
   const filteredGames = useMemo(() => {
     let result = games.filter((game) => platformFilter === "All" || game.platform === platformFilter);

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useRealtime } from "@/hooks/useRealtime";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, StickyNote, Plus, Check, Trash2, Clock, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +27,8 @@ export default function Notes() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { load(); }, []);
+  // Live update — reflects changes from any device
+  useRealtime('notes', load);
 
   async function load() {
     setLoading(true);

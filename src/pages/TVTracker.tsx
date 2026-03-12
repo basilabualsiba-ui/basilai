@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useRealtime } from "@/hooks/useRealtime";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -117,6 +118,7 @@ const TVTracker = () => {
     loadLibrary();
     loadEpisodes();
   }, []);
+  useRealtime('media', () => { loadLibrary(); loadEpisodes(); });
 
   // Sync series on load
   useEffect(() => {
