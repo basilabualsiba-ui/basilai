@@ -214,13 +214,14 @@ const TVTracker = () => {
   const toggleMovieWatched = async (movie: MediaItem) => {
     const newStatus = movie.status === 'watched' ? 'want_to_watch' : 'watched';
     if (newStatus === 'watched' && !movie.user_rating) { setMovieRatingValue(0); setRatingMedia(movie.id); return; }
+    setLibrary(prev => prev.map(m => m.id === movie.id ? { ...m, status: newStatus } : m));
     await supabase.from('media').update({ status: newStatus }).eq('id', movie.id);
-    loadLibrary();
   };
 
   const submitMovieRating = async (mediaId: string, rating: number) => {
+    setLibrary(prev => prev.map(m => m.id === mediaId ? { ...m, status: 'watched', user_rating: rating } : m));
+    setRatingMedia(null);
     await supabase.from('media').update({ status: 'watched', user_rating: rating }).eq('id', mediaId);
-    setRatingMedia(null); loadLibrary();
   };
 
   const toggleEpisodeWatched = async (ep: Episode) => {
@@ -232,18 +233,30 @@ const TVTracker = () => {
   const submitEpisodeRating = async (epId: string, rating: number) => {
     const ep = episodes.find(e => e.id === epId);
     if (!ep) return;
-    await supabase.from('episodes').update({ watched: true, user_rating: rating }).eq('id', epId);
-    setRatingEpisode(null);
     setEpisodes(prev => prev.map(e => e.id === epId ? { ...e, watched: true, user_rating: rating } : e));
+    setRatingEpisode(null);
+    await supabase.from('episodes').update({ watched: true, user_rating: rating }).eq('id', epId);
     await updateSeriesStatus(ep.series_id, epId, true);
-    loadLibrary();
+    // Update series status locally too
+    const seriesEps = episodes.map(e => e.id === epId ? { ...e, watched: true } : e).filter(e => e.series_id === ep.series_id);
+    const allWatched = seriesEps.every(e => e.watched);
+    const someWatched = seriesEps.some(e => e.watched);
+    const newStatus = allWatched ? 'watched' : someWatched ? 'watching' : 'want_to_watch';
+    setLibrary(prev => prev.map(m => m.id === ep.series_id ? { ...m, status: newStatus } : m));
   };
 
   const doToggleEpisode = async (ep: Episode, newWatched: boolean) => {
-    await supabase.from('episodes').update({ watched: newWatched }).eq('id', ep.id);
+    // Instant local update
     setEpisodes(prev => prev.map(e => e.id === ep.id ? { ...e, watched: newWatched } : e));
-    await updateSeriesStatus(ep.series_id, ep.id, newWatched);
-    loadLibrary();
+    // Update series status locally
+    const updatedEps = episodes.map(e => e.id === ep.id ? { ...e, watched: newWatched } : e).filter(e => e.series_id === ep.series_id);
+    const allWatched = updatedEps.every(e => e.watched);
+    const someWatched = updatedEps.some(e => e.watched);
+    const newStatus = allWatched ? 'watched' : someWatched ? 'watching' : 'want_to_watch';
+    setLibrary(prev => prev.map(m => m.id === ep.series_id ? { ...m, status: newStatus } : m));
+    // Background DB writes
+    await supabase.from('episodes').update({ watched: newWatched }).eq('id', ep.id);
+    await supabase.from('media').update({ status: newStatus }).eq('id', ep.series_id);
   };
 
   const updateSeriesStatus = async (seriesId: string, changedEpId: string, newWatched: boolean) => {
@@ -255,8 +268,10 @@ const TVTracker = () => {
   };
 
   const deleteMedia = async (mediaId: string) => {
+    setLibrary(prev => prev.filter(m => m.id !== mediaId));
+    setEpisodes(prev => prev.filter(e => e.series_id !== mediaId));
+    setSelectedMedia(null);
     await supabase.from('media').delete().eq('id', mediaId);
-    loadLibrary(); loadEpisodes(); setSelectedMedia(null);
   };
 
   const getEpisodesForSeries = (seriesId: string) => episodes.filter(e => e.series_id === seriesId);

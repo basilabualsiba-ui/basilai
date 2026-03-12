@@ -127,13 +127,22 @@ const GamesTracker = () => {
       user_price_ils: Number(form.userPriceILS || 0),
       rating: selectedGame.rating || null,
     };
-    const { error } = await supabase.from("games").insert(payload as never);
-    setSaving(false);
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Added", description: `${selectedGame.name} saved to your library` });
+
+    // Close immediately and add a temp item
+    const tempId = `temp-${Date.now()}`;
+    setGames(prev => [{ id: tempId, date_added: new Date().toISOString(), ...payload } as any, ...prev]);
     setShowAdd(false); setSelectedGame(null); setSearchQuery(""); setSearchResults([]);
     setForm({ platform: "PC", projectLink: "", userPriceILS: "" });
-    loadGames();
+    setSaving(false);
+
+    // Background DB write
+    const { data, error } = await supabase.from("games").insert(payload as never).select().single();
+    if (error) {
+      setGames(prev => prev.filter(g => g.id !== tempId));
+      toast({ title: "Error", description: error.message, variant: "destructive" }); return;
+    }
+    setGames(prev => prev.map(g => g.id === tempId ? data as any : g));
+    toast({ title: "Added", description: `${(payload as any).name} saved to your library` });
   };
 
   const openEditDialog = (game: GameRow) => {
@@ -150,25 +159,33 @@ const GamesTracker = () => {
   const handleUpdateGame = async () => {
     if (!editGame) return;
     setSaving(true);
-    const { error } = await supabase.from("games").update({
+
+    const updates = {
       platform: editForm.platform,
       project_link: editForm.projectLink || null,
       user_price_ils: Number(editForm.userPriceILS || 0),
-    } as never).eq("id", editGame.id);
-    setSaving(false);
-    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    };
+
+    // Instant UI
+    setGames(prev => prev.map(g => g.id === editGame.id ? { ...g, ...updates } : g));
+    setShowEdit(false); setEditGame(null); setSaving(false);
+
+    const { error } = await supabase.from("games").update(updates as never).eq("id", editGame.id);
+    if (error) {
+      loadGames(); // rollback
+      toast({ title: "Error", description: error.message, variant: "destructive" }); return;
+    }
     toast({ title: "Updated", description: `${editGame.name} updated` });
-    setShowEdit(false); setEditGame(null);
-    loadGames();
   };
 
   const handleDeleteGame = async () => {
     if (!editGame) return;
     if (!confirm(`Delete ${editGame.name}?`)) return;
-    await supabase.from("games").delete().eq("id", editGame.id);
-    toast({ title: "Deleted", description: `${editGame.name} removed` });
+    const id = editGame.id;
+    setGames(prev => prev.filter(g => g.id !== id));
     setShowEdit(false); setEditGame(null);
-    loadGames();
+    await supabase.from("games").delete().eq("id", id);
+    toast({ title: "Deleted", description: `${editGame?.name ?? "Game"} removed` });
   };
 
   const openProject = (url: string | null) => {
