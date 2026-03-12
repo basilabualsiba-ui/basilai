@@ -4,7 +4,8 @@ import {
   ArrowLeft, Shirt, Plus, Camera, Upload, Search,
   RotateCcw, Wind, Archive, ShoppingBag, Sparkles,
   Trash2, Pencil, MoveRight, Wand2, ScanLine,
-  ChevronRight, X, Check, RefreshCw, AlertCircle
+  ChevronRight, X, Check, RefreshCw, AlertCircle,
+  Timer, WashingMachine, Layers, Hanger
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -19,19 +20,18 @@ import {
 type Tab = "wardrobe" | "laundry" | "outfits" | "scanner";
 type AddStep = "capture" | "analyzing" | "confirm" | null;
 
-const CLOTHING_TYPES: ClothingType[] = ["T-shirt","Shirt","Hoodie","Jacket","Coat","Pants","Jeans","Shorts","Skirt","Dress"];
+const CLOTHING_TYPES: ClothingType[] = ["T-shirt","Shirt","Hoodie","Jacket","Coat","Pants","Jeans","Shorts","Chinos","Sweatpants","Thobe","Tracksuit"];
 const PATTERNS:       PatternType[]  = ["Solid","Striped","Floral","Checkered","Graphic"];
 const STYLES:         StyleType[]    = ["Casual","Formal","Sport","Streetwear","Homewear"];
 const SEASONS:        SeasonType[]   = ["Summer","Winter","All-Season","Spring/Fall"];
-const LOCATIONS:      LocationType[] = ["Closet","Laundry Basket","Washing Machine","Drying","Ready to Wear"];
+const LOCATIONS:      LocationType[] = ["Closet","Laundry Basket","Washing Machine","Drying"];
 const COLORS_LIST = ["Black","White","Gray","Navy","Blue","Red","Green","Brown","Beige","Yellow","Orange","Pink","Purple","Teal"];
 
-const LOCATION_META: Record<LocationType, { icon: typeof Archive; color: string; bg: string; next?: LocationType; nextLabel?: string }> = {
+const LOCATION_META: Record<LocationType, { icon: typeof Archive; color: string; bg: string; next?: LocationType; nextLabel?: string; needsTimer?: boolean }> = {
   "Closet":          { icon: Archive,       color: "text-green-400",  bg: "bg-green-400/15",  next: "Laundry Basket",  nextLabel: "Send to Laundry" },
-  "Laundry Basket":  { icon: ShoppingBag,   color: "text-amber-400",  bg: "bg-amber-400/15",  next: "Washing Machine", nextLabel: "Start Washing" },
+  "Laundry Basket":  { icon: ShoppingBag,   color: "text-amber-400",  bg: "bg-amber-400/15",  next: "Washing Machine", nextLabel: "Start Washing", needsTimer: true },
   "Washing Machine": { icon: RotateCcw,     color: "text-blue-400",   bg: "bg-blue-400/15",   next: "Drying",          nextLabel: "Hang to Dry" },
-  "Drying":          { icon: Wind,          color: "text-sky-400",    bg: "bg-sky-400/15",    next: "Ready to Wear",   nextLabel: "Mark Ready" },
-  "Ready to Wear":   { icon: Sparkles,      color: "text-emerald-400",bg: "bg-emerald-400/15",next: "Closet",          nextLabel: "Put Away" },
+  "Drying":          { icon: Wind,          color: "text-sky-400",    bg: "bg-sky-400/15",    next: "Closet",          nextLabel: "Done — Put Away" },
 };
 
 const COLOR_HEX: Record<string, string> = {
@@ -56,6 +56,10 @@ export default function Wardrobe() {
   const [items,       setItems]       = useState<WardrobeItem[]>([]);
   const [loading,     setLoading]     = useState(true);
   const [locFilter,   setLocFilter]   = useState<LocationType | "All">("All");
+
+  // Wash duration modal
+  const [washModalItem, setWashModalItem] = useState<WardrobeItem | null>(null);
+  const [washDuration,  setWashDuration]  = useState<number>(60);
 
   // Add flow
   const [addStep,     setAddStep]     = useState<AddStep>(null);
@@ -162,16 +166,41 @@ export default function Wardrobe() {
   }
 
   // ── Move item location — OPTIMISTIC ─────────────────────────────────────────
-  async function moveLocation(item: WardrobeItem, to: LocationType) {
+  async function moveLocation(item: WardrobeItem, to: LocationType, washMinutes?: number) {
     const ts = new Date().toISOString();
+    const update: any = { location: to, location_updated_at: ts };
+
+    // When starting wash: record start time + duration
+    if (to === "Washing Machine" && washMinutes) {
+      update.wash_start_time = ts;
+      update.wash_duration_minutes = washMinutes;
+    }
+    // When moving out of washing machine to drying: clear wash timer
+    if (to === "Drying") {
+      update.wash_start_time = null;
+      update.wash_duration_minutes = null;
+    }
+
     // Instant local update
     setItems(prev => prev.map(i =>
-      i.id === item.id ? { ...i, location: to, location_updated_at: ts } : i
+      i.id === item.id ? { ...i, ...update } : i
     ));
     if (selected?.id === item.id)
-      setSelected(prev => prev ? { ...prev, location: to, location_updated_at: ts } : null);
+      setSelected(prev => prev ? { ...prev, ...update } : null);
     // Background DB write
-    await supabase.from("wardrobe").update({ location: to, location_updated_at: ts }).eq("id", item.id);
+    await supabase.from("wardrobe").update(update).eq("id", item.id);
+  }
+
+  // ── Trigger wash — open duration picker then move ───────────────────────────
+  function triggerStartWash(item: WardrobeItem) {
+    setWashModalItem(item);
+    setWashDuration(60);
+  }
+
+  async function confirmStartWash() {
+    if (!washModalItem) return;
+    await moveLocation(washModalItem, "Washing Machine", washDuration);
+    setWashModalItem(null);
   }
 
   // ── Delete item — OPTIMISTIC ─────────────────────────────────────────────────
@@ -218,7 +247,7 @@ export default function Wardrobe() {
   // ─── UI helpers ─────────────────────────────────────────────────────────────
   const filteredItems = locFilter === "All" ? items : items.filter(i => i.location === locFilter);
 
-  const laundryGroups: LocationType[] = ["Laundry Basket","Washing Machine","Drying","Ready to Wear"];
+  const laundryGroups: LocationType[] = ["Laundry Basket","Washing Machine","Drying"];
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RENDER: ADD FLOW overlay
@@ -610,23 +639,28 @@ export default function Wardrobe() {
       {/* ── LAUNDRY TAB ──────────────────────────────────────────────────── */}
       {tab === "laundry" && (
         <div className="px-4 pt-4 space-y-4 pb-4">
-          {laundryGroups.map(loc => {
+          {/* Laundry pipeline — Basket → Machine → Drying → (auto back to Closet) */}
+          {(["Laundry Basket","Washing Machine","Drying"] as LocationType[]).map(loc => {
             const meta = LOCATION_META[loc];
             const LocIcon = meta.icon;
             const groupItems = items.filter(i => i.location === loc);
             return (
-              <div key={loc} className={`rounded-2xl border border-border overflow-hidden`}>
+              <div key={loc} className="rounded-2xl border border-border overflow-hidden">
                 {/* Group header */}
                 <div className={`flex items-center gap-2 px-4 py-3 ${meta.bg}`}>
                   <LocIcon className={`h-4 w-4 ${meta.color}`} />
                   <span className={`text-sm font-semibold ${meta.color}`}>{loc}</span>
+                  {loc === "Washing Machine" && groupItems.length > 0 && groupItems[0].wash_duration_minutes && (
+                    <span className="ml-2 flex items-center gap-1 text-[10px] text-blue-300 bg-blue-400/10 px-2 py-0.5 rounded-full">
+                      <Timer className="h-3 w-3" />
+                      {groupItems[0].wash_duration_minutes}min
+                    </span>
+                  )}
                   <span className={`ml-auto text-xs ${meta.color} opacity-70`}>{groupItems.length} item{groupItems.length !== 1 ? "s" : ""}</span>
                 </div>
 
                 {groupItems.length === 0 ? (
-                  <div className="px-4 py-6 text-center text-xs text-muted-foreground">
-                    No items here
-                  </div>
+                  <div className="px-4 py-6 text-center text-xs text-muted-foreground">Empty</div>
                 ) : (
                   <div className="p-3 flex gap-3 overflow-x-auto no-scrollbar">
                     {groupItems.map(item => (
@@ -639,9 +673,10 @@ export default function Wardrobe() {
                         </div>
                         <p className="text-xs font-medium truncate mb-1">{item.type}</p>
                         {meta.next && (
-                          <button onClick={() => moveLocation(item, meta.next!)}
+                          <button
+                            onClick={() => meta.needsTimer ? triggerStartWash(item) : moveLocation(item, meta.next!)}
                             className={`w-full flex items-center justify-center gap-1 py-1.5 rounded-lg text-[11px] font-medium ${meta.bg} ${meta.color} transition-all active:scale-95`}>
-                            <ChevronRight className="h-3 w-3" />
+                            {meta.needsTimer ? <Timer className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                             {meta.nextLabel}
                           </button>
                         )}
@@ -653,17 +688,17 @@ export default function Wardrobe() {
             );
           })}
 
-          {/* Closet items that can be sent to laundry */}
+          {/* Closet items — send to laundry */}
           <div className="rounded-2xl border border-border overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-3 bg-green-400/10">
               <Archive className="h-4 w-4 text-green-400" />
               <span className="text-sm font-semibold text-green-400">In Closet</span>
-              <span className="ml-auto text-xs text-green-400/70">{items.filter(i => i.location === "Closet" || i.location === "Ready to Wear").length} items</span>
+              <span className="ml-auto text-xs text-green-400/70">{items.filter(i => i.location === "Closet").length} items</span>
             </div>
             <div className="p-3 flex gap-3 overflow-x-auto no-scrollbar">
-              {items.filter(i => i.location === "Closet" || i.location === "Ready to Wear").map(item => (
+              {items.filter(i => i.location === "Closet").map(item => (
                 <div key={item.id} className="shrink-0 w-32">
-                  <div className="aspect-square rounded-xl bg-muted overflow-hidden mb-2" onClick={() => setSelected(item)}>
+                  <div className="aspect-square rounded-xl bg-muted overflow-hidden mb-2 cursor-pointer" onClick={() => setSelected(item)}>
                     {item.image_url ? <img src={item.image_url} alt={item.type} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Shirt className="h-8 w-8 text-muted-foreground/30" /></div>}
                   </div>
                   <p className="text-xs font-medium truncate mb-1">{item.type}</p>
@@ -674,7 +709,7 @@ export default function Wardrobe() {
                 </div>
               ))}
               {items.filter(i => i.location === "Closet").length === 0 && (
-                <p className="text-xs text-muted-foreground py-6 px-4">All items are in the laundry cycle</p>
+                <p className="text-xs text-muted-foreground py-6 px-4">All items are in the wash cycle</p>
               )}
             </div>
           </div>
@@ -873,22 +908,81 @@ export default function Wardrobe() {
         </div>
       )}
 
-      {/* ── BOTTOM NAV ───────────────────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-card border-t border-border safe-bottom">
-        <div className="flex">
-          {([
-            { id: "wardrobe", label: "Wardrobe", icon: Shirt   },
-            { id: "laundry",  label: "Laundry",  icon: RotateCcw },
-            { id: "outfits",  label: "Outfits",  icon: Sparkles },
-            { id: "scanner",  label: "Scanner",  icon: ScanLine },
-          ] as const).map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`flex-1 flex flex-col items-center gap-1 py-3 text-xs transition-colors
-                ${tab === t.id ? "text-primary" : "text-muted-foreground"}`}>
-              <t.icon className="h-5 w-5" />
-              <span className="text-[11px]">{t.label}</span>
+      {/* ── WASH DURATION MODAL ─────────────────────────────────────────────── */}
+      {washModalItem && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md bg-card rounded-t-3xl p-6 pb-8 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-400/15 flex items-center justify-center">
+                <Timer className="h-5 w-5 text-blue-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Start Washing</h3>
+                <p className="text-xs text-muted-foreground">{washModalItem.type} · How long is the cycle?</p>
+              </div>
+              <button onClick={() => setWashModalItem(null)} className="ml-auto p-2 rounded-xl hover:bg-muted">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Duration picker */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Wash duration</span>
+                <span className="text-2xl font-bold text-blue-400">{washDuration}<span className="text-sm font-normal text-muted-foreground ml-1">min</span></span>
+              </div>
+              <input type="range" min={15} max={180} step={15} value={washDuration}
+                onChange={e => setWashDuration(Number(e.target.value))}
+                className="w-full accent-blue-400" />
+              <div className="flex justify-between text-[10px] text-muted-foreground">
+                <span>15m</span><span>45m</span><span>60m</span><span>90m</span><span>120m</span><span>180m</span>
+              </div>
+              {/* Quick presets */}
+              <div className="flex gap-2 flex-wrap">
+                {[30,45,60,90,120].map(m => (
+                  <button key={m} onClick={() => setWashDuration(m)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${washDuration === m ? "bg-blue-400/25 text-blue-400" : "bg-muted text-muted-foreground"}`}>
+                    {m}min
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button onClick={confirmStartWash}
+              className="w-full py-3.5 rounded-2xl font-semibold text-sm text-white bg-blue-500 active:scale-95 transition-all">
+              Start Washing · {washDuration} min
             </button>
-          ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── BOTTOM NAV — matches Financial card style ──────────────────────── */}
+      <div className="fixed bottom-0 left-0 right-0 z-20">
+        <div className="absolute inset-x-0 -top-8 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
+        <div className="bg-background/80 backdrop-blur-2xl border-t border-border/20 shadow-2xl shadow-black/10">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
+          <div className="grid grid-cols-4 h-16 px-2">
+            {([
+              { id: "wardrobe", label: "Wardrobe", icon: Shirt    },
+              { id: "laundry",  label: "Laundry",  icon: Wind     },
+              { id: "outfits",  label: "Outfits",  icon: Sparkles },
+              { id: "scanner",  label: "Scanner",  icon: ScanLine },
+            ] as const).map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)}
+                className={`relative flex flex-col items-center justify-center gap-0.5 transition-all duration-300 rounded-2xl mx-1 ${tab === t.id ? "text-violet-400" : "text-muted-foreground hover:text-foreground"}`}>
+                {tab === t.id && (
+                  <>
+                    <div className="absolute inset-1 bg-gradient-to-b from-violet-500/15 to-violet-500/5 rounded-xl" />
+                    <div className="absolute top-1 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-gradient-to-r from-transparent via-violet-400 to-transparent rounded-full" />
+                  </>
+                )}
+                <div className={`relative z-10 transition-all duration-300 ${tab === t.id ? "scale-110 -translate-y-0.5" : ""}`}>
+                  <t.icon className="h-5 w-5" />
+                </div>
+                <span className={`relative z-10 text-[10px] font-medium transition-all duration-300 ${tab === t.id ? "font-semibold" : ""}`}>{t.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
