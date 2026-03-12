@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useRealtime } from "@/hooks/useRealtime";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Shirt, Plus, Camera, Upload, Search,
@@ -95,8 +94,6 @@ export default function Wardrobe() {
   }
 
   useEffect(() => { loadItems(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  // Live update across all devices
-  useRealtime('wardrobe', loadItems);
 
   // ── Add flow: handle image capture ──────────────────────────────────────────
   async function handleImageFile(file: File) {

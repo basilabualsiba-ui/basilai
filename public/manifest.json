@@ -1,7 +1,7 @@
 {
   "name": "BASILIX",
   "short_name": "BASILIX",
-  "description": "BASILIX \u2014 personal life tracking app",
+  "description": "BASILIX — personal life tracking app",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
@@ -9,14 +9,8 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/basilix-icon.svg",
-      "type": "image/svg+xml",
-      "sizes": "any",
-      "purpose": "any"
-    },
-    {
       "src": "/lovable-uploads/fe018138-2090-4b1d-8808-4ed8082f7011.png",
-      "sizes": "192x192 512x512",
+      "sizes": "48x48 72x72 96x96 128x128 192x192 256x256 512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
@@ -26,11 +20,7 @@
     "background-sync",
     "push"
   ],
-  "categories": [
-    "productivity",
-    "health",
-    "finance"
-  ],
+  "categories": ["productivity", "health", "finance"],
   "scope": "/",
   "prefer_related_applications": false,
   "gcm_sender_id": "103953800507"
